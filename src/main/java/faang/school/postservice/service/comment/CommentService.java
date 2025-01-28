@@ -53,7 +53,7 @@ public class CommentService {
         commentRepository.deleteById(commentId);
     }
 
-    private Comment getCommentById(long commentId) {
+    public Comment getCommentById(long commentId) {
         return commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Комментария с ID " + commentId + " не найден"));
     }

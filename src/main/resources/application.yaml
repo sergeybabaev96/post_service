@@ -52,6 +52,13 @@ thread:
   pool:
     size: 10
 
+services:
+  s3:
+    endpoint: http://localhost:9000
+    accessKey: user
+    secretKey: password
+    bucketName: postbucket
+
 user-service:
   host: localhost
   port: 8080
