@@ -9,10 +9,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -21,6 +17,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LikeController {
     private final LikeService service;
+
+    private final LikeService likeService;
 
     @PostMapping("/posts/like")
     public ResponseEntity<?> toggleLikePost(@Valid @NotNull @RequestBody LikePostRequest request) {
@@ -34,14 +32,14 @@ public class LikeController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/comment/{commentId}")
-    public List<UserDto> getUsersLikedToComment(@PathVariable long commentId) {
-        return likeService.getLikedUsersToComment(commentId);
+    @GetMapping("/post/{postId}")
+    public List<UserDto> getUsersLikedToPost(@Valid @NotNull @PathVariable Long postId) {
+        return likeService.getLikedUsersToPost(postId);
     }
 
-    @GetMapping("/post/{postId}")
-    public List<UserDto> getUsersLikedToPost(@PathVariable long postId) {
-        return likeService.getLikedUsersToPost(postId);
+    @GetMapping("/comment/{commentId}")
+    public List<UserDto> getUsersLikedToComment(@Valid @NotNull @PathVariable Long commentId) {
+        return likeService.getLikedUsersToComment(commentId);
     }
 
 }
