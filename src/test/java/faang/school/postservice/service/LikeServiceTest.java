@@ -202,7 +202,7 @@ public class LikeServiceTest {
 
     @Test
     @DisplayName("Test getLikedUsersToPost Success")
-    public void testGetLikedUsersToPostSuccess() {
+    public void getLikedUsersToPost_Success() {
         when(postService.existsById(1L)).thenReturn(true);
         when(likeRepository.findAllByPostId(1L)).thenReturn(likeStream);
         when(userServiceClient.getUsersByIds(List.of(1L, 2L, 3L))).thenReturn(userList);
@@ -215,7 +215,7 @@ public class LikeServiceTest {
 
     @Test
     @DisplayName("Test getLikedUsersToPostNotExistsById Error")
-    public void testGetLikedUsersToPostNotExistsById() {
+    public void getLikedUsersToPost_NotExistsById() {
         when(postService.existsById(2L)).thenReturn(false);
 
         PostWasNotFoundException exception = assertThrows(PostWasNotFoundException.class, () ->
@@ -228,7 +228,7 @@ public class LikeServiceTest {
 
     @Test
     @DisplayName("Test getLikedUsersToPostUserServiceError Error")
-    public void testGetLikedUsersToPostUserServiceError() {
+    public void getLikedUsersToPost_UserServiceError() {
         when(postService.existsById(1L)).thenReturn(true);
         when(likeRepository.findAllByPostId(1L)).thenReturn(likeStream);
         when(userServiceClient.getUsersByIds(List.of(1L, 2L, 3L))).thenThrow(new RuntimeException());
@@ -243,7 +243,7 @@ public class LikeServiceTest {
 
     @Test
     @DisplayName("Test getLikedUsersToComment Success")
-    public void testGetLikedUsersToCommentSuccess() {
+    public void getLikedUsersToComment_Success() {
         when(commentService.existsById(1L)).thenReturn(true);
         when(likeRepository.findAllByCommentId(1L)).thenReturn(likeStream);
         when(userServiceClient.getUsersByIds(List.of(1L, 2L, 3L))).thenReturn(userList);
@@ -256,7 +256,7 @@ public class LikeServiceTest {
 
     @Test
     @DisplayName("Test getLikedUsersToCommentNotExistsById Error")
-    public void testGetLikedUsersToCommentNotExistsById() {
+    public void getLikedUsersToComment_NotExistsById() {
         when(commentService.existsById(2L)).thenReturn(false);
 
         CommentWasNotFoundException exception = assertThrows(CommentWasNotFoundException.class, () ->
@@ -269,7 +269,7 @@ public class LikeServiceTest {
 
     @Test
     @DisplayName("Test getLikedUsersToCommentUserServiceError Error")
-    public void testGetLikedUsersToCommentUserServiceError() {
+    public void getLikedUsersToComment_UserServiceError() {
         when(commentService.existsById(1L)).thenReturn(true);
         when(likeRepository.findAllByCommentId(1L)).thenReturn(likeStream);
         when(userServiceClient.getUsersByIds(List.of(1L, 2L, 3L))).thenThrow(new RuntimeException());
