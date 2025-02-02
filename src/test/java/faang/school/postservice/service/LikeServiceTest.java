@@ -8,6 +8,7 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.exceptions.CommentWasNotFoundException;
 import faang.school.postservice.exceptions.PostWasNotFoundException;
 import faang.school.postservice.exceptions.UserServiceConnectException;
+import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
@@ -26,19 +27,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
-import java.util.Optional;
-
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class LikeServiceTest {
-
     @Mock
     private LikeRepository likeRepository;
     @Mock
@@ -56,7 +53,6 @@ public class LikeServiceTest {
     private LikeService likeService;
 
     private List<UserDto> userList;
-
     private Stream<Like> likeStream;
     private Post post;
     private Comment comment;
@@ -64,7 +60,6 @@ public class LikeServiceTest {
 
     @BeforeEach
     public void setUp() {
-
         post = Post.builder()
                 .id(1L)
                 .authorId(13L)
@@ -79,6 +74,7 @@ public class LikeServiceTest {
                 .id(1L)
                 .username("Bob")
                 .build();
+
 
         likeStream = Stream.of(
                 Like.builder().id(1).userId(1L).build(),
@@ -204,7 +200,7 @@ public class LikeServiceTest {
     @DisplayName("Test getLikedUsersToPost Success")
     public void getLikedUsersToPost_Success() {
         when(postService.existsById(1L)).thenReturn(true);
-        when(likeRepository.findAllByPostId(1L)).thenReturn(likeStream);
+        when(likeRepository.findAllByPostId(1L)).thenReturn(likeStream.stream());
         when(userServiceClient.getUsersByIds(List.of(1L, 2L, 3L))).thenReturn(userList);
 
         List<UserDto> result = likeService.getLikedUsersToPost(1L);
@@ -230,7 +226,7 @@ public class LikeServiceTest {
     @DisplayName("Test getLikedUsersToPostUserServiceError Error")
     public void getLikedUsersToPost_UserServiceError() {
         when(postService.existsById(1L)).thenReturn(true);
-        when(likeRepository.findAllByPostId(1L)).thenReturn(likeStream);
+        when(likeRepository.findAllByPostId(1L)).thenReturn(likeStream.stream());
         when(userServiceClient.getUsersByIds(List.of(1L, 2L, 3L))).thenThrow(new RuntimeException());
 
         UserServiceConnectException exception = assertThrows(UserServiceConnectException.class, () ->
@@ -245,7 +241,7 @@ public class LikeServiceTest {
     @DisplayName("Test getLikedUsersToComment Success")
     public void getLikedUsersToComment_Success() {
         when(commentService.existsById(1L)).thenReturn(true);
-        when(likeRepository.findAllByCommentId(1L)).thenReturn(likeStream);
+        when(likeRepository.findAllByCommentId(1L)).thenReturn(likeStream.stream());
         when(userServiceClient.getUsersByIds(List.of(1L, 2L, 3L))).thenReturn(userList);
 
         List<UserDto> result = likeService.getLikedUsersToComment(1L);
@@ -271,7 +267,7 @@ public class LikeServiceTest {
     @DisplayName("Test getLikedUsersToCommentUserServiceError Error")
     public void getLikedUsersToComment_UserServiceError() {
         when(commentService.existsById(1L)).thenReturn(true);
-        when(likeRepository.findAllByCommentId(1L)).thenReturn(likeStream);
+        when(likeRepository.findAllByCommentId(1L)).thenReturn(likeStream.stream());
         when(userServiceClient.getUsersByIds(List.of(1L, 2L, 3L))).thenThrow(new RuntimeException());
 
         UserServiceConnectException exception = assertThrows(UserServiceConnectException.class, () ->
