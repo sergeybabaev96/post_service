@@ -1,5 +1,6 @@
 package faang.school.postservice.config.redis;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -13,16 +14,16 @@ import java.time.Duration;
 
 @Configuration
 public class RedisConfig {
-    @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
-        RedisCacheConfiguration cacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(60))
-                .disableCachingNullValues()
-                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()));
 
-        return RedisCacheManager.builder(redisConnectionFactory)
-                .cacheDefaults(cacheConfiguration)
+    @Bean
+    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+        RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
+                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer(objectMapper)))
+                .entryTtl(Duration.ofMinutes(60));
+
+        return RedisCacheManager.builder(connectionFactory)
+                .cacheDefaults(config)
                 .build();
     }
 }

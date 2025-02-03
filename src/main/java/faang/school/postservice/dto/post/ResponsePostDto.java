@@ -1,18 +1,24 @@
 package faang.school.postservice.dto.post;
 
-import lombok.Value;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
-@Value
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class ResponsePostDto {
-    Long id;
-    String content;
-    Long authorId;
-    Long projectId;
-    boolean published;
-    LocalDateTime publishedAt;
-    LocalDateTime scheduledAt;
-    LocalDateTime createdAt;
-    LocalDateTime updatedAt;
+    private Long id;
+    private String content;
+    private Long authorId;
+    private Long projectId;
+    private boolean published;
+    private LocalDateTime publishedAt;
+    private LocalDateTime scheduledAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

@@ -11,12 +11,14 @@ import faang.school.postservice.repository.PostRepository;
 import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -25,6 +27,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserServiceClient userServiceClient;
     private final ProjectServiceClient projectServiceClient;
+    private final PostHashtagCacheService postHashtagCacheService;
 
     @Transactional
     public void createPostByUserId(Long userId, Post post) {
@@ -33,7 +36,9 @@ public class PostService {
         post.setCreatedAt(LocalDateTime.now());
         post.setUpdatedAt(LocalDateTime.now());
 
+        pullHashtags(post);
         postRepository.save(post);
+        postHashtagCacheService.updatePostsInCache(post);
     }
 
     @Transactional
@@ -43,7 +48,9 @@ public class PostService {
         post.setCreatedAt(LocalDateTime.now());
         post.setUpdatedAt(LocalDateTime.now());
 
+        pullHashtags(post);
         postRepository.save(post);
+        postHashtagCacheService.updatePostsInCache(post);
     }
 
     @Transactional
@@ -67,7 +74,9 @@ public class PostService {
         existingPost.setUpdatedAt(LocalDateTime.now());
         existingPost.setProjectId(post.getProjectId());
 
+        pullHashtags(existingPost);
         postRepository.save(existingPost);
+        postHashtagCacheService.updatePostsInCache(existingPost);
     }
 
     @Transactional
@@ -77,6 +86,7 @@ public class PostService {
         existingPost.setDeleted(true);
 
         postRepository.save(existingPost);
+        postHashtagCacheService.removePostFromCache(existingPost);
     }
 
     public Post getPostById(Long postId) {
@@ -103,7 +113,6 @@ public class PostService {
                 .findByProjectId(projectId).stream()
                 .filter(post -> !post.isPublished())
                 .collect(Collectors.toList());
-
     }
 
     public List<Post> getPublishedPostsByUser(Long userId) {
@@ -127,19 +136,25 @@ public class PostService {
         postRepository.save(post);
     }
 
+    private void pullHashtags(Post post) {
+        String regex = "#\\w+";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(post.getContent());
+
+        List<String> hashtags = new ArrayList<>();
+
+        while (matcher.find()) {
+            hashtags.add(matcher.group());
+        }
+        post.setHashtags(hashtags);
+    }
+
     private void doesUserExist(Long userId) {
         try {
             userServiceClient.getUser(userId);
         } catch (FeignException.NotFound e) {
             throw new UserNotFoundException("User with id " + userId + " not found");
         }
-    }
-
-    @Transactional(readOnly = true)
-    @Cacheable(value = "postsByHashtag", key = "#hashtag")
-    public List<Post> getPostsByHashtag(String hashtag) {
-        String str = "[\"" + hashtag + "\"]";
-        return postRepository.findPostsByHashtag(str);
     }
 
     private void doesProjectExist(Long projectId) {
