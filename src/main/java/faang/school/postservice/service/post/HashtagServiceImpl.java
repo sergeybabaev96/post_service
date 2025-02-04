@@ -31,7 +31,9 @@ public class HashtagServiceImpl implements HashtagService {
     @Override
     public List<HashtagResponseDto> getAllHashtags() {
         log.info("Get all hashtags");
-        return hashtagRepository.findAll().stream().map(hashtagMapper::toDto).toList();
+        return hashtagRepository.findAll().stream()
+                .map(hashtagMapper::toDto)
+                .toList();
     }
 
     @Cacheable(value = "top_hashtags")
@@ -39,7 +41,9 @@ public class HashtagServiceImpl implements HashtagService {
     public List<HashtagResponseDto> getTopHashtags() {
         log.info("Get top hashtags");
         Pageable pageable = PageRequest.of(0, hashtagProperties.getLimit());
-        return hashtagRepository.getTopHashtags(pageable).stream().map(hashtagMapper::toDto).toList();
+        return hashtagRepository.getTopHashtags(pageable).stream()
+                .map(hashtagMapper::toDto)
+                .toList();
     }
 
     @Transactional
