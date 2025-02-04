@@ -48,6 +48,8 @@ springdoc:
   swagger-ui:
     path: /post-service-ui.html
 
-post:
-  scheduled:
-    cron: "0 * * * * ?"
+post-service:
+  publish:
+    scheduled:
+      cron: "0 * * * * ?"
+    batch-size: 1000

@@ -11,17 +11,26 @@ import faang.school.postservice.repository.PostRepository;
 import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class PostService {
+
+    @Value("${post-service.publish.batch-size")
+    private final int batchSize;
+
     private final PostRepository postRepository;
     private final UserServiceClient userServiceClient;
     private final ProjectServiceClient projectServiceClient;
@@ -136,6 +145,27 @@ public class PostService {
         }
     }
 
+    public void publishScheduledPosts() {
+        List<Post> readyToPublish = postRepository.findReadyToPublish();
+
+        if (readyToPublish.isEmpty()) {
+            log.info("No one post ready to publish");
+            return;
+        }
+
+        int postsAmount = readyToPublish.size();
+        int totalBatches = (postsAmount + batchSize - 1) / batchSize;
+
+        List<CompletableFuture<Void>> futures = IntStream.range(0, totalBatches)
+                .mapToObj(i -> {
+                    int start = i * batchSize;
+                    int end = Math.min(batchSize + start, postsAmount);
+                    List<Post> currentBatch = readyToPublish.subList(start, end);
+                    return CompletableFuture.runAsync(() -> publishBatch(currentBatch), executorService);
+                })
+                .toList();
+    }
+
     private void doesProjectExist(Long projectId) {
         try {
             projectServiceClient.getProject(projectId);
@@ -147,5 +177,14 @@ public class PostService {
     private Post getPost(Long postId) {
         return postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found"));
+    }
+
+    private void publishBatch(List<Post> posts) {
+        posts.forEach(post -> {
+            post.setPublished(true);
+            post.setPublishedAt(LocalDateTime.now());
+        });
+        postRepository.saveAll(posts);
+        log.info("Scheduled task #Publish post# completed");
     }
 }

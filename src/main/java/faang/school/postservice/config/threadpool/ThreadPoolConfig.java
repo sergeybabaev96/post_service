@@ -10,9 +10,10 @@ import java.util.concurrent.Executors;
 @RequiredArgsConstructor
 @Configuration
 public class ThreadPoolConfig {
+    private static final int THREAD_AMOUNT = 10;
 
     @Bean(destroyMethod = "shutdown")
     public ExecutorService executorService() {
-        return Executors.newFixedThreadPool(10);
+        return Executors.newFixedThreadPool(THREAD_AMOUNT);
     }
 }
