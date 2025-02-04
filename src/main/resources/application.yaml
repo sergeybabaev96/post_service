@@ -53,4 +53,4 @@ springdoc:
 
 app:
   number-posts-by-hashtags: 100
-  cache-live-time: 180
+  cache-live-time: 1800
