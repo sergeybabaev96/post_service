@@ -30,12 +30,9 @@ public class LikeService {
 
     @Transactional
     public void toggleLikePost(LikePostRequest request) {
-        Post post;
-        UserDto userDto;
-
-        post = postRepository.findById(request.postId())
+        Post post = postRepository.findById(request.postId())
                 .orElseThrow(() -> new EntityNotFoundException("Пост с id " + request.postId() + " не был найден"));
-        userDto = getUserDto(request.userId());
+        UserDto userDto = getUserDto(request.userId());
 
         List<Like> likes = new ArrayList<>(post.getLikes() == null ? Collections.emptyList() : post.getLikes());
         boolean likeAlreadyExists = likes.stream().anyMatch(like -> like.getUserId() == userDto.id());
