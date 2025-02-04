@@ -30,6 +30,7 @@ dependencies {
      */
     implementation("org.liquibase:liquibase-core")
     implementation("redis.clients:jedis:4.3.2")
+    implementation ("org.apache.commons:commons-pool2:2.11.1")
     runtimeOnly("org.postgresql:postgresql")
     implementation ("com.vladmihalcea:hibernate-types-60:2.16.2")
 

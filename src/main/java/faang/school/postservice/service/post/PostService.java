@@ -29,6 +29,8 @@ public class PostService {
     private final ProjectServiceClient projectServiceClient;
     private final PostHashtagCacheService postHashtagCacheService;
 
+    private static final String REGEX = "#\\w+";
+
     @Transactional
     public void createPostByUserId(Long userId, Post post) {
         doesUserExist(userId);
@@ -36,9 +38,9 @@ public class PostService {
         post.setCreatedAt(LocalDateTime.now());
         post.setUpdatedAt(LocalDateTime.now());
 
-        pullHashtags(post);
+        findHashtags(post);
         postRepository.save(post);
-        postHashtagCacheService.updatePostsInCache(post);
+        postHashtagCacheService.setPostsIntoCache(post);
     }
 
     @Transactional
@@ -48,9 +50,9 @@ public class PostService {
         post.setCreatedAt(LocalDateTime.now());
         post.setUpdatedAt(LocalDateTime.now());
 
-        pullHashtags(post);
+        findHashtags(post);
         postRepository.save(post);
-        postHashtagCacheService.updatePostsInCache(post);
+        postHashtagCacheService.setPostsIntoCache(post);
     }
 
     @Transactional
@@ -74,9 +76,9 @@ public class PostService {
         existingPost.setUpdatedAt(LocalDateTime.now());
         existingPost.setProjectId(post.getProjectId());
 
-        pullHashtags(existingPost);
+        findHashtags(existingPost);
         postRepository.save(existingPost);
-        postHashtagCacheService.updatePostsInCache(existingPost);
+        postHashtagCacheService.setPostsIntoCache(existingPost);
     }
 
     @Transactional
@@ -136,9 +138,8 @@ public class PostService {
         postRepository.save(post);
     }
 
-    private void pullHashtags(Post post) {
-        String regex = "#\\w+";
-        Pattern pattern = Pattern.compile(regex);
+    private void findHashtags(Post post) {
+        Pattern pattern = Pattern.compile(REGEX);
         Matcher matcher = pattern.matcher(post.getContent());
 
         List<String> hashtags = new ArrayList<>();

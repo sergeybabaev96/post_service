@@ -7,11 +7,11 @@ import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.core.RedisCallback;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Response;
+import redis.clients.jedis.Transaction;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,98 +21,165 @@ import java.util.List;
 @Service
 public class PostHashtagCacheService {
     private final PostRepository postRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final Jedis jedis;
     private final ObjectMapper objectMapper;
 
     @Value("${app.cache-live-time}")
     private int CACHE_LIVE_TIME;
 
-    @Transactional(readOnly = true)
-    public List<Post> getPostsByHashtag(String hashtag) {
-        String cacheKey = "postsBy:" + hashtag;
-        List<Post> cachedPosts = (List<Post>) redisTemplate.opsForValue().get(cacheKey);
-
-        if (cachedPosts != null) {
-            return cachedPosts;
-        }
-
-        String str = "[\"" + hashtag + "\"]";
-        List<Post> posts = postRepository.findPostsByHashtag(str);
-
-        redisTemplate.opsForValue().set(cacheKey, posts);
-
-        return posts;
-    }
-
-    public void updatePostsInCache(Post post) {
+    @Transactional
+    public void setPostsIntoCache(Post post) {
         List<String> hashtags = post.getHashtags();
         for (String hashtag : hashtags) {
             String cacheKey = "postsBy:" + hashtag;
+            Transaction transaction = null;
 
-            redisTemplate.execute((RedisCallback<Object>) redisConnection -> {
-                redisConnection.multi();
+            try {
+                jedis.watch(cacheKey);
+                transaction = jedis.multi();
 
-                List<Post> cachedPosts = getCachedPosts(redisConnection, cacheKey);
+                Response<byte[]> cachedDataResponse = transaction.get(cacheKey.getBytes());
 
                 boolean updated = false;
-                for (Post cachedPost : cachedPosts) {
-                    if (cachedPost.getId().equals(post.getId())) {
-                        cachedPosts.set(cachedPosts.indexOf(cachedPost), post);
-                        updated = true;
-                        break;
+                List<Post> cachedPosts = new ArrayList<>();
+
+                List<Object> result = transaction.exec();
+                if (result == null) {
+
+                    System.out.println("Transaction cancelled for key: " + cacheKey);
+                } else {
+
+                    byte[] cachedData = cachedDataResponse.get();
+
+                    if (cachedData != null) {
+                        try {
+                            cachedPosts = objectMapper.readValue(cachedData, new TypeReference<List<Post>>() {
+                            });
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+
+                    for (Post cachedPost : cachedPosts) {
+                        if (cachedPost.getId().equals(post.getId())) {
+                            cachedPosts.set(cachedPosts.indexOf(cachedPost), post);
+                            updated = true;
+                            break;
+                        }
+                    }
+
+                    if (!updated) {
+                        cachedPosts.add(post);
                     }
                 }
 
-                if (!updated) {
-                    cachedPosts.add(post);
+                if (result != null) {
+                    jedis.setex(cacheKey.getBytes(), CACHE_LIVE_TIME, objectMapper.writeValueAsBytes(cachedPosts));
                 }
 
-                updatePostsInCache(redisConnection, cacheKey, cachedPosts);
-
-                return redisConnection.exec();
-            });
+            } catch (Exception e) {
+                if (transaction != null) {
+                    try {
+                        transaction.discard();
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Error discarding transaction: " + ex.getMessage(), ex);
+                    }
+                }
+                throw new RuntimeException(e);
+            } finally {
+                jedis.unwatch();
+            }
         }
     }
 
+    @Transactional
     public void removePostFromCache(Post post) {
         List<String> hashtags = post.getHashtags();
         for (String hashtag : hashtags) {
             String cacheKey = "postsBy:" + hashtag;
+            Transaction transaction = null;
 
-            redisTemplate.execute((RedisCallback<Object>) redisConnection -> {
-                redisConnection.multi();
+            try {
+                jedis.watch(cacheKey);
+                transaction = jedis.multi();
+                Response<byte[]> cachedDataResponse = transaction.get(cacheKey.getBytes());
 
-                List<Post> cachedPosts = getCachedPosts(redisConnection, cacheKey);
+                List<Object> execResult = transaction.exec();
 
-                cachedPosts.removeIf(cachedPost -> cachedPost.getId().equals(post.getId()));
+                if (execResult == null) {
+                    System.out.println("Transaction cancelled for key: " + cacheKey);
+                    continue;
+                }
 
-                updatePostsInCache(redisConnection, cacheKey, cachedPosts);
+                byte[] cachedData = cachedDataResponse.get();
+                List<Post> cachedPosts = new ArrayList<>();
 
-                return redisConnection.exec();
-            });
+                if (cachedData != null) {
+                    try {
+                        cachedPosts = objectMapper.readValue(cachedData, new TypeReference<List<Post>>() {
+                        });
+                    } catch (IOException e) {
+                        throw new RuntimeException("Error deserializing cached data: " + e.getMessage(), e);
+                    }
+                }
+
+                cachedPosts.removeIf(p -> p.getId().equals(post.getId()));
+
+                jedis.setex(cacheKey.getBytes(), CACHE_LIVE_TIME, objectMapper.writeValueAsBytes(cachedPosts));
+
+            } catch (Exception e) {
+                if (transaction != null) {
+                    try {
+                        transaction.discard();
+                    } catch (Exception ex) {
+                        throw new RuntimeException("Error discarding transaction: " + ex.getMessage(), ex);
+                    }
+                }
+                throw new RuntimeException("Error removing post from cache: " + e.getMessage(), e);
+            } finally {
+                jedis.unwatch();
+            }
         }
     }
 
-    private void updatePostsInCache(RedisConnection redisConnection, String cacheKey, List<Post> cachedPosts) {
-        redisConnection.del(cacheKey.getBytes());
-        try {
-            redisConnection.setEx(cacheKey.getBytes(), CACHE_LIVE_TIME, objectMapper.writeValueAsBytes(cachedPosts));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+
+    @Transactional(readOnly = true)
+    public List<Post> getPostsByHashtag(String hashtag) {
+        String cacheKey = "postsBy:" + hashtag;
+        List<Post> cachedPosts = getPostsFromCache(cacheKey);
+
+        if (!cachedPosts.isEmpty()) {
+            return cachedPosts;
         }
+
+        List<Post> posts = postRepository.findPostsByHashtag(turnIntoJson(hashtag));
+
+        if (posts != null && !posts.isEmpty()) {
+            try {
+                jedis.setex(cacheKey.getBytes(), CACHE_LIVE_TIME, objectMapper.writeValueAsBytes(posts));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Error while serializing posts for cache: " + e.getMessage(), e);
+            }
+        }
+
+        return posts;
     }
 
-    private List<Post> getCachedPosts(RedisConnection redisConnection, String cacheKey) {
-        byte[] cachedData = redisConnection.get(cacheKey.getBytes());
+    private List<Post> getPostsFromCache(String cacheKey) {
+        byte[] cachedData = jedis.get(cacheKey.getBytes());
         List<Post> cachedPosts = new ArrayList<>();
         if (cachedData != null) {
             try {
-                cachedPosts = objectMapper.readValue(cachedData, new TypeReference<>() {
+                cachedPosts = objectMapper.readValue(cachedData, new TypeReference<List<Post>>() {
                 });
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Error deserializing from cache: " + e.getMessage(), e);
             }
         }
         return cachedPosts;
+    }
+
+    private static String turnIntoJson(String hashtag) {
+        return "[\"" + hashtag + "\"]";
     }
 }

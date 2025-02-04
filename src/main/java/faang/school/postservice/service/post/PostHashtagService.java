@@ -1,7 +1,6 @@
 package faang.school.postservice.service.post;
 
 import faang.school.postservice.model.Post;
-import faang.school.postservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,8 +12,6 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Service
 public class PostHashtagService {
-    private final PostRepository postRepository;
-    private final PostService postService;
     private final PostHashtagCacheService postHashtagCacheService;
 
     @Transactional(readOnly = true)

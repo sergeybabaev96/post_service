@@ -34,7 +34,7 @@ public class PostController {
     private final PostMapper postMapper;
 
     @Value("${app.number-posts-by-hashtags}")
-    private int NUMBER_POSTS;
+    private int POSTS_NUMBER;
 
     @PostMapping("/create-by-user/{user-id}")
     public ResponseEntity<Void> createPostByUserId(
@@ -141,7 +141,7 @@ public class PostController {
     public ResponseEntity<List<ResponsePostDto>> getPostsByHashtag(
             @RequestParam(name = "hashtag") @NonNull String hashtag) {
 
-        List<Post> postsByHashtag = postHashtagService.getLimitedPostsByHashtag(hashtag, NUMBER_POSTS);
+        List<Post> postsByHashtag = postHashtagService.getLimitedPostsByHashtag(hashtag, POSTS_NUMBER);
         List<ResponsePostDto> posts = postMapper.toDto(postsByHashtag);
 
         return new ResponseEntity<>(posts, HttpStatus.OK);
