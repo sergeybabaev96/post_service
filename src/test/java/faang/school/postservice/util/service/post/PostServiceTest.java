@@ -14,11 +14,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -26,18 +29,27 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class PostServiceTest {
+
     @Mock
     private PostRepository postRepository;
+
     @Mock
     private UserServiceClient userServiceClient;
+
     @Mock
     private ProjectServiceClient projectServiceClient;
+
+    @Mock
+    private ExecutorService executorService;
 
     @InjectMocks
     private PostService postService;
@@ -203,5 +215,39 @@ public class PostServiceTest {
 
         assertEquals(1, result.size());
         assertSame(firstPost, result.get(0));
+    }
+
+    @Test
+    public void testPublishScheduledPosts_Success() {
+        postService = new PostService(postRepository, userServiceClient, projectServiceClient, executorService);
+        int testBatchSize = 1500;
+        ReflectionTestUtils.setField(postService, "batchSize", testBatchSize);
+        List<Post> posts = List.of(new Post(), new Post(), new Post());
+
+        when(postRepository.findReadyToPublish()).thenReturn(posts);
+
+        doAnswer(invocation -> {
+            Runnable task = invocation.getArgument(0);
+            task.run();
+            return null;
+        }).when(executorService).execute(any(Runnable.class));
+
+        postService.publishScheduledPosts();
+
+        posts.forEach(post -> {
+            assertTrue(post.isPublished(), "Post must be published");
+            assertNotNull(post.getPublishedAt(), "Publication date must not be null");
+        });
+
+        verify(postRepository, times(1)).saveAll(anyList());
+    }
+
+    @Test
+    public void testPublishScheduledPosts_EmptyList() {
+        when(postRepository.findReadyToPublish()).thenReturn(Collections.emptyList());
+
+        postService.publishScheduledPosts();
+
+        verify(postRepository, never()).saveAll(anyList());
     }
 }
