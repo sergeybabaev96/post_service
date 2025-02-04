@@ -1,6 +1,6 @@
 package faang.school.postservice.event_sender;
 
-import faang.school.postservice.model.cache.PostViewEvent;
+import faang.school.postservice.model.event.PostViewEvent;
 import faang.school.postservice.producer.KafkaPostViewProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

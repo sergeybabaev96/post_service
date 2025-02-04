@@ -1,7 +1,7 @@
 package faang.school.postservice.consumer;
 
-import faang.school.postservice.model.cache.Event;
-import faang.school.postservice.model.cache.PostEvent;
+import faang.school.postservice.model.event.Event;
+import faang.school.postservice.model.event.PostEvent;
 import faang.school.postservice.repository.redis.RedisPostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

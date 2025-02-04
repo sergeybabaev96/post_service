@@ -1,6 +1,6 @@
 package faang.school.postservice.config.kafka;
 
-import faang.school.postservice.model.cache.PostEvent;
+import faang.school.postservice.model.event.PostEvent;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;

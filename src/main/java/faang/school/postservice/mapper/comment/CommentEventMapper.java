@@ -1,7 +1,7 @@
 package faang.school.postservice.mapper.comment;
 
 import faang.school.postservice.model.Comment;
-import faang.school.postservice.model.cache.CommentEvent;
+import faang.school.postservice.model.event.CommentEvent;
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
 

@@ -7,11 +7,14 @@ import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.post.PostUpdateDto;
 import faang.school.postservice.dto.resource.ResourceResponseDto;
 import faang.school.postservice.event_sender.PostViewSender;
+import faang.school.postservice.mapper.post.PostEventMapper;
 import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.mapper.resource.ResourceMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
-import faang.school.postservice.model.cache.PostViewEvent;
+import faang.school.postservice.model.event.PostEvent;
+import faang.school.postservice.model.event.PostViewEvent;
+import faang.school.postservice.producer.KafkaPostProducer;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.post.filter.PostFilters;
 import faang.school.postservice.util.ModerationDictionary;
@@ -61,8 +64,10 @@ public class PostService {
     private final PostValidator postValidator;
     private final List<PostFilters> postFilters;
     private final ModerationDictionary moderationDictionary;
-    private final PostServiceCache postServiceCache;
+    private final PostServiceRedis postServiceRedis;
     private final PostViewSender postViewSender;
+    private final KafkaPostProducer kafkaPostProducer;
+    private final PostEventMapper postEventMapper;
 
     public PostResponseDto create(PostRequestDto requestDto) {
         postValidator.validateCreate(requestDto);
@@ -160,7 +165,12 @@ public class PostService {
         postRepository.save(post);
         log.debug("Post added to database");
 
-        postServiceCache.savePost(post);
+        PostEvent postEvent = postEventMapper.toEvent(post);
+
+        postServiceRedis.save(postEvent);
+
+        kafkaPostProducer.send(postEvent);
+        log.debug("Post with id {} added to Kafka topic", postEvent.getId());
 
         return postMapper.toDto(post);
     }

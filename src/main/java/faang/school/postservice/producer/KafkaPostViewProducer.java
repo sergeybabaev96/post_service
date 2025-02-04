@@ -1,6 +1,6 @@
 package faang.school.postservice.producer;
 
-import faang.school.postservice.model.cache.PostViewEvent;
+import faang.school.postservice.model.event.PostViewEvent;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

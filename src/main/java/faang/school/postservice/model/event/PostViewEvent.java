@@ -1,4 +1,4 @@
-package faang.school.postservice.model.cache;
+package faang.school.postservice.model.event;
 
 
 import lombok.Getter;

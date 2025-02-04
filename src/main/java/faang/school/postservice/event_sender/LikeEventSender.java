@@ -2,7 +2,7 @@ package faang.school.postservice.event_sender;
 
 import faang.school.postservice.mapper.like.LikeEventMapper;
 import faang.school.postservice.model.Like;
-import faang.school.postservice.model.cache.LikeEvent;
+import faang.school.postservice.model.event.LikeEvent;
 import faang.school.postservice.producer.KafkaLikeProducer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

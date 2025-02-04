@@ -1,8 +1,6 @@
-package faang.school.postservice.model.cache;
-
+package faang.school.postservice.model.event;
 
 import jakarta.persistence.Id;
-import jakarta.persistence.Version;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,25 +9,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
 
-import java.util.List;
-import java.util.TreeSet;
-
-@RedisHash(value = "post")
+@RedisHash(value = "user")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class PostEvent {
+public class UserEvent {
     @Id
     private Long id;
-    private TreeSet<CommentEvent> comments;
-    private Long authorId;
-    private List<Long> followersId;
-    private int likesCount;
-    private int viewsCount;
-
-    @Version
-    private Long version;
+    private String username;
+    private String email;
+    private String phone;
 
     @TimeToLive
     @Value("${spring.data.redis.cache.ttl}")
