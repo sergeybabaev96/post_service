@@ -57,13 +57,10 @@ public class LikeService {
 
     @Transactional
     public void toggleLikeComment(LikeCommentRequest request) {
-        Comment comment;
-        UserDto userDto;
-
-        comment = commentRepository.findById(request.commentId())
+        Comment comment = commentRepository.findById(request.commentId())
                 .orElseThrow(() -> new EntityNotFoundException(
                         "Комментарий с id " + request.commentId() + " не был найден"));
-        userDto = getUserDto(request.userId());
+        UserDto userDto = getUserDto(request.userId());
 
         List<Like> likes = new ArrayList<>(comment.getLikes() == null ? Collections.emptyList() : comment.getLikes());
         boolean likeAlreadyExists = likes.stream().anyMatch(like -> like.getUserId() == userDto.id());
