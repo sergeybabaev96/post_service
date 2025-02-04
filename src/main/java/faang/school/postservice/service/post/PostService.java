@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -24,6 +25,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final UserServiceClient userServiceClient;
     private final ProjectServiceClient projectServiceClient;
+    private final ExecutorService executorService;
 
     @Transactional
     public void createPostByUserId(Long userId, Post post) {
