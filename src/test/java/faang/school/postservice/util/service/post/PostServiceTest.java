@@ -15,10 +15,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -50,10 +52,6 @@ public class PostServiceTest {
     private PostHashtagCacheService postHashtagCacheService;
     @Mock
     private PostHashtagService postHashtagService;
-    @Mock
-    private RedisTemplate<String, Object> redisTemplate;
-    @Mock
-    private RedisConnection redisConnection;
 
     @InjectMocks
     private PostService postService;
@@ -79,7 +77,7 @@ public class PostServiceTest {
 
         firstPost = Post.builder()
                 .id(1L)
-                .content("Content1 with #hashtag")
+                .content("Content1")
                 .authorId(userId)
                 .projectId(projectId)
                 .published(true)
@@ -112,7 +110,7 @@ public class PostServiceTest {
         assertNotNull(firstPost.getUpdatedAt());
     }
 
-/*    @Test
+    @Test
     public void testCreatePostByProjectId_Success() {
         when(postRepository.save(any(Post.class))).thenReturn(firstPost);
         projectServiceClient.getProject(projectId);
@@ -122,30 +120,7 @@ public class PostServiceTest {
         assertEquals(projectId, firstPost.getProjectId());
         assertNotNull(firstPost.getCreatedAt());
         assertNotNull(firstPost.getUpdatedAt());
-    }*/
-
-/*    @Test
-    public void testCreatePostByProjectId_Success() {
-        when(postRepository.save(any(Post.class))).thenReturn(firstPost);
-        when(postHashtagCacheService.getCachedPosts(redisConnection, anyString())).thenReturn(new ArrayList<>());
-
-        RedisConnection redisConnection = mock(RedisConnection.class);
-        when(redisTemplate.execute(any(RedisCallback.class))).thenAnswer(invocation -> {
-            RedisCallback<Object> callback = invocation.getArgument(0);
-            return callback.doInRedis(redisConnection);
-        });
-
-        postService.createPostByProjectId(projectId, firstPost);
-
-        verify(postRepository, times(1)).save(any(Post.class));
-        assertEquals(projectId, firstPost.getProjectId());
-        assertNotNull(firstPost.getCreatedAt());
-        assertNotNull(firstPost.getUpdatedAt());
-        assertEquals(List.of("#hashtag"), firstPost.getHashtags());
-
-        verify(postHashtagCacheService, times(1)).setPostsIntoCache(firstPost);
-        verify(redisTemplate, times(1)).execute(any(RedisCallback.class));
-    }*/
+    }
 
     @Test
     public void testPublishPost() {
