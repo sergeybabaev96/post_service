@@ -1,6 +1,6 @@
 package faang.school.postservice.validator;
 
-import faang.school.postservice.Exception.DataValidationException;
+import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.post.CreatePostDto;
@@ -52,18 +52,18 @@ public class PostValidator {
     private boolean isUserNotExist(Long authorId) {
         try {
             userServiceClient.getUser(authorId);
-            return true;
-        } catch (FeignException.FeignClientException ex) {
             return false;
+        } catch (FeignException.FeignClientException ex) {
+            return true;
         }
     }
 
     private boolean isProjectNotExist(Long projectId) {
         try {
             projectServiceClient.getProject(projectId);
-            return true;
-        } catch (FeignException.FeignClientException ex) {
             return false;
+        } catch (FeignException.FeignClientException ex) {
+            return true;
         }
     }
 }

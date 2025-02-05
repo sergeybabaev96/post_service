@@ -1,4 +1,4 @@
-package faang.school.postservice.Exception;
+package faang.school.postservice.exception;
 
 public class DataNotFoundException extends RuntimeException {
     public DataNotFoundException(String message) {
