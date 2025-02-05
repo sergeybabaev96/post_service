@@ -83,9 +83,9 @@ public class PostService {
 
         groups.forEach(group -> {
             scheduledPublishPostThreadPool.submit(() -> {
-               group.forEach(item -> {
-                  publishPost(item.getId());
-               });
+                group.forEach(item -> {
+                    publishPost(item.getId());
+                });
             });
         });
     }
@@ -152,10 +152,25 @@ public class PostService {
                 .orElseThrow(() -> new PostWasNotFoundException("No posts was found!"));
     }
 
+    private List<List<Post>> divideListIntoGroups(List<Post> items, int groupSize) {
+        List<List<Post>> groups = new ArrayList<>();
+        List<Post> currentGroup = new ArrayList<>();
+        for (Post item : items) {
+            currentGroup.add(item);
+            if (currentGroup.size() >= groupSize) {
+                groups.add(currentGroup);
+                currentGroup = new ArrayList<>();
+            }
+        }
+        if (!currentGroup.isEmpty()) {
+            groups.add(currentGroup);
+        }
+        return groups;
+    }
+
     public boolean existsById(long id) {
         return postRepository.existsById(id);
     }
-
 
     public void postCorrections() {
         List<Post> posts = postRepository.findReadyToPublish();
