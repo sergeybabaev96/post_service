@@ -1,6 +1,5 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.exception.PostNotFoundException;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
@@ -90,4 +89,5 @@ public class PostService {
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
                 .toList();
     }
+
 }

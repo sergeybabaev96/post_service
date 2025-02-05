@@ -1,11 +1,18 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.exception.FileFormatException;
 import faang.school.postservice.model.Comment;
+import faang.school.postservice.utils.ImageType;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
+@Slf4j
 @NoArgsConstructor
 @Service
 public class CommentValidator {
@@ -31,6 +38,23 @@ public class CommentValidator {
     public void validateAuthor(Comment comment, Long userId) {
         if (!Objects.equals(userId, comment.getAuthorId())) {
             throw new IllegalArgumentException("You can't modify comment of another user");
+        }
+    }
+
+    public void validateImageFormat(MultipartFile image) {
+        log.info("ImageType: {}", image.getContentType());
+        String imageType = image.getContentType();
+        boolean isValid = Arrays.stream(ImageType.values()).anyMatch((type) ->
+                Objects.equals(imageType, type.getMimeType()));
+        if (!isValid) {
+            String validFormats = Arrays.stream(ImageType.values())
+                    .map(ImageType::getMimeType)
+                    .collect(Collectors.joining(", "));
+
+            throw new FileFormatException(String.format(
+                    "Invalid image format: %s. Supported formats are: %s",
+                    imageType, validFormats
+            ));
         }
     }
 
