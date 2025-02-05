@@ -43,3 +43,6 @@ project-service:
 payment-service:
   host: localhost
   port: 9080
+
+post:
+  batch-size: 1000
