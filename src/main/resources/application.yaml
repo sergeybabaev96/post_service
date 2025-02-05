@@ -34,6 +34,10 @@ logging:
   level:
     root: info
 
+post-moderation:
+  partition-size: 5
+  cronPeriod: "0 0 0 * * *"
+
 user-service:
   host: localhost
   port: 8080

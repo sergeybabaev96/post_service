@@ -11,12 +11,14 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -38,7 +40,8 @@ public class Post extends BaseEntity {
     private Long projectId;
 
     @OneToMany(mappedBy = "post", orphanRemoval = true)
-    private List<Like> likes;
+    @Builder.Default
+    private List<Like> likes = new ArrayList<>();
 
     @OneToMany(mappedBy = "post", orphanRemoval = true)
     private List<Comment> comments;
@@ -65,4 +68,10 @@ public class Post extends BaseEntity {
 
     @Column(name = "deleted", nullable = false)
     private boolean deleted;
+
+    @Column(name = "verified_date")
+    private LocalDateTime verifiedDate;
+
+    @Column(name = "verified", nullable = false)
+    private boolean verified;
 }

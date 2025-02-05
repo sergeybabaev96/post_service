@@ -1,11 +1,11 @@
-package faang.school.postservice.service;
+package faang.school.postservice.service.post;
 
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.post.PostCreateDto;
-import faang.school.postservice.dto.post.PostReadDto;
 import faang.school.postservice.dto.post.PostOwnerType;
+import faang.school.postservice.dto.post.PostReadDto;
 import faang.school.postservice.dto.post.PostUpdateDto;
 import faang.school.postservice.exception.BusinessException;
 import faang.school.postservice.exception.EntityNotFoundException;
@@ -13,10 +13,14 @@ import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
 @Service
@@ -27,6 +31,11 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
     private final UserContext userContext;
+    private final ModerationDictionary moderationDictionary;
+    private final ExecutorService executorService;
+
+    @Value("${post-moderation.partition-size}")
+    private int partitionSize;
 
     public PostReadDto createPostDraft(PostCreateDto dto) {
         validateCreateDraftDto(dto);
@@ -85,11 +94,43 @@ public class PostService {
                 .orElseThrow(() -> new EntityNotFoundException("Пост с ID " + id + " не найден"));
     }
 
+    public void moderatePosts() {
+        List<Post> notVerifiedPosts = postRepository.findAllNotVerified();
+        int notVerifiedPostsSize = notVerifiedPosts.size();
+        List<CompletableFuture<List<Post>>> futuresList = new ArrayList<>();
+
+        for (int i = 0; i < notVerifiedPostsSize; i += partitionSize) {
+            int end = Math.min(i + partitionSize, notVerifiedPostsSize);
+            List<Post> partition = notVerifiedPosts.subList(i, end);
+            futuresList.add(CompletableFuture.supplyAsync(
+                    () -> verifyPosts(partition),
+                    executorService
+            ));
+        }
+
+        List<Post> posts = futuresList
+                .stream()
+                .flatMap(future -> future.join().stream())
+                .toList();
+        postRepository.saveAll(posts);
+    }
+
+    private List<Post> verifyPosts(List<Post> posts) {
+        LocalDateTime verifiedDate = LocalDateTime.now();
+        return posts.stream()
+                .filter(post -> moderationDictionary.isAllowed(post.getContent()))
+                .peek(post -> {
+                    post.setVerified(true);
+                    post.setVerifiedDate(verifiedDate);
+                })
+                .toList();
+    }
+
     private List<PostReadDto> getAllPostByCondition(
             PostOwnerType ownerType,
             Supplier<List<Post>> authorSupplier,
             Supplier<List<Post>> projetcSupplier
-            ) {
+    ) {
         List<Post> postStream = switch (ownerType) {
             case AUTHOR:
                 yield authorSupplier.get();
