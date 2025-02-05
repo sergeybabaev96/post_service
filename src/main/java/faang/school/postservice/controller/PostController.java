@@ -50,7 +50,7 @@ public class PostController {
         return postService.getPost(postId);
     }
 
-    @GetMapping("/users/{authorId}/posts/drafts")
+    @GetMapping("/users/{authorId}/drafts")
     public List<PostResponseDto> getDraftPostsByAuthorId(@PathVariable long authorId) {
         return postService.getDraftPostsByAuthorId(authorId);
     }
