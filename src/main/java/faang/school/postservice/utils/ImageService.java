@@ -22,10 +22,12 @@ public class ImageService {
         try {
             BufferedImage image = ImageIO.read(file.getInputStream());
             BufferedImage resizedImage = resizeImage(image, targetSize);
+            String originalFilename = file.getOriginalFilename();
+            String extension = originalFilename.substring(originalFilename.lastIndexOf('.') + 1);
 
             try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-                ImageIO.write(resizedImage, "png", baos);
-                return minioService.uploadFile(baos.toByteArray(), bucketName);
+                ImageIO.write(resizedImage, extension, baos);
+                return minioService.uploadFile(baos.toByteArray(), file.getContentType(), bucketName);
             }
         } catch (IOException e) {
             log.error("Failed to process image", e);

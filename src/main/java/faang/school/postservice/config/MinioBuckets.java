@@ -1,8 +1,8 @@
 package faang.school.postservice.config;
 
-import org.springframework.stereotype.Component;
+import lombok.experimental.UtilityClass;
 
-@Component
+@UtilityClass
 public class MinioBuckets {
     public static final String COMMENT_IMAGE_BUCKET_NAME = "comments-images-bucket";
 }

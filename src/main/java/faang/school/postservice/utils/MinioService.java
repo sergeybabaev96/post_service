@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j
@@ -21,7 +22,7 @@ public class MinioService {
 
     private final MinioClient minioClient;
 
-    public String uploadFile(byte[] byteArray, String bucketName) {
+    public String uploadFile(byte[] byteArray, String contentType, String bucketName) {
         try {
             if (!minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucketName).build())) {
                 minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucketName).build());
@@ -31,14 +32,14 @@ public class MinioService {
             throw new RuntimeException("Minio create bucket error");
         }
 
-        String fileId = UUID.randomUUID().toString();
+        String fileId = UUID.randomUUID().toString() + LocalDateTime.now();
         try (ByteArrayInputStream inputStream = new ByteArrayInputStream(byteArray)) {
             minioClient.putObject(
                     PutObjectArgs.builder()
                             .bucket(bucketName)
-                            .object(fileId + ".png")
+                            .object(fileId)
                             .stream(inputStream, byteArray.length, -1)
-                            .contentType("image/png")
+                            .contentType(contentType)
                             .build()
             );
         } catch (Exception e) {
@@ -53,7 +54,7 @@ public class MinioService {
         try (InputStream inputStream = minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket(bucketName)
-                        .object(fileId + ".svg")
+                        .object(fileId)
                         .build()
         )) {
             ByteArrayOutputStream result = new ByteArrayOutputStream();
