@@ -23,4 +23,5 @@ public class PostReadDto {
     private boolean published;
     private boolean deleted;
     private LocalDateTime publishedAt;
+    private LocalDateTime scheduledAt;
 }

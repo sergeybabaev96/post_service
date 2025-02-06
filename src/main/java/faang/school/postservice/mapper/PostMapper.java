@@ -14,6 +14,8 @@ import org.mapstruct.Named;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
 
+import java.time.LocalDateTime;
+
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface PostMapper {
     Post toEntity(PostCreateDto dto);
@@ -24,11 +26,18 @@ public interface PostMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "content", conditionQualifiedByName = "isNotBlank")
+    @Mapping(target = "scheduledAt", conditionQualifiedByName = "isNotNull")
     void updateEntityFromDto(PostUpdateDto dto, @MappingTarget Post entity);
 
     @Condition
     @Named("isNotBlank")
     default boolean isNotBlank(String value) {
         return StringUtils.isNotBlank(value);
+    }
+
+    @Condition
+    @Named("isNotNull")
+    default boolean isNotNull(LocalDateTime value) {
+        return value != null;
     }
 }
