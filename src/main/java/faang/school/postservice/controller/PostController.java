@@ -3,6 +3,7 @@ package faang.school.postservice.controller;
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.post.CreatePostDto;
 import faang.school.postservice.dto.post.UpdatePostDto;
+import faang.school.postservice.dto.filter.FilterDto;
 import faang.school.postservice.service.PostService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -40,7 +42,7 @@ public class PostController {
         return postService.delete(postId);
     }
 
-    @PostMapping("/{postId}/publish")
+    @PostMapping("/{postId}/publishing")
     public PostResponseDto publishPost(@PathVariable long postId) {
         return postService.publish(postId);
     }
@@ -50,23 +52,13 @@ public class PostController {
         return postService.getPost(postId);
     }
 
-    @GetMapping("/users/{authorId}/drafts")
-    public List<PostResponseDto> getDraftPostsByAuthorId(@PathVariable long authorId) {
-        return postService.getDraftPostsByAuthorId(authorId);
-    }
+    @GetMapping("/filter")
+    public List<PostResponseDto> getFilteredPosts(
+            @RequestParam(required = false) Long authorId,
+            @RequestParam(required = false) Long projectId,
+            @RequestParam Boolean isPublished) {
 
-    @GetMapping("/users/{authorId}/posts/published")
-    public List<PostResponseDto> getPublishedPostsByAuthorId(@PathVariable long authorId) {
-        return postService.getPublishedPostsByAuthorId(authorId);
-    }
-
-    @GetMapping("/projects/{projectId}/posts/drafts")
-    public List<PostResponseDto> getDraftPostsByProjectId(@PathVariable long projectId) {
-        return postService.getDraftPostsByProjectId(projectId);
-    }
-
-    @GetMapping("/projects/{projectId}/posts/published")
-    public List<PostResponseDto> getPublishedPostsByProjectId(@PathVariable long projectId) {
-        return postService.getPublishedPostsByProjectId(projectId);
+        FilterDto filterDto = new FilterDto(authorId, projectId, isPublished);
+        return postService.getFilteredPosts(filterDto);
     }
 }

@@ -1,7 +1,7 @@
 package faang.school.postservice.exception.handler;
 
-import faang.school.postservice.exception.DataNotFoundException;
 import faang.school.postservice.exception.DataValidationException;
+import faang.school.postservice.exception.EntityNotFound;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -15,8 +15,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
 
-    @ExceptionHandler(DataNotFoundException.class)
-    public ResponseEntity<String> handleDataNotFoundException(DataNotFoundException e) {
+    @ExceptionHandler(EntityNotFound.class)
+    public ResponseEntity<String> handleDataNotFoundException(EntityNotFound e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 }

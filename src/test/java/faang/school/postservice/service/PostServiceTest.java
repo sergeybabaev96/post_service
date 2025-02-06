@@ -1,10 +1,11 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.dto.filter.FilterDto;
 import faang.school.postservice.dto.post.CreatePostDto;
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.post.UpdatePostDto;
-import faang.school.postservice.exception.DataNotFoundException;
 import faang.school.postservice.exception.DataValidationException;
+import faang.school.postservice.exception.EntityNotFound;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
@@ -17,7 +18,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -60,12 +59,7 @@ public class PostServiceTest {
     private PostService postService;
 
     private Post post;
-    private Post draftPost;
-    private Post publishedPost;
-    private Post deletedPost;
     private PostResponseDto postResponseDto;
-    private PostResponseDto draftDto;
-    private PostResponseDto publishedDto;
     private PostResponseDto expectedResponse;
     private CreatePostDto createPostDto;
 
@@ -87,43 +81,6 @@ public class PostServiceTest {
                 .projectId(PROJECT_ID)
                 .content(TEST_CONTENT)
                 .published(false)
-                .deleted(false)
-                .build();
-
-        draftPost = Post.builder()
-                .id(ID)
-                .authorId(AUTHOR_ID)
-                .published(false)
-                .deleted(false)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        publishedPost = Post.builder()
-                .id(ID)
-                .authorId(AUTHOR_ID)
-                .published(true)
-                .deleted(false)
-                .build();
-
-        draftDto = PostResponseDto.builder()
-                .id(ID)
-                .authorId(AUTHOR_ID)
-                .published(false)
-                .deleted(false)
-                .build();
-
-        deletedPost = Post.builder()
-                .id(ID)
-                .projectId(PROJECT_ID)
-                .published(false)
-                .deleted(true)
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        publishedDto = PostResponseDto.builder()
-                .id(ID)
-                .projectId(PROJECT_ID)
-                .published(true)
                 .deleted(false)
                 .build();
 
@@ -183,7 +140,7 @@ public class PostServiceTest {
                 .content(UPDATE_CONTENT)
                 .build();
 
-        UpdatePostDto updatePostDto = new UpdatePostDto(UPDATE_CONTENT);
+        UpdatePostDto updatePostDto = new UpdatePostDto(UPDATE_CONTENT, ID);
 
         when(postRepository.findById(ID)).thenReturn(Optional.of(post));
         when(postRepository.save(any(Post.class))).thenReturn(post);
@@ -230,50 +187,12 @@ public class PostServiceTest {
     }
 
     @Test
-    void getDraftPostsByAuthorIdTest() {
-
-        List<Post> posts = Arrays.asList(draftPost, publishedPost);
-        when(postRepository.findByAuthorId(ID)).thenReturn(posts);
-
-        when(postMapper.toDtoList(anyList())).thenReturn(Collections.singletonList(draftDto));
-
-        List<PostResponseDto> result = postService.getDraftPostsByAuthorId(ID);
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertFalse(result.get(0).getPublished());
-        assertEquals(ID, result.get(0).getId());
-
-        verify(postRepository).findByAuthorId(ID);
-        verify(postMapper).toDtoList(anyList());
-    }
-
-    @Test
-    void getDraftPostsByProjectIdTest() {
-
-        List<Post> posts = Arrays.asList(draftPost, deletedPost);
-        when(postRepository.findByProjectId(PROJECT_ID)).thenReturn(posts);
-
-        when(postMapper.toDtoList(anyList())).thenReturn(Collections.singletonList(draftDto));
-
-        List<PostResponseDto> result = postService.getDraftPostsByProjectId(PROJECT_ID);
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertFalse(result.get(0).getPublished());
-        assertEquals(ID, result.get(0).getId());
-
-        verify(postRepository).findByProjectId(PROJECT_ID);
-        verify(postMapper).toDtoList(anyList());
-    }
-
-    @Test
     void exceptionWhenPostNotFoundTest() {
         when(postRepository.findById(ID)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(DataNotFoundException.class, () -> postService.getPost(ID));
+        Exception exception = assertThrows(EntityNotFound.class, () -> postService.getPost(ID));
 
-        assertEquals(POST_NOT_FOUND, exception.getMessage());
+        assertEquals(POST_NOT_FOUND + " ID поста: " + ID, exception.getMessage());
         verify(postRepository).findById(ID);
         verifyNoInteractions(postMapper);
     }
@@ -283,9 +202,9 @@ public class PostServiceTest {
         post.setDeleted(true);
         when(postRepository.findById(ID)).thenReturn(Optional.of(post));
 
-        Exception exception = assertThrows(DataNotFoundException.class, () -> postService.getPost(ID));
+        Exception exception = assertThrows(EntityNotFound.class, () -> postService.getPost(ID));
 
-        assertEquals(POST_NOT_FOUND, exception.getMessage());
+        assertEquals(POST_NOT_FOUND + " ID поста: " + ID, exception.getMessage());
         verify(postRepository).findById(ID);
         verifyNoInteractions(postMapper);
     }
@@ -303,84 +222,65 @@ public class PostServiceTest {
         assertEquals(EXCEPTION_MESSAGE, exception.getMessage());
 
         verify(postValidator).validateNotPublished(post);
-
         verify(postValidator, never()).validateNotDeleted(post);
         verify(postValidator, never()).validatePostAuthorExist(post);
         verify(postRepository, never()).save(any(Post.class));
     }
 
     @Test
-    void onlyPublishedByProjectIdTest() {
+    void getFilteredPosts_ByAuthorId_ReturnsFilteredPosts() {
 
-        List<Post> posts = Collections.singletonList(publishedPost);
+        FilterDto filterDto = new FilterDto(AUTHOR_ID, null, false);
+        List<Post> posts = Collections.singletonList(post);
+        List<PostResponseDto> expectedDtos = Collections.singletonList(postResponseDto);
 
-        when(postRepository.findByProjectId(PROJECT_ID)).thenReturn(posts);
+        when(postRepository.findByAuthorId(AUTHOR_ID)).thenReturn(posts);
+        when(postMapper.toDtoList(posts)).thenReturn(expectedDtos);
 
-        List<PostResponseDto> expectedDto = Collections.singletonList(publishedDto);
-        when(postMapper.toDtoList(anyList())).thenReturn(expectedDto);
-
-        List<PostResponseDto> result = postService.getPublishedPostsByProjectId(PROJECT_ID);
+        List<PostResponseDto> result = postService.getFilteredPosts(filterDto);
 
         assertNotNull(result);
-        assertEquals(1, result.size());
-        assertTrue(result.get(0).getPublished());
-        assertEquals(ID, result.get(0).getId());
-
-        verify(postRepository).findByProjectId(PROJECT_ID);
-        verify(postMapper).toDtoList(anyList());
+        assertEquals(expectedDtos, result);
+        verify(postValidator).validateFilterDto(filterDto);
+        verify(postRepository).findByAuthorId(AUTHOR_ID);
+        verify(postMapper).toDtoList(posts);
     }
 
     @Test
-    void noDeletedByProjectIdTest() {
+    void getFilteredPosts_ByProjectId_ReturnsFilteredPosts() {
 
-        List<Post> posts = Collections.singletonList(deletedPost);
+        FilterDto filterDto = new FilterDto(null, PROJECT_ID, false);
+        List<Post> posts = Collections.singletonList(post);
+        List<PostResponseDto> expectedDtos = Collections.singletonList(postResponseDto);
 
         when(postRepository.findByProjectId(PROJECT_ID)).thenReturn(posts);
-        when(postMapper.toDtoList(anyList())).thenReturn(Collections.emptyList());
+        when(postMapper.toDtoList(posts)).thenReturn(expectedDtos);
 
-        List<PostResponseDto> result = postService.getPublishedPostsByProjectId(PROJECT_ID);
+        List<PostResponseDto> result = postService.getFilteredPosts(filterDto);
+
+        assertNotNull(result);
+        assertEquals(expectedDtos, result);
+        verify(postValidator).validateFilterDto(filterDto);
+        verify(postRepository).findByProjectId(PROJECT_ID);
+        verify(postMapper).toDtoList(posts);
+    }
+
+    @Test
+    void getFilteredPosts_NoPostsFound_ReturnsEmptyList() {
+
+        FilterDto filterDto = new FilterDto(AUTHOR_ID, null, true);
+        List<Post> emptyPosts = Collections.emptyList();
+        List<PostResponseDto> emptyDtos = Collections.emptyList();
+
+        when(postRepository.findByAuthorId(AUTHOR_ID)).thenReturn(emptyPosts);
+        when(postMapper.toDtoList(emptyPosts)).thenReturn(emptyDtos);
+
+        List<PostResponseDto> result = postService.getFilteredPosts(filterDto);
 
         assertNotNull(result);
         assertTrue(result.isEmpty());
-
-        verify(postRepository).findByProjectId(PROJECT_ID);
-        verify(postMapper).toDtoList(anyList());
-    }
-
-    @Test
-    void onlyPublishedByAuthorIdTest() {
-
-        List<Post> posts = Collections.singletonList(publishedPost);
-
-        when(postRepository.findByAuthorId(ID)).thenReturn(posts);
-        List<PostResponseDto> expectedDtos = Collections.singletonList(publishedDto);
-        when(postMapper.toDtoList(anyList())).thenReturn(expectedDtos);
-
-        List<PostResponseDto> result = postService.getPublishedPostsByAuthorId(ID);
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertTrue(result.get(0).getPublished());
-        assertEquals(ID, result.get(0).getId());
-
-        verify(postRepository).findByAuthorId(ID);
-        verify(postMapper).toDtoList(anyList());
-    }
-
-    @Test
-    void noDraftsByAuthorIdTest() {
-
-        List<Post> posts = Collections.singletonList(draftPost);
-
-        when(postRepository.findByAuthorId(ID)).thenReturn(posts);
-        when(postMapper.toDtoList(anyList())).thenReturn(Collections.emptyList());
-
-        List<PostResponseDto> result = postService.getPublishedPostsByAuthorId(ID);
-
-        assertNotNull(result);
-        assertTrue(result.isEmpty());
-
-        verify(postRepository).findByAuthorId(ID);
-        verify(postMapper).toDtoList(anyList());
+        verify(postValidator).validateFilterDto(filterDto);
+        verify(postRepository).findByAuthorId(AUTHOR_ID);
+        verify(postMapper).toDtoList(emptyPosts);
     }
 }

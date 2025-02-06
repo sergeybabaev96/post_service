@@ -1,17 +1,19 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.exception.DataNotFoundException;
-import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.post.CreatePostDto;
+import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.post.UpdatePostDto;
+import faang.school.postservice.dto.filter.FilterDto;
+import faang.school.postservice.exception.EntityNotFound;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.validator.PostValidator;
-import jakarta.persistence.EntityNotFoundException;
+
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -27,6 +29,7 @@ public class PostService {
     private final PostMapper postMapper;
     private final PostValidator postValidator;
 
+    @Transactional
     public PostResponseDto create(CreatePostDto createPostDto) {
         postValidator.validateDraftPost(createPostDto);
 
@@ -40,11 +43,12 @@ public class PostService {
     public PostResponseDto getPost(long postId) {
         Post post = findPostById(postId);
         if (post.isDeleted()) {
-            throw new DataNotFoundException(POST_NOT_FOUND);
+            throw new EntityNotFound(POST_NOT_FOUND + " ID поста: " + postId);
         }
         return postMapper.toDto(post);
     }
 
+    @Transactional
     public PostResponseDto update(long postId, UpdatePostDto updatePostDto) {
         Post post = findPostById(postId);
 
@@ -55,15 +59,17 @@ public class PostService {
         return postMapper.toDto(updatedPost);
     }
 
+    @Transactional
     public PostResponseDto delete(long id) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(POST_NOT_FOUND + " with id: " + id));
+                .orElseThrow(() -> new EntityNotFound(POST_NOT_FOUND + " ID поста: " + id));
         postValidator.validateNotDeleted(post);
         post.setDeleted(true);
         Post updatedPost = postRepository.save(post);
         return postMapper.toDto(updatedPost);
     }
 
+    @Transactional
     public PostResponseDto publish(long id) {
         Post post = findPostById(id);
 
@@ -81,7 +87,7 @@ public class PostService {
 
     private Post findPostById(@NotNull long id) {
         return postRepository.findById(id)
-                .orElseThrow(() -> new DataNotFoundException(POST_NOT_FOUND));
+                .orElseThrow(() -> new EntityNotFound(POST_NOT_FOUND+ " ID поста: " + id));
     }
 
     private List<PostResponseDto> getPosts(Long id, boolean published, boolean byAuthor) {
@@ -95,19 +101,14 @@ public class PostService {
         return postMapper.toDtoList(posts);
     }
 
-    public List<PostResponseDto> getDraftPostsByAuthorId(long authorId) {
-        return getPosts(authorId, false, true);
-    }
+    public List<PostResponseDto> getFilteredPosts(FilterDto filterDto) {
 
-    public List<PostResponseDto> getDraftPostsByProjectId(long projectId) {
-        return getPosts(projectId, false, false);
-    }
+        postValidator.validateFilterDto(filterDto);
 
-    public List<PostResponseDto> getPublishedPostsByAuthorId(long authorId) {
-        return getPosts(authorId, true, true);
-    }
-
-    public List<PostResponseDto> getPublishedPostsByProjectId(long projectId) {
-        return getPosts(projectId, true, false);
+        if (filterDto.authorId() != null) {
+            return getPosts(filterDto.authorId(), filterDto.isPublished(), true);
+        } else {
+            return getPosts(filterDto.projectId(), filterDto.isPublished(), false);
+        }
     }
 }

@@ -2,6 +2,7 @@ package faang.school.postservice.validator;
 
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.dto.filter.FilterDto;
 import faang.school.postservice.dto.project.ProjectDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.DataValidationException;
@@ -46,7 +47,6 @@ class PostValidatorTest {
 
         userDto = new UserDto(AUTHOR_ID, "testUser", "test@example.com");
         projectDto = new ProjectDto(AUTHOR_ID, "testProject");
-
     }
 
     @Test
@@ -111,5 +111,39 @@ class PostValidatorTest {
                 () -> postValidator.validatePostAuthorExist(post));
 
         assertEquals("У поста должен быть либо автор, либо проект", exception.getMessage());
+    }
+
+    @Test
+    void validateFilterDto_Throws_WhenProjectIdAndAuthorIdIsNull() {
+
+        FilterDto filterDto = new FilterDto(null, null, true);
+        DataValidationException exception = assertThrows(DataValidationException.class,
+                () -> postValidator.validateFilterDto(filterDto));
+        assertEquals("Необходимо указать authorId или projectId", exception.getMessage());
+    }
+
+    @Test
+    void validateFilterDto_NotThrow_WhenOnlyAuthorIdIsSet() {
+
+        FilterDto filterDto = new FilterDto(AUTHOR_ID, null, false);
+        assertDoesNotThrow(() -> postValidator.validateFilterDto(filterDto));
+    }
+
+    @Test
+    void validateFilterDto_NotThrow_WhenOnlyProjectIdIsSet() {
+
+        FilterDto filterDto = new FilterDto(null, PROJECT_ID, false);
+        assertDoesNotThrow(() -> postValidator.validateFilterDto(filterDto));
+    }
+
+    @Test
+    void validateFilterDto_Throws_WhenProjectIdAndAuthorIdIsSet() {
+
+        FilterDto filterDto = new FilterDto(AUTHOR_ID, PROJECT_ID, true);
+
+        DataValidationException exception = assertThrows(DataValidationException.class,
+                () -> postValidator.validateFilterDto(filterDto));
+
+        assertEquals("Укажите либо authorId, либо projectId, но не оба одновременно", exception.getMessage());
     }
 }

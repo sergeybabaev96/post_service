@@ -1,9 +1,10 @@
 package faang.school.postservice.validator;
 
-import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.dto.filter.FilterDto;
 import faang.school.postservice.dto.post.CreatePostDto;
+import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import feign.FeignException;
@@ -46,6 +47,16 @@ public class PostValidator {
 
         if (post.getAuthorId() == null && post.getProjectId() == null) {
             throw new DataValidationException("У поста должен быть либо автор, либо проект");
+        }
+    }
+
+    public void validateFilterDto(FilterDto filterDto) {
+        if (filterDto.authorId() != null && filterDto.projectId() != null) {
+            throw new DataValidationException("Укажите либо authorId, либо projectId, но не оба одновременно");
+        }
+
+        if (filterDto.authorId() == null && filterDto.projectId() == null) {
+            throw new DataValidationException("Необходимо указать authorId или projectId");
         }
     }
 
