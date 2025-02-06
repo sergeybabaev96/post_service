@@ -6,12 +6,12 @@ import faang.school.postservice.dto.post.PostUpdateRequestDto;
 import faang.school.postservice.mapper.PostMapperImpl;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.service.PostService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
@@ -29,7 +29,8 @@ class PostServiceImplTest {
     private PostRepository postRepositoryMock;
     @Spy
     private PostMapperImpl postMapper;
-    private PostService postService;
+    @InjectMocks
+    private PostServiceImpl postService;
     private PostCreateRequestDto postCreateRequestDto;
     private PostUpdateRequestDto postUpdateRequestDto;
     private final List<Post> somePosts = TestData.getSomePosts();

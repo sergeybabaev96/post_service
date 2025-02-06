@@ -50,7 +50,6 @@ public class PostServiceImpl implements PostService {
     public PostResponseDto updatePost(Long postId, PostUpdateRequestDto postUpdateRequestDto) {
         Post postToUpdate = getPostById(postId);
         Post requestPost = postMapper.toPostEntity(postUpdateRequestDto);
-        postServiceValidator.validatePostBeforeUpdate(postToUpdate, requestPost);
         Post updatedPost = postRepository.save(copyPostData(requestPost, postToUpdate));
         log.info("Post is updated {}", updatedPost);
         return postMapper.toPostResponseDto(updatedPost);

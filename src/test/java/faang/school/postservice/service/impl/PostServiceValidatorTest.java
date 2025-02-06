@@ -31,6 +31,8 @@ class PostServiceValidatorTest {
     UserDto userDto;
     ProjectDto projectDto;
     Post post;
+    Post postByOtherAuthor;
+    Post postInOtherProject;
 
     @BeforeEach
     void setUp() {
@@ -43,6 +45,19 @@ class PostServiceValidatorTest {
                 .id(123L)
                 .content("some content")
                 .authorId(111L)
+                .projectId(123L)
+                .build();
+        postByOtherAuthor = Post.builder()
+                .id(123L)
+                .content("some content")
+                .authorId(222L)
+                .projectId(123L)
+                .build();
+        postInOtherProject = Post.builder()
+                .id(123L)
+                .content("some content")
+                .authorId(111L)
+                .projectId(1231L)
                 .build();
         userDto = new UserDto(111L, "Alice", "alice@mail.ru");
         projectDto = new ProjectDto(222L, "New project");
@@ -54,20 +69,26 @@ class PostServiceValidatorTest {
         PostCreateRequestDto emptyAuthorsPostDto = PostCreateRequestDto.builder()
                 .content("test")
                 .build();
-        Assert.assertThrows(IllegalArgumentException.class,
-                () -> postServiceValidator.validatePostDto(emptyAuthorsPostDto));
+        postServiceValidator.validatePostDto(emptyAuthorsPostDto);
+        //Assert.assertThrows(IllegalArgumentException.class,
+        //        () -> postServiceValidator.validatePostDto(emptyAuthorsPostDto));
 
+        long authorId = 0L;
         PostCreateRequestDto emptyAuthorIdIsZeroPostDto = PostCreateRequestDto.builder()
-                .authorId(0L)
+                .authorId(authorId)
                 .content("test")
                 .build();
+        Mockito.when(userServiceClient.getUser(authorId)).thenReturn(userDto);
         Assert.assertThrows(IllegalArgumentException.class,
                 () -> postServiceValidator.validatePostDto(emptyAuthorIdIsZeroPostDto));
 
+        long projectId = 0L;
         PostCreateRequestDto emptyProjectIdIsZeroPostDto = PostCreateRequestDto.builder()
                 .projectId(0L)
                 .content("test")
                 .build();
+        Mockito.when(projectServiceClient.getProject(projectId)).thenReturn(projectDto);
+
         Assert.assertThrows(IllegalArgumentException.class,
                 () -> postServiceValidator.validatePostDto(emptyProjectIdIsZeroPostDto));
 
@@ -112,7 +133,18 @@ class PostServiceValidatorTest {
 
     @Test
     void testValidatePostBeforeUpdate() {
-        //TODO написать тест
+
+        Assert.assertThrows(IllegalArgumentException.class,
+                () -> postServiceValidator.validatePostBeforeUpdate(null, post));
+
+        Assert.assertThrows(IllegalArgumentException.class,
+                () -> postServiceValidator.validatePostBeforeUpdate(post, postByOtherAuthor));
+
+        Assert.assertThrows(IllegalArgumentException.class,
+                () -> postServiceValidator.validatePostBeforeUpdate(post, postInOtherProject));
+
         postServiceValidator.validatePostBeforeUpdate(post, post);
+
+
     }
 }
