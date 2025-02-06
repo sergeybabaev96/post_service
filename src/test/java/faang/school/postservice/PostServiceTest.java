@@ -19,7 +19,11 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -32,6 +36,9 @@ public class PostServiceTest {
     private PostRepository postRepository;
     @Mock
     private PostUtil postUtil;
+    @Mock
+    private ExecutorService scheduledPublishPostThreadPool;
+
     @Spy
     private PostMapper postMapper = Mappers.getMapper(PostMapper.class);
 
@@ -188,5 +195,32 @@ public class PostServiceTest {
         when(postRepository.findById(postId)).thenReturn(Optional.of(setPost));
 
         Assertions.assertThrows(IllegalArgumentException.class, () -> postService.updatePost(postUpdatingDto));
+    }
+
+    @Test
+    public void publishScheduledPost_Success() {
+        List<Post> posts = new ArrayList<>();
+
+        for (int i = 1; i < 5050; i++) {
+            posts.add(Post.builder()
+                            .id((long) i)
+                            .published(false)
+                    .build());
+        }
+
+        when(postRepository.findReadyToPublish()).thenReturn(posts);
+
+        postService.publishScheduledPost();
+
+        verify(scheduledPublishPostThreadPool, times(6)).submit(any(Runnable.class));
+    }
+
+    @Test
+    public void publishScheduledPost_zeroPostsToPublish() {
+        when(postRepository.findReadyToPublish()).thenReturn(Collections.emptyList());
+
+        postService.publishScheduledPost();
+
+        verify(scheduledPublishPostThreadPool, times(0)).submit(any(Runnable.class));
     }
 }
