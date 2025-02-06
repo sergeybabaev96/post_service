@@ -116,6 +116,24 @@ public class PostService {
         return authorIdsForBan;
     }
 
+    @Transactional(readOnly = true)
+    public void postAuthorsToBan() {
+        List<Long> authorIdsToBan = findAuthorIdsToBan();
+        log.info("Start publishing authors to ban");
+        for (Long authorIdToBan : authorIdsToBan) {
+            log.debug("Publishing author {} to ban", authorIdToBan);
+            kafkaTemplate.send(banTopic, authorIdToBan);
+        }
+        log.info("Finish publishing authors to ban");
+    }
+
+    private List<Long> findAuthorIdsToBan() {
+        log.info("Start search authors to ban.");
+        List<Long> authorIdsForBan = postRepository.findAuthorsForBan(rejectedPostsToBan);
+        log.info("End search authors to ban. Found {} authors", authorIdsForBan);
+        return authorIdsForBan;
+    }
+
     private List<PostResponseDto> getExistingPostsSortedByDate(
             Function<Long, List<Post>> repositoryMethod,
             Function<Post, LocalDateTime> fieldToSortBy,
