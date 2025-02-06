@@ -46,3 +46,8 @@ payment-service:
 
 post:
   batch-size: 1000
+  scheduled-cron: "0 * * * * *"
+  max-retries: 5
+  timeout: 10
+  initial-delay: 500
+  delay-multiplier: 2
