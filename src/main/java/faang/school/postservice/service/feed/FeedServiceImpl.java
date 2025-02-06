@@ -7,6 +7,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.OptimisticLockingFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,8 +24,9 @@ public class FeedServiceImpl implements FeedService {
 
   private final FeedCacheRepository feedCacheRepository;
 
+  //TODO async processing each follower's feed
   @Override
-  //TODO optimistic lock, async processinf each follower's feed
+  @Retryable(retryFor = OptimisticLockingFailureException.class, backoff = @Backoff(delay = 3000L))
   public void processPostEvent(PostEventDto dto) {
     List<Long> followers = dto.getFollowers(); // list of users to update theirs feeds
 

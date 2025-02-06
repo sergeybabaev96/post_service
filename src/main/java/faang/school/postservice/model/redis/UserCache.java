@@ -6,10 +6,12 @@ import jakarta.validation.constraints.NotBlank;
 import java.io.Serializable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.redis.core.RedisHash;
 
 @Builder
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @RedisHash(value = "Users", timeToLive = 90_000)

@@ -5,12 +5,12 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.data.redis.core.RedisHash;
 
 @Builder
-@Setter
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 @RedisHash(value = "Posts", timeToLive = 90_000)
