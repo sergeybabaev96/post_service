@@ -198,7 +198,7 @@ public class PostServiceTest {
     }
 
     @Test
-    public void publishScheduledPost_Success() {
+    public void publishScheduledPost_success6ThreadsRun() {
         List<Post> posts = new ArrayList<>();
 
         for (int i = 1; i < 5050; i++) {
@@ -214,7 +214,23 @@ public class PostServiceTest {
 
         verify(scheduledPublishPostThreadPool, times(6)).submit(any(Runnable.class));
     }
+    @Test
+    public void publishScheduledPost_success1ThreadsRun() {
+        List<Post> posts = new ArrayList<>();
 
+        for (int i = 1; i < 500; i++) {
+            posts.add(Post.builder()
+                    .id((long) i)
+                    .published(false)
+                    .build());
+        }
+
+        when(postRepository.findReadyToPublish()).thenReturn(posts);
+
+        postService.publishScheduledPost();
+
+        verify(scheduledPublishPostThreadPool, times(1)).submit(any(Runnable.class));
+    }
     @Test
     public void publishScheduledPost_zeroPostsToPublish() {
         when(postRepository.findReadyToPublish()).thenReturn(Collections.emptyList());
