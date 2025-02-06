@@ -32,8 +32,7 @@ public class AlbumService {
 
     @Transactional(readOnly = true)
     public AlbumDto getAlbumById(Long albumId) {
-        return albumMapper.toDto(albumRepository.findById(albumId)
-                .orElseThrow(() -> new EntityNotFoundException("Альбом с ID " + albumId + " не найден")));
+        return albumMapper.toDto(getAlbum(albumId));
     }
 
     @Transactional(readOnly = true)
@@ -64,8 +63,7 @@ public class AlbumService {
         }
         Album album = albumMapper.toEntity(request);
         album.setAuthorId(userId);
-        album = albumRepository.save(album);
-        return albumMapper.toDto(album);
+        return albumMapper.toDto(albumRepository.save(album));
     }
 
     @Transactional
@@ -76,30 +74,28 @@ public class AlbumService {
 
     @Transactional
     public void addPostToAlbum(Long userId, Long albumId, Long postId) {
-        Album album = validateUserAlbum(userId, albumId);
+        Album album = getAndValidateUserAlbum(userId, albumId);
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Пост не найден"));
 
         album.getPosts().add(post);
-        albumRepository.save(album);
     }
 
     @Transactional
     public AlbumDto updateAlbum(Long userId, Long albumId, UpdateAlbumRequestDto request) {
-        Album album = validateUserAlbum(userId, albumId);
+        Album album = getAndValidateUserAlbum(userId, albumId);
         if (albumRepository.existsByTitleAndAuthorId(request.title(), userId)
                 && !album.getTitle().equals(request.title())) {
             throw new IllegalArgumentException("Альбом с таким названием уже существует.");
         }
 
         albumMapper.updateAlbumFromDto(request, album);
-        album = albumRepository.save(album);
         return albumMapper.toDto(album);
     }
 
     @Transactional
     public void deleteAlbum(Long userId, Long albumId) {
-        Album album = validateUserAlbum(userId, albumId);
+        Album album = getAndValidateUserAlbum(userId, albumId);
         albumRepository.delete(album);
     }
 
@@ -111,9 +107,8 @@ public class AlbumService {
 
     @Transactional
     public void removePostFromAlbum(Long userId, Long albumId, Long postId) {
-        Album album = validateUserAlbum(userId, albumId);
+        Album album = getAndValidateUserAlbum(userId, albumId);
         album.getPosts().removeIf(post -> post.getId().equals(postId));
-        albumRepository.save(album);
     }
 
     private void validateAlbum(Long albumId) {
@@ -130,10 +125,14 @@ public class AlbumService {
         }
     }
 
-    private Album validateUserAlbum(Long userId, Long albumId) {
+    private Album getAlbum(Long albumId) {
+        return albumRepository.findById(albumId)
+                .orElseThrow(() -> new EntityNotFoundException("Альбом с ID " + albumId + " не найден"));
+    }
+
+    private Album getAndValidateUserAlbum(Long userId, Long albumId) {
         validateUser(userId);
-        Album album = albumRepository.findById(albumId)
-                .orElseThrow(() -> new EntityNotFoundException("Альбом не найден"));
+        Album album = getAlbum(albumId);
 
         if (album.getAuthorId() != userId) {
             throw new IllegalStateException("Вы не владелец этого альбома");
@@ -143,13 +142,13 @@ public class AlbumService {
     }
 
     private List<AlbumDto> applyFilters(List<Album> albums, AlbumFilterDto filter) {
-        Stream<Album> album = albums.stream();
+        Stream<Album> albumStream = albums.stream();
         for (AlbumFilter albumFilter : albumFilters) {
             if (albumFilter.isApplicable(filter)) {
-                album = albumFilter.apply(album, filter);
+                albumStream = albumFilter.apply(albumStream, filter);
             }
         }
 
-        return album.map(albumMapper::toDto).collect(Collectors.toList());
+        return albumStream.map(albumMapper::toDto).collect(Collectors.toList());
     }
 }
