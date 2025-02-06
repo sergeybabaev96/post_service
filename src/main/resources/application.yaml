@@ -41,3 +41,14 @@ project-service:
 payment-service:
   host: localhost
   port: 9080
+
+author:
+  ban:
+    cron: "0 0 0 * * *" # every day at midnight
+
+user:
+  ban:
+    channel: user_ban
+
+post:
+  max-unverified: 5
