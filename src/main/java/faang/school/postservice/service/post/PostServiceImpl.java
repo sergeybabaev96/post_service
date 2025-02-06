@@ -2,7 +2,11 @@ package faang.school.postservice.service.post;
 
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.mapper.post.PostMapper;
+import faang.school.postservice.model.post.Post;
+import faang.school.postservice.properties.post.PostProperties;
+import faang.school.postservice.properties.user.UserBanProperties;
 import faang.school.postservice.repository.post.PostRepository;
+import faang.school.postservice.service.redis.RedisPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
