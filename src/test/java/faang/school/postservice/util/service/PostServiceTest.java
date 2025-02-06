@@ -1,10 +1,10 @@
 package faang.school.postservice.util.service;
 
-import faang.school.postservice.client.ProjectServiceClient;
-import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.post.PostDto;
+import faang.school.postservice.exception.ExternalServiceValidationException;
 import faang.school.postservice.exception.PostNotFoundException;
-import faang.school.postservice.exception.PostValidationException;
+import faang.school.postservice.gateway.ProjectServiceGateway;
+import faang.school.postservice.gateway.UserServiceGateway;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
@@ -20,8 +20,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static faang.school.postservice.constant.PostErrorMessages.POSTS_MUST_HAVE_ONE_AUTHOR;
-import static faang.school.postservice.constant.PostErrorMessages.POST_WITH_ID_ALREADY_PUBLISHED;
+import static faang.school.postservice.service.impl.PostServiceImpl.POSTS_MUST_HAVE_ONE_AUTHOR;
+import static faang.school.postservice.service.impl.PostServiceImpl.POST_WITH_ID_ALREADY_PUBLISHED;
 import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -35,9 +35,9 @@ public class PostServiceTest {
     @Mock
     private PostRepository postRepository;
     @Mock
-    private UserServiceClient userServiceClient;
+    private UserServiceGateway userServiceGateway;
     @Mock
-    private ProjectServiceClient projectServiceClient;
+    private ProjectServiceGateway projectServiceGateway;
     @Mock
     private PostMapper postMapper;
     @InjectMocks
@@ -59,7 +59,7 @@ public class PostServiceTest {
         PostDto actualPost = postService.createDraft(inputPost);
 
         assertEquals(expectedPost, actualPost);
-        verify(userServiceClient).getUser(TEST_USER_ID);
+        verify(userServiceGateway).getUser(TEST_USER_ID);
         verify(postMapper).toEntity(inputPost);
         verify(postRepository).save(postEntity);
         verify(postMapper).toDto(postEntity);
@@ -69,13 +69,13 @@ public class PostServiceTest {
     void createDraft_shouldThrowExceptionForInvalidInput() {
         PostDto invalidPost = new PostDto();
 
-        PostValidationException exception = assertThrows(
-                PostValidationException.class,
+        ExternalServiceValidationException exception = assertThrows(
+                ExternalServiceValidationException.class,
                 () -> postService.createDraft(invalidPost)
         );
 
         assertEquals(POSTS_MUST_HAVE_ONE_AUTHOR, exception.getMessage());
-        verifyNoInteractions(postRepository, postMapper, userServiceClient, projectServiceClient);
+        verifyNoInteractions(postRepository, postMapper, userServiceGateway, projectServiceGateway);
     }
 
 
@@ -105,8 +105,8 @@ public class PostServiceTest {
 
         when(postRepository.findById(TEST_POST_ID)).thenReturn(Optional.of(post));
 
-        PostValidationException exception = assertThrows(
-                PostValidationException.class,
+        ExternalServiceValidationException exception = assertThrows(
+                ExternalServiceValidationException.class,
                 () -> postService.publish(TEST_POST_ID)
         );
 
