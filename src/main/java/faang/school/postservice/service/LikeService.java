@@ -5,7 +5,7 @@ import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.mapper.like.LikeMapper;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.repository.ad.LikeRepository;
-import faang.school.postservice.validation.LikeValidator;
+import faang.school.postservice.validator.LikeValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
