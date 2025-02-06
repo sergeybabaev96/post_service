@@ -35,19 +35,25 @@ public class PostServiceValidator {
 
     void validatePostBeforePublish(Post post) {
         if (post.isPublished()) {
-            throw new IllegalArgumentException("The post is already published!");
+            throw new IllegalArgumentException("The post is already published! Post id = " + post.getId());
         }
     }
 
     void validatePostBeforeUpdate(Post sourcePost, Post targetPost) {
-        if (sourcePost.getAuthorId() != null && !sourcePost.getAuthorId().equals(targetPost.getAuthorId())) {
-            throw new IllegalArgumentException("Unable to change author id to post!");
+        if (sourcePost == null) {
+            throw new IllegalArgumentException("Post to update is null!");
         }
-        if (sourcePost.getProjectId() != null && !sourcePost.getProjectId().equals(targetPost.getProjectId())) {
-            throw new IllegalArgumentException("Unable to change project id to post!");
+        Long postId = sourcePost.getId();
+        Long authorId = sourcePost.getAuthorId();
+        Long projectId = sourcePost.getProjectId();
+
+        if (!authorId.equals(targetPost.getAuthorId())) {
+            throw new IllegalArgumentException("Unable to change author id to post! Post id = "
+                    + postId + ", Author Id = " + authorId);
         }
-        if (sourcePost.getAuthorId() == null && sourcePost.getProjectId() == null) {
-            throw new IllegalArgumentException("Unable to clear authorship of the post!");
+        if (projectId != null && !projectId.equals(targetPost.getProjectId())) {
+            throw new IllegalArgumentException("Unable to change project id to post! Post id = "
+                    + postId + ", Project Id = " + projectId);
         }
     }
 

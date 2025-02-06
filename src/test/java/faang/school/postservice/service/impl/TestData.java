@@ -11,88 +11,39 @@ public class TestData {
     {
         List<Post> posts = new ArrayList<>();
 
-        Post post1 = Post.builder()
-                .id(1L)
-                .content("Post 1")
-                .authorId(111L)
-                .published(true)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Post post1 = createPost(1L, "Post 1", 111L, 111L,true);
         posts.add(post1);
-        Post post2 = Post.builder()
-                .id(2L)
-                .content("Post 2")
-                .authorId(111L)
-                .published(true)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Post post2 = createPost(2L, "Post 2", 111L, 111L,true);
         posts.add(post2);
-        Post post3 = Post.builder()
-                .id(3L)
-                .content("Post 3")
-                .authorId(112L)
-                .published(true)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Post post3 = createPost(3L, "Post 3", 112L, 112L,true);
         posts.add(post3);
-        Post post4 = Post.builder()
-                .id(4L)
-                .content("Post 4")
-                .authorId(112L)
-                .published(true)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Post post4 = createPost(4L, "Post 4", 112L, 112L,true);
         posts.add(post4);
-        Post post5 = Post.builder()
-                .id(5L)
-                .content("Post 5")
-                .projectId(222L)
-                .published(true)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Post post5 = createPost(5L, "Post 5", 222L, null,true);
         posts.add(post5);
-        Post post6 = Post.builder()
-                .id(6L)
-                .content("Post 6")
-                .projectId(222L)
-                .published(true)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Post post6 = createPost(6L, "Post 6", 222L, null,true);
         posts.add(post6);
-        Post post7 = Post.builder()
-                .id(7L)
-                .content("Post 7")
-                .projectId(223L)
-                .published(true)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Post post7 = createPost(7L, "Post 7", 223L, null,true);
         posts.add(post7);
-        Post post8 = Post.builder()
-                .id(8L)
-                .content("Post 8")
-                .projectId(223L)
-                .published(true)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Post post8 = createPost(8L, "Post 8", 223L, null,true);
         posts.add(post8);
-        Post post9 = Post.builder()
-                .id(9L)
-                .content("Post 9")
-                .authorId(111L)
-                .published(false)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Post post9 = createPost(9L, "Post 9", null, 111L,false);
         posts.add(post9);
-        Post post10 = Post.builder()
-                .id(10L)
-                .content("Post 10")
-                .projectId(222L)
-                .published(false)
-                .createdAt(LocalDateTime.now())
-                .build();
+        Post post10 = createPost(10L, "Post 10", 222L, null,false);
         posts.add(post10);
 
         return posts;
+    }
+
+    private static Post createPost(Long id, String content, Long projectId, Long authorId, boolean isPublished) {
+        return  Post.builder()
+                .id(id)
+                .content(content)
+                .projectId(projectId)
+                .authorId(authorId)
+                .published(isPublished)
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 
 }
