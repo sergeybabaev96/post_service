@@ -1,26 +1,37 @@
-package faang.school.postservice.service;
+package faang.school.postservice.service.comment;
 
 import faang.school.postservice.dto.comment.CommentReadDto;
 import faang.school.postservice.dto.comment.CommentCreateDto;
 import faang.school.postservice.dto.comment.CommentUpdateDto;
 import faang.school.postservice.exception.BusinessException;
+import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.model.Comment;
+import faang.school.postservice.model.File;
 import faang.school.postservice.repository.CommentRepository;
+import faang.school.postservice.repository.FileRepository;
+import faang.school.postservice.service.UserService;
+import faang.school.postservice.service.s3.S3Service;
 import faang.school.postservice.service.post.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class CommentService {
+    private static final int MAX_IMAGE_SIZE_MB = 5;
+    private static final int MB_TO_BYTES = 1048576;
     private final CommentMapper commentMapper;
     private final CommentRepository commentRepository;
     private final UserService userService;
     private final PostService postService;
+    private final S3Service s3Service;
+    private final FileRepository fileRepository;
 
     public CommentReadDto create(CommentCreateDto createDto) {
         verifyCommentCreation(createDto);
@@ -53,6 +64,31 @@ public class CommentService {
         commentRepository.deleteById(commentId);
     }
 
+    public CommentReadDto uploadImage(long commentId, MultipartFile file) {
+        validateImageUpload(file);
+
+        String folder = commentId + "_comment_attachments";
+        File newFile = s3Service.uploadFile(file, folder);
+        newFile = fileRepository.save(newFile);
+
+        Comment comment = getCommentById(commentId);
+        comment.getFiles().add(newFile);
+
+        comment = commentRepository.save(comment);
+        return commentMapper.toDto(comment);
+    }
+
+    public InputStream downloadImage(long imageId) {
+        File file = getFileById(imageId);
+        return s3Service.downloadFile(file.getKey());
+    }
+
+    public void removeImage(long imageId) {
+        File file = getFileById(imageId);
+        s3Service.deleteFile(file.getKey());
+        fileRepository.deleteById(imageId);
+    }
+
     public Comment getCommentById(long commentId) {
         return commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Комментария с ID " + commentId + " не найден"));
@@ -67,6 +103,21 @@ public class CommentService {
     private void verifyCommentCreation(CommentCreateDto createDto) {
         userService.getUserDtoById(createDto.authorId());
         postService.getPostById(createDto.postId());
+    }
+
+    public void validateImageUpload(MultipartFile file) {
+        if (file.getSize() > MAX_IMAGE_SIZE_MB * MB_TO_BYTES) {
+            throw new DataValidationException("Размер файла не должен превышать " + MAX_IMAGE_SIZE_MB + " Мб");
+        }
+        String fileType = file.getContentType();
+        if (fileType == null || !fileType.startsWith("image/")) {
+            throw new IllegalArgumentException("Неверный тип файла. Разрешено загружать только изображения");
+        }
+    }
+
+    public File getFileById(long fileId) {
+        return fileRepository.findById(fileId)
+                .orElseThrow(() -> new EntityNotFoundException("Файл с ID " + fileId + " не найден"));
     }
 
 }
