@@ -23,7 +23,9 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -42,10 +44,10 @@ public class CommentService {
     @Value("${services.s3.bucketName}")
     private String bucketName;
 
-    @Value("${image.comment.largeImageMaxSize}")
+    @Value("${comment.image.largeImageMaxSize}")
     private int LARGE_IMAGE_MAX_SIZE;
 
-    @Value("${image.comment.smallImageMaxSize}")
+    @Value("${comment.image.smallImageMaxSize}")
     private int SMALL_IMAGE_MAX_SIZE;
 
     @Transactional(readOnly = true)
@@ -105,40 +107,31 @@ public class CommentService {
         commentValidator.validateAuthor(comment, userId);
         commentValidator.validateImageFormat(image);
 
+        clearCommentResourcesIfExist(comment);
+
         String fileName = image.getOriginalFilename();
         String format = fileName.substring(fileName.lastIndexOf('.') + 1);
-        String key = "/posts/" + comment.getPost().getId() + "/" + fileName + "_" + LocalDateTime.now();
 
-        InputStream smallImage;
-        InputStream largeImage;
-        try {
-            BufferedImage large = imageProcessor.resizeImage(image, LARGE_IMAGE_MAX_SIZE);
-            BufferedImage small = imageProcessor.resizeImage(image, SMALL_IMAGE_MAX_SIZE);
+        String baseKey = "/posts/" + comment.getPost().getId() + "/Img_" + LocalDateTime.now();
+        String keyLarge = baseKey + "_large" + "." + format;
+        String keySmall = baseKey + "_small" + "." + format;
 
-            largeImage = imageProcessor.convertInputStream(large, format);
-            smallImage = imageProcessor.convertInputStream(small, format);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        String keyLarge = key + "_large" + "." + format;
-        String keySmall = key + "_small" + "." + format;
-        awsService.uploadFile(bucketName, keyLarge, largeImage, image.getContentType());
-        awsService.uploadFile(bucketName, keySmall, smallImage, image.getContentType());
+        long largeSize = resizeUploadImage(image, bucketName, keyLarge, format, LARGE_IMAGE_MAX_SIZE);
+        long smallSize = resizeUploadImage(image, bucketName, keySmall, format, SMALL_IMAGE_MAX_SIZE);
 
         Resource large = Resource.builder()
                 .key(keyLarge)
                 .type(format)
-                .size(image.getSize())
-                .name(fileName + "_l")
+                .size(largeSize)
+                .name(fileName)
                 .post(comment.getPost())
                 .build();
 
         Resource small = Resource.builder()
                 .key(keySmall)
                 .type(format)
-                .size(image.getSize())
-                .name(fileName + "_s")
+                .size(smallSize)
+                .name(fileName)
                 .post(comment.getPost())
                 .build();
 
@@ -151,15 +144,15 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
-    @Transactional
     public byte[] getCommentImage(@PathVariable Long commentId, Function<Comment, String> keyExtractor) throws IOException {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentNotFoundException("There is no comment with id " + commentId));
 
         String key = keyExtractor.apply(comment);
         InputStream file = awsService.downloadFile(bucketName, key);
-
-        return file.readAllBytes();
+        byte[] data = file.readAllBytes();
+        file.close();
+        return data;
     }
 
 
@@ -170,20 +163,35 @@ public class CommentService {
 
         commentValidator.validateAuthor(comment, userId);
 
-        String smallKey = comment.getSmallImageFileKey();
-        String largeKey = comment.getLargeImageFileKey();
+        clearCommentResourcesIfExist(comment);
 
-        awsService.deleteFile(bucketName, smallKey);
-        awsService.deleteFile(bucketName, largeKey);
+        return commentRepository.save(comment);
+    }
+
+    private long resizeUploadImage(MultipartFile image, String bucketName, String key, String format, int maxSize) {
+        try {
+            BufferedImage resized = imageProcessor.resizeImage(image, maxSize);
+            InputStream imageStream = imageProcessor.convertInputStream(resized, format);
+
+            long sizeBytes = imageStream.available();
+
+            awsService.uploadFile(bucketName, key, imageStream);
+            imageStream.close();
+            return sizeBytes;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void clearCommentResourcesIfExist(Comment comment) {
+        Stream.of(comment.getSmallImageFileKey(), comment.getLargeImageFileKey())
+                .filter(Objects::nonNull)
+                .forEach(key -> {
+                    resourceService.deleteResourceByKey(key);
+                    awsService.deleteFile(bucketName, key);
+                });
 
         comment.setSmallImageFileKey(null);
         comment.setLargeImageFileKey(null);
-        commentRepository.save(comment);
-
-        Resource small = resourceService.findResourceByKey(smallKey);
-        Resource large = resourceService.findResourceByKey(largeKey);
-        resourceService.deleteResource(small);
-        resourceService.deleteResource(large);
-        return comment;
     }
 }

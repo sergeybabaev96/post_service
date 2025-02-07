@@ -4,15 +4,19 @@ import faang.school.postservice.exception.ResourceNotFoundException;
 import faang.school.postservice.model.Resource;
 import faang.school.postservice.repository.ResourceRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class ResourceService {
     private final ResourceRepository resourceRepository;
 
     public Resource createResource(Resource resource) {
-        return resourceRepository.save(resource);
+        Resource saved = resourceRepository.save(resource);
+        log.info("Resource saved. Key: {}", resource.getKey());
+        return saved;
     }
 
     public Resource findResourceByKey(String key) {
@@ -21,7 +25,10 @@ public class ResourceService {
                         new ResourceNotFoundException("There is no resource with key: " + key));
     }
 
-    public void deleteResource(Resource resource) {
-        resourceRepository.delete(resource);
+    public void deleteResourceByKey(String key) {
+        resourceRepository.deleteResourceByKey(key);
+        log.info("Resource with key: {}. Was succesfully deleted", key);
     }
+
+
 }

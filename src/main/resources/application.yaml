@@ -37,13 +37,13 @@ logging:
 
 services:
   s3:
-    endpoint: http://192.168.0.101:9000
+    endpoint: http://localhost:9000
     accessKey: user
     secretKey: password
     bucketName: corpbucket
 
-image:
-  comment:
+comment:
+  image:
     largeImageMaxSize: 1080
     smallImageMaxSize: 170
 

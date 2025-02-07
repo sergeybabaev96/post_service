@@ -42,7 +42,6 @@ public class CommentValidator {
     }
 
     public void validateImageFormat(MultipartFile image) {
-        log.info("ImageType: {}", image.getContentType());
         String imageType = image.getContentType();
         boolean isValid = Arrays.stream(ImageType.values()).anyMatch((type) ->
                 Objects.equals(imageType, type.getMimeType()));

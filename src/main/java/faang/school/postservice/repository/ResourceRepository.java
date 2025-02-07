@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface ResourceRepository extends JpaRepository<Resource, Long> {
 
     Optional<Resource> findByKey(String key);
+
+    void deleteResourceByKey(String key);
 }

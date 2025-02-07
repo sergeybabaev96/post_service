@@ -39,7 +39,9 @@ dependencies {
     /**
      * Amazon s3
      */
-    implementation("com.amazonaws:aws-java-sdk-s3:1.12.481")
+    implementation("software.amazon.awssdk:s3:2.20.86")
+    implementation("software.amazon.awssdk:url-connection-client:2.20.86")
+
 
     /**
      * Utils & Logging

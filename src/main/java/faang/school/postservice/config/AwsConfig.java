@@ -1,14 +1,19 @@
 package faang.school.postservice.config;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.client.builder.AwsClientBuilder;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.s3.S3Configuration;
+
+import java.net.URI;
 
 @Configuration
 @Getter
@@ -27,18 +32,24 @@ public class AwsConfig {
     private String bucketName;
 
     @Bean
-    public AmazonS3 s3Client() {
-        AwsClientBuilder.EndpointConfiguration endpointConfig = new AwsClientBuilder.EndpointConfiguration(endpoint, null);
+    public S3Client s3Client() {
+        S3ClientBuilder builder = S3Client.builder();
+        builder.credentialsProvider(StaticCredentialsProvider
+                .create(AwsBasicCredentials.create(accessKey, secretKey)));
 
-        AmazonS3 s3 = AmazonS3ClientBuilder
-                .standard()
-                .withEndpointConfiguration(endpointConfig)
-                .withCredentials(new AWSStaticCredentialsProvider(new BasicAWSCredentials(accessKey, secretKey)))
+        builder.endpointOverride(URI.create(endpoint));
+
+        S3Configuration confBuilder = S3Configuration.builder()
+                .pathStyleAccessEnabled(true)
                 .build();
 
-        if (!s3.doesBucketExistV2(bucketName)) {
-            s3.createBucket(bucketName);
-        }
-        return s3;
+        builder.serviceConfiguration(confBuilder)
+                .httpClient(UrlConnectionHttpClient.builder().build());
+
+        S3Client client = builder
+                .region(Region.of("ignored"))
+                .build();
+
+        return client;
     }
 }

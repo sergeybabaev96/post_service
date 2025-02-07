@@ -91,20 +91,20 @@ public class CommentController {
     }
 
     @PutMapping("/{commentId}/image")
-    public ResponseEntity<CommentDto> attachImageToComment(@PathVariable
-                                                           @Positive(message = "commentId should be positive") Long commentId,
+    public ResponseEntity<CommentDto> attachImageToComment(@PathVariable @Positive Long commentId,
                                                            @RequestBody MultipartFile image,
-                                                           @RequestHeader("x-user-id") @NotNull
-                                                           @Positive(message = "userId should be positive") Long userId) {
+                                                           @RequestHeader("x-user-id")
+                                                           @NotNull
+                                                           @Positive Long userId) {
         Comment comment = commentService.attachImageToComment(commentId, image, userId);
         return ResponseEntity.ok(commentMapper.toDto(comment));
     }
 
     @DeleteMapping("/{commentId}/image")
-    public ResponseEntity<CommentDto> deleteCommentImage(@PathVariable
-                                                         @Positive(message = "commentId should be positive") Long commentId,
-                                                         @RequestHeader("x-user-id") @NotNull
-                                                         @Positive(message = "userId should be positive") Long userId) {
+    public ResponseEntity<CommentDto> deleteCommentImage(@PathVariable @Positive Long commentId,
+                                                         @RequestHeader("x-user-id")
+                                                         @NotNull
+                                                         @Positive Long userId) {
         Comment comment = commentService.deleteCommentImage(commentId, userId);
         return ResponseEntity.ok(commentMapper.toDto(comment));
     }

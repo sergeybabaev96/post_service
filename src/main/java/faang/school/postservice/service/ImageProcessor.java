@@ -1,5 +1,6 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.exception.FileFormatException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,7 +21,7 @@ public class ImageProcessor {
         InputStream inputStream = file.getInputStream();
         BufferedImage originalImage = ImageIO.read(inputStream);
         if (originalImage == null) {
-            throw new IOException("Invalid image format.");
+            throw new FileFormatException("Invalid file format");
         }
 
         int originalWidth = originalImage.getWidth();
@@ -39,7 +40,7 @@ public class ImageProcessor {
             }
         }
 
-        BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_RGB);
         Graphics2D g2d = resizedImage.createGraphics();
         g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g2d.drawImage(originalImage, 0, 0, newWidth, newHeight, null);

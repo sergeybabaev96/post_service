@@ -9,8 +9,7 @@ import lombok.ToString;
 @ToString
 public enum ImageType {
     JPEG("image/jpeg"),
-    PNG("image/png"),
-    WEBP("image/gif");
+    PNG("image/png");
 
     private final String mimeType;
 }
