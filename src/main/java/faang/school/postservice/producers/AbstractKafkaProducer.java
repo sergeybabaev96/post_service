@@ -21,7 +21,7 @@ public abstract class AbstractKafkaProducer<T> {
                 log.info("Sent event=[" + event +
                         "] with offset=[" + result.getRecordMetadata().offset() + "]");
             } else {
-                log.info("Unable to send event=[" +
+                log.error("Unable to send event=[" +
                         event + "] due to : " + ex.getMessage());
             }
         });
