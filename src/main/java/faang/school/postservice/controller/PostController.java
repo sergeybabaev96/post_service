@@ -64,9 +64,4 @@ public class PostController {
     public List<PostResultResponse> getPublishedPostsByProject(@PathVariable @NotNull Long projectId) {
         return postService.getPublishedPostsByProject(projectId);
     }
-
-    @PostMapping("/rewrites")
-    public void rewrites() {
-        postService.postCorrections();
-    }
 }

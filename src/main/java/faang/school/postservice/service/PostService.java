@@ -14,7 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -137,9 +139,23 @@ public class PostService {
 
     public void postCorrections() {
         List<Post> posts = postRepository.findReadyToPublish();
-        posts.forEach(post -> {
-            String newText = rewriterService.rewriteText(post.getContent());
-            post.setContent(newText);
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        for (Post post : posts) {
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> processRewritePost(post));
+            futures.add(future);
+        }
+
+        CompletableFuture.runAsync(() -> {
+            futures.forEach(CompletableFuture::join);
+            log.info("Successfully rewrited posts");
         });
+    }
+
+    public void processRewritePost(Post post) {
+        String newText = rewriterService.rewriteText(post.getContent());
+        post.setContent(newText);
+        postRepository.save(post);
+        log.info("Rewriting post with id : {}", post.getId());
     }
 }
