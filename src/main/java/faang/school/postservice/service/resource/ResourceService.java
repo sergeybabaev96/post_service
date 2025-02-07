@@ -95,10 +95,11 @@ public class ResourceService {
         List<Resource> expiredDeletedResources =
                 resourceRepository.findAllByStatusAndUpdatedAtBefore(ResourceStatus.DELETED, expirationPeriod);
 
-        for (Resource resource : expiredDeletedResources) {
-            s3Service.deleteFile(resource.getKey());
-            resourceRepository.delete(resource);
-        }
+        expiredDeletedResources
+                .forEach(resource -> {
+                    s3Service.deleteFile(resource.getKey());
+                    resourceRepository.delete(resource);
+                });
     }
 
     private List<MultipartFile> resizeFiles(List<MultipartFile> imageFiles) {
