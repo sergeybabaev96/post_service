@@ -31,7 +31,7 @@ public class FeedService {
             ).getPostsId().stream()
                     .limit(POST_LIMIT)
                     .collect(Collectors.toSet());
-            //Если нет 20, то надо идти бд
+            //TODO: Если нет 20, то надо идти в БД
 
             if (postIds.isEmpty()) {
                 Set<PostEvent> postFromDb = postRepository.f
