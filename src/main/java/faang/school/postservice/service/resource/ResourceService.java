@@ -1,5 +1,6 @@
 package faang.school.postservice.service.resource;
 
+import faang.school.postservice.dto.resource.ResourceRequest;
 import faang.school.postservice.dto.resource.ResourceResponse;
 import faang.school.postservice.exceptions.FileException;
 import faang.school.postservice.mapper.resource.ResourceMapper;
@@ -9,17 +10,15 @@ import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.ResourceRepository;
 import faang.school.postservice.utils.ImageService;
 import faang.school.postservice.utils.MinioService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -71,16 +70,21 @@ public class ResourceService {
         return resourceMapper.toResponse(resource);
     }
 
-    /**
-     * Метод выполняет загрузку файла:
-     * 1. Проверяет, что размер файла не превышает 5 МБ.
-     * 2. Если файл является изображением, проверяет его разрешение и при необходимости вызывает imageService.saveImage,
-     *    который выполняет ресайз и загрузку в Minio.
-     * 3. Если изменение размера не требуется, файл загружается напрямую через minioService.
-     * 4. Создаётся объект Resource, в котором сохраняется id файла (поле key) из Minio.
-     */
+    @Transactional
+    public void removeFileFromPost(ResourceRequest resourceDto) {
+        log.info("вызван removeFileFromPost, resourceDto ={}", resourceDto);
+
+        try {
+            resourceRepository.deleteById(resourceDto.id()); // сначала удаляем из БД
+            minioService.completeRemoval(resourceDto.key()); // потом удаляем из MinIO
+        } catch (Exception e) {
+            log.error("Ошибка при удалении файла: {}", e.getMessage());
+            throw new RuntimeException(e);
+        }
+    }
+
+
     private Resource fileUploadResult(MultipartFile file, Post post) {
-        // Проверка размера файла
         if (file.getSize() > MAX_FILE_SIZE) {
             log.error("Размер файла {} превышает допустимый лимит в 5 МБ", file.getOriginalFilename());
             throw new FileException("Размер файла не должен превышать 5 МБ");
@@ -89,13 +93,10 @@ public class ResourceService {
         String uploadedFileId;
         try {
             BufferedImage image = ImageIO.read(file.getInputStream());
-            // Если файл является изображением
             if (image != null) {
                 int width = image.getWidth();
                 int height = image.getHeight();
 
-                // Если изображение превышает заданные лимиты:
-                // горизонтальное – ширина больше 1080 и высота больше 566, либо квадратное – больше 1080
                 if ((width != height && width > 1080 && height > 566) || (width == height && width > 1080)) {
                     log.info("Изображение {} превышает заданные разрешения, выполняется ресайз", file.getOriginalFilename());
                     uploadedFileId = imageService.saveImage(file, 1080, BUCKET_NAME);
@@ -110,15 +111,10 @@ public class ResourceService {
             throw new FileException("Ошибка обработки изображения");
         }
 
-        // Генерируем объект Resource и сохраняем информацию о файле в базе (например, оригинальное имя, размер, тип и id файла из Minio)
         Resource resource = generateResource(file, uploadedFileId, post);
         return resourceRepository.save(resource);
     }
 
-    /**
-     * Генерирует объект Resource для сохранения в БД.
-     * Поле key содержит идентификатор файла, полученный после загрузки в Minio.
-     */
     private Resource generateResource(MultipartFile multipartFile, String fileKey, Post post) {
         log.info("Генерация нового ресурса для файла {}", multipartFile.getOriginalFilename());
         Resource resource = new Resource();
@@ -131,17 +127,11 @@ public class ResourceService {
         return resource;
     }
 
-    public List<InputStream> getFilesForPost(long postId) {
-        // Получаем список ресурсов для поста из БД
+    public List<byte[]> getFilesForPost(long postId) {
         List<Resource> resources = resourceRepository.findByPostId(postId);
 
-        // Для каждого ресурса получаем файл из Minio по ключу, оборачиваем в ByteArrayInputStream и возвращаем список потоков
         return resources.stream()
-                .map(resource -> {
-                    byte[] fileBytes = minioService.getFile("post-images", resource.getKey());
-                    return new ByteArrayInputStream(fileBytes);
-                })
+                .map(resource -> minioService.getFile("post-images", resource.getKey()))
                 .collect(Collectors.toList());
     }
-
 }

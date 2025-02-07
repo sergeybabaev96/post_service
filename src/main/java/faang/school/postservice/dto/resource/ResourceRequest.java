@@ -7,6 +7,9 @@ import lombok.Builder;
 
 @Builder
 public record ResourceRequest(
+        @Positive(message = "Id must be a positive number")
+        Long id,
+
         @NotBlank(message = "Key must not be empty")
         String key,
 
@@ -22,4 +25,5 @@ public record ResourceRequest(
         @NotNull(message = "PostId must not be null")
         @Positive(message = "PostId must be a positive number")
         Long postId
-) {}
+) {
+}
