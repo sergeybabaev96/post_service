@@ -11,9 +11,11 @@ import java.util.Optional;
 
 @Repository
 public interface ResourceRepository extends JpaRepository<Resource, Integer> {
+
     @Query("SELECT pr FROM Resource pr WHERE pr.post.id = :postId")
     List<Resource> findByPostId(long postId);
 
     Optional<Object> findById(@Positive(message = "Id must be a positive number") Long id);
+
     void deleteById(@Positive(message = "Id must be a positive number") Long id);
 }

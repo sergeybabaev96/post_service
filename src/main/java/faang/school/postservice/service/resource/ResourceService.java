@@ -98,7 +98,8 @@ public class ResourceService {
                 int height = image.getHeight();
 
                 if ((width != height && width > 1080 && height > 566) || (width == height && width > 1080)) {
-                    log.info("Изображение {} превышает заданные разрешения, выполняется ресайз", file.getOriginalFilename());
+                    log.info("Изображение {} превышает заданные разрешения, выполняется ресайз",
+                            file.getOriginalFilename());
                     uploadedFileId = imageService.saveImage(file, 1080, BUCKET_NAME);
                 } else {
                     uploadedFileId = minioService.uploadFile(file.getBytes(), file.getContentType(), BUCKET_NAME);
