@@ -7,15 +7,22 @@ import faang.school.postservice.exceptions.PostWasNotFoundException;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.service.moderation.ModerationDictionary;
 import faang.school.postservice.utils.PostUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -28,6 +35,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostUtil postUtil;
     private final RewriterService rewriterService;
+    private final ObjectFactory<ModerationDictionary> moderationDictionaryObjectFactory;
 
     @Transactional
     public PostResultResponse createPost(PostCreatingRequest postCreatingDto) {
@@ -38,6 +46,7 @@ public class PostService {
                 .build();
 
         log.info("Creating the post with id : {}", post.getId());
+
         log.info("Validating the post creator with id : {}", post.getId());
         int result = postUtil.validateCreator(postCreatingDto.authorId(), postCreatingDto.projectId());
         switch (result) {
@@ -157,5 +166,44 @@ public class PostService {
         post.setContent(newText);
         postRepository.save(post);
         log.info("Rewriting post with id : {}", post.getId());
+    }
+}
+    public void moderationPosts() {
+        log.info("Moderating posts");
+        ModerationDictionary moderationDictionary = moderationDictionaryObjectFactory.getObject();
+        Set<String> moderationSet = moderationDictionary.getModerationSet();
+        int page = 0;
+        int pageSize = 100;
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        Page<Post> postPage;
+        do {
+            Pageable pageable = PageRequest.of(page, pageSize);
+            postPage = postRepository.findUnverifiedPosts(pageable);
+            List<Post> content = postPage.getContent();
+
+            CompletableFuture<Void> voidCompletableFuture = CompletableFuture.runAsync(() -> moderateBatch(content, moderationSet));
+            futures.add(voidCompletableFuture);
+
+            page++;
+        } while (postPage.hasNext());
+
+        futures.forEach(CompletableFuture::join);
+        log.info("Successfully moderated posts");
+    }
+
+    private void moderateBatch(List<Post> posts, Set<String> moderationSet) {
+        posts.forEach(post -> moderatePost(post, moderationSet));
+    }
+
+    private void moderatePost(Post post, Set<String> moderationSet) {
+        String content = post.getContent().toLowerCase();
+
+        boolean containsObsceneWord = moderationSet.stream()
+                .anyMatch(moderationWord -> content.contains(moderationWord));
+
+        post.setVerified(!containsObsceneWord);
+        post.setVerifiedDate(LocalDateTime.now());
+        postRepository.save(post);
+        log.info("moderated post with id: {}. Verified: {}", post.getId(), post.isVerified());
     }
 }
