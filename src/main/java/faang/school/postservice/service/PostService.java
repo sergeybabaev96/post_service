@@ -3,6 +3,7 @@ package faang.school.postservice.service;
 import faang.school.postservice.dto.Post.CreatePostDraftDto;
 import faang.school.postservice.dto.Post.PostResponseDto;
 import faang.school.postservice.dto.Post.UpdatePostDto;
+import faang.school.postservice.dto.Post.UploadedImageResponseDto;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
@@ -10,6 +11,7 @@ import faang.school.postservice.validator.PostValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -79,6 +81,10 @@ public class PostService {
 
     public List<PostResponseDto> getProjectPosts(long projectId) {
         return getExistingPostsSortedByDate(postRepository::findByProjectId, Post::getPublishedAt, projectId, true);
+    }
+
+    public List<UploadedImageResponseDto> uploadImages(Long postId, MultipartFile[] images) {
+return null;
     }
 
     private List<PostResponseDto> getExistingPostsSortedByDate(
