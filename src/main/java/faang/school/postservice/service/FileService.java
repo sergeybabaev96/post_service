@@ -5,6 +5,7 @@ import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
 import faang.school.postservice.service.aws.S3Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.services.s3.model.PutObjectResponse;
@@ -29,6 +30,15 @@ public class FileService {
     private final S3Service s3Service;
     private final PostService postService;
 
+    @Value("${file-controller.upload.max-files-size-in-post-mb}")
+    private long maxFileSizeMb;
+
+    @Value("${file-controller.image.max-width}")
+    private int maxWidth;
+
+    @Value("${file-controller.image.max-height-rectangle}")
+    private int maxHeightRectangle;
+
     public List<String> uploadFiles(Long postId, List<MultipartFile> files) {
         List<String> fileKeys = new ArrayList<>();
 
@@ -39,6 +49,7 @@ public class FileService {
                 String key = uploadFileToS3(postId, file, fileBytes);
                 fileKeys.add(key);
             } catch (IOException e) {
+                fileKeys.forEach(key -> s3Service.deleteFileAsync(awsS3ApiConfig.getBucket(),key).join());
                 throw new RuntimeException("Failed to process file", e);
             }
         });
@@ -70,7 +81,7 @@ public class FileService {
     }
 
     private void validateFile(MultipartFile file) {
-        if (file.getSize() > 5 * 1024 * 1024) {
+        if (file.getSize() > maxFileSizeMb * 1024 * 1024) {
             throw new IllegalArgumentException("File size must be less than or equal to 5MB");
         }
 
@@ -126,14 +137,14 @@ public class FileService {
         int newHeight = height;
 
         if (width == height) {
-            newWidth = Math.min(newWidth, 1080);
+            newWidth = Math.min(newWidth, maxWidth);
             newHeight = newWidth;
         } else {
             float aspectRatio = (float) width / height;
-            newWidth = Math.min(newWidth, 1080);
-            newHeight = Math.round(1080 / aspectRatio);
-            if (newHeight > 566) {
-                newHeight = Math.min(newWidth, 566);
+            newWidth = Math.min(newWidth, maxWidth);
+            newHeight = Math.round(maxWidth / aspectRatio);
+            if (newHeight > maxHeightRectangle) {
+                newHeight = maxHeightRectangle;
                 newWidth = Math.round(newHeight * aspectRatio);
             }
         }

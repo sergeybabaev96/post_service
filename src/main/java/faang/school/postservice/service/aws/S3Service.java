@@ -44,12 +44,12 @@ public class S3Service {
         CompletableFuture<PutObjectResponse> response =
                 s3AsyncClient.putObject(objectRequest, AsyncRequestBody.fromBytes(fileBytes));
 
-        return response.whenComplete((resp, ex) -> {
-            if (ex != null) {
-                logger.error("Failed to upload file: {}", key, ex);
-                throw new RuntimeException("Failed to upload file", ex);
-            }
-            logger.info("File uploaded successfully: {}", key);
+        return response.thenApply(resp -> {
+            logger.info("File uploaded successfully: {}", key);;
+            return resp;
+        }).exceptionally(ex -> {
+            logger.error("Failed to upload file: {}", key, ex);
+            throw new RuntimeException("Failed to upload file", ex);
         });
     }
 

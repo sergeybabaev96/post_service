@@ -31,7 +31,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign:4.0.2")
-    implementation ("org.springframework.cloud:spring-cloud-starter-openfeign")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
     /**
@@ -66,8 +65,6 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
     testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-
-    //testImplementation("org.mockito:mockito-inline:4.0.0")
 }
 
 tasks.test {

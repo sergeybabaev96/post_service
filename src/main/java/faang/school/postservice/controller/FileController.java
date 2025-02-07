@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,6 +25,9 @@ import java.util.List;
 public class FileController {
     private final FileService fileService;
 
+    @Value("${file-controller.upload.max-files-per-post}")
+    private int maxFiles;
+
     @Operation(summary = "Upload files to a post",
             description = "Uploads a list of files to a specified post")
     @PostMapping
@@ -32,7 +36,7 @@ public class FileController {
             @RequestParam List<MultipartFile> files,
             @Parameter(description = "ID of the post to upload files to", required = true)
             @RequestParam("postId") Long postId) {
-        if (files.size() > 10) {
+        if (files.size() > maxFiles) {
             throw new IllegalArgumentException("Cannot upload more than 10 files per post");
         }
         fileService.uploadFiles(postId, files);
