@@ -181,8 +181,8 @@ public class PostService {
             postPage = postRepository.findUnverifiedPosts(pageable);
             List<Post> content = postPage.getContent();
 
-            CompletableFuture<Void> voidCompletableFuture = CompletableFuture.runAsync(() -> moderateBatch(content, moderationSet));
-            futures.add(voidCompletableFuture);
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> moderateBatch(content, moderationSet));
+            futures.add(future);
 
             page++;
         } while (postPage.hasNext());
