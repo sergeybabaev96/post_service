@@ -1,4 +1,4 @@
-package faang.school.postservice.service;
+package faang.school.postservice.service.comment;
 
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.exception.UserUnauthorizedAccessException;
@@ -77,7 +77,7 @@ public class CommentService {
         }
     }
 
-    private Comment getComment(Long id) {
+    public Comment getComment(Long id) {
         return commentRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException(String.format("Comment #%d not found or deleted", id)));
     }
