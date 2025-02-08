@@ -68,4 +68,4 @@ author:
     kafka_topic: "user_ban"
     rejected_posts_to_ban: 5
     scheduler:
-      cron: "* * * * * *" #every day at 03.00
+      cron: "0 0 3 * * *" #every day at 03.00
