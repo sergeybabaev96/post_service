@@ -2,7 +2,7 @@ package faang.school.postservice.service;
 
 import faang.school.postservice.dto.filter.FilterDto;
 import faang.school.postservice.dto.post.CreatePostDto;
-import faang.school.postservice.dto.post.PostResponseDto;
+import faang.school.postservice.dto.post.ReadPostDto;
 import faang.school.postservice.dto.post.UpdatePostDto;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.exception.EntityNotFound;
@@ -44,7 +44,6 @@ public class PostServiceTest {
     private static final long PROJECT_ID = 10L;
     private static final String TEST_CONTENT = "Тестовая запись";
     private static final String UPDATE_CONTENT = "Обновленная запись";
-    private static final String POST_NOT_FOUND = "Пост не найден";
     private static final String EXCEPTION_MESSAGE = "Пост уже опубликован и не может быть опубликован повторно";
 
     @Mock
@@ -60,8 +59,8 @@ public class PostServiceTest {
     private PostService postService;
 
     private Post post;
-    private PostResponseDto postResponseDto;
-    private PostResponseDto expectedResponse;
+    private ReadPostDto readPostDto;
+    private ReadPostDto expectedResponse;
     private CreatePostDto createPostDto;
 
     @BeforeEach
@@ -76,7 +75,7 @@ public class PostServiceTest {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        postResponseDto = PostResponseDto.builder()
+        readPostDto = ReadPostDto.builder()
                 .id(ID)
                 .authorId(AUTHOR_ID)
                 .projectId(PROJECT_ID)
@@ -91,7 +90,7 @@ public class PostServiceTest {
                 .published(false)
                 .build();
 
-        expectedResponse = PostResponseDto.builder()
+        expectedResponse = ReadPostDto.builder()
                 .id(ID)
                 .published(true)
                 .build();
@@ -102,9 +101,9 @@ public class PostServiceTest {
 
         when(postMapper.toEntity(createPostDto)).thenReturn(post);
         when(postRepository.save(any(Post.class))).thenReturn(post);
-        when(postMapper.toDto(post)).thenReturn(postResponseDto);
+        when(postMapper.toDto(post)).thenReturn(readPostDto);
 
-        PostResponseDto response = postService.create(createPostDto);
+        ReadPostDto response = postService.create(createPostDto);
 
         assertNotNull(response);
         assertEquals(TEST_CONTENT, response.getContent());
@@ -119,9 +118,9 @@ public class PostServiceTest {
     @Test
     void getPostSuccessfullyTest() {
         when(postRepository.findById(ID)).thenReturn(Optional.of(post));
-        when(postMapper.toDto(post)).thenReturn(postResponseDto);
+        when(postMapper.toDto(post)).thenReturn(readPostDto);
 
-        PostResponseDto response = postService.getPost(ID);
+        ReadPostDto response = postService.getPost(ID);
 
         assertNotNull(response);
         assertEquals(ID, response.getId());
@@ -137,7 +136,7 @@ public class PostServiceTest {
         Post post = new Post();
         post.setContent(TEST_CONTENT);
 
-        PostResponseDto postResponseDto = PostResponseDto.builder()
+        ReadPostDto readPostDto = ReadPostDto.builder()
                 .content(UPDATE_CONTENT)
                 .build();
 
@@ -145,9 +144,9 @@ public class PostServiceTest {
 
         when(postRepository.findById(ID)).thenReturn(Optional.of(post));
         when(postRepository.save(any(Post.class))).thenReturn(post);
-        when(postMapper.toDto(any(Post.class))).thenReturn(postResponseDto);
+        when(postMapper.toDto(any(Post.class))).thenReturn(readPostDto);
 
-        PostResponseDto response = postService.update(ID, updatePostDto);
+        ReadPostDto response = postService.update(ID, updatePostDto);
 
         assertEquals(UPDATE_CONTENT, response.getContent());
     }
@@ -159,7 +158,7 @@ public class PostServiceTest {
         when(postRepository.save(any(Post.class))).thenReturn(post);
         when(postMapper.toDto(any(Post.class))).thenReturn(expectedResponse);
 
-        PostResponseDto response = postService.publish(ID);
+        ReadPostDto response = postService.publish(ID);
 
         assertNotNull(response);
         assertTrue(response.getPublished());
@@ -233,12 +232,12 @@ public class PostServiceTest {
 
         FilterDto filterDto = new FilterDto(AUTHOR_ID, null, false);
         List<Post> posts = Collections.singletonList(post);
-        List<PostResponseDto> expectedDtos = Collections.singletonList(postResponseDto);
+        List<ReadPostDto> expectedDtos = Collections.singletonList(readPostDto);
 
         when(postRepository.findByAuthorId(AUTHOR_ID)).thenReturn(posts);
         when(postMapper.toDtoList(posts)).thenReturn(expectedDtos);
 
-        List<PostResponseDto> result = postService.getFilteredPosts(filterDto);
+        List<ReadPostDto> result = postService.getFilteredPosts(filterDto);
 
         assertNotNull(result);
         assertEquals(expectedDtos, result);
@@ -252,12 +251,12 @@ public class PostServiceTest {
 
         FilterDto filterDto = new FilterDto(null, PROJECT_ID, false);
         List<Post> posts = Collections.singletonList(post);
-        List<PostResponseDto> expectedDtos = Collections.singletonList(postResponseDto);
+        List<ReadPostDto> expectedDtos = Collections.singletonList(readPostDto);
 
         when(postRepository.findByProjectId(PROJECT_ID)).thenReturn(posts);
         when(postMapper.toDtoList(posts)).thenReturn(expectedDtos);
 
-        List<PostResponseDto> result = postService.getFilteredPosts(filterDto);
+        List<ReadPostDto> result = postService.getFilteredPosts(filterDto);
 
         assertNotNull(result);
         assertEquals(expectedDtos, result);
@@ -271,12 +270,12 @@ public class PostServiceTest {
 
         FilterDto filterDto = new FilterDto(AUTHOR_ID, null, true);
         List<Post> emptyPosts = Collections.emptyList();
-        List<PostResponseDto> emptyDtos = Collections.emptyList();
+        List<ReadPostDto> emptyDtos = Collections.emptyList();
 
         when(postRepository.findByAuthorId(AUTHOR_ID)).thenReturn(emptyPosts);
         when(postMapper.toDtoList(emptyPosts)).thenReturn(emptyDtos);
 
-        List<PostResponseDto> result = postService.getFilteredPosts(filterDto);
+        List<ReadPostDto> result = postService.getFilteredPosts(filterDto);
 
         assertNotNull(result);
         assertTrue(result.isEmpty());

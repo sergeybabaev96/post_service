@@ -1,6 +1,6 @@
 package faang.school.postservice.mapper;
 
-import faang.school.postservice.dto.post.PostResponseDto;
+import faang.school.postservice.dto.post.ReadPostDto;
 import faang.school.postservice.dto.post.CreatePostDto;
 import faang.school.postservice.model.Post;
 import org.mapstruct.Mapper;
@@ -15,7 +15,7 @@ public interface PostMapper {
     Post toEntity(CreatePostDto savePostDto);
 
     @Mapping(source = "publishedAt", target = "publishedDate")
-    PostResponseDto toDto(Post post);
+    ReadPostDto toDto(Post post);
 
-    List<PostResponseDto> toDtoList(List<Post> posts);
+    List<ReadPostDto> toDtoList(List<Post> posts);
 }

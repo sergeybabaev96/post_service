@@ -2,7 +2,7 @@ package faang.school.postservice.service;
 
 import faang.school.postservice.dto.filter.FilterDto;
 import faang.school.postservice.dto.post.CreatePostDto;
-import faang.school.postservice.dto.post.PostResponseDto;
+import faang.school.postservice.dto.post.ReadPostDto;
 import faang.school.postservice.dto.post.UpdatePostDto;
 import faang.school.postservice.exception.EntityNotFound;
 import faang.school.postservice.mapper.PostMapper;
@@ -30,7 +30,7 @@ public class PostService {
     private final PostValidator postValidator;
 
     @Transactional
-    public PostResponseDto create(CreatePostDto createPostDto) {
+    public ReadPostDto create(CreatePostDto createPostDto) {
         postValidator.validateDraftPost(createPostDto);
 
         Post post = postMapper.toEntity(createPostDto);
@@ -40,7 +40,7 @@ public class PostService {
         return postMapper.toDto(savedPost);
     }
 
-    public PostResponseDto getPost(long postId) {
+    public ReadPostDto getPost(long postId) {
         Post post = findById(postId);
         if (post.isDeleted()) {
             throw new EntityNotFound(format("Пост с id=%d не найден", postId));
@@ -49,7 +49,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponseDto update(long postId, UpdatePostDto updatePostDto) {
+    public ReadPostDto update(long postId, UpdatePostDto updatePostDto) {
         Post post = findById(postId);
 
         post.setContent(updatePostDto.content());
@@ -60,7 +60,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponseDto delete(long id) {
+    public ReadPostDto delete(long id) {
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFound(format("Пост с id=%d не найден", id)));
         postValidator.validateNotDeleted(post);
@@ -70,7 +70,7 @@ public class PostService {
     }
 
     @Transactional
-    public PostResponseDto publish(long id) {
+    public ReadPostDto publish(long id) {
         Post post = findById(id);
 
         postValidator.validateNotPublished(post);
@@ -90,7 +90,7 @@ public class PostService {
                 .orElseThrow(() -> new EntityNotFoundException(format("Пост с id=%d не найден", id)));
     }
 
-    private List<PostResponseDto> getPosts(Long id, boolean published, boolean byAuthor) {
+    private List<ReadPostDto> getPosts(Long id, boolean published, boolean byAuthor) {
         List<Post> posts = byAuthor ? postRepository.findByAuthorId(id) : postRepository.findByProjectId(id);
 
         posts = posts.stream()
@@ -101,7 +101,7 @@ public class PostService {
         return postMapper.toDtoList(posts);
     }
 
-    public List<PostResponseDto> getFilteredPosts(FilterDto filterDto) {
+    public List<ReadPostDto> getFilteredPosts(FilterDto filterDto) {
         postValidator.validateFilterDto(filterDto);
 
         if (filterDto.authorId() != null) {

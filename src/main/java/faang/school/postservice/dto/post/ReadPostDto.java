@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class PostResponseDto {
+public class ReadPostDto {
     private Long id;
     private Long authorId;
     private Long projectId;
