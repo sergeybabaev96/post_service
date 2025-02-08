@@ -19,7 +19,7 @@ public class KafkaPostConsumer {
       LoggerFactory.getLogger(this.getClass());
 
   @KafkaListener(topics = "post_topic", containerFactory = "kafkaListenerContainerFactory", groupId = "feed-group-id")
-  public void handle(PostEventDto dto, Acknowledgment acknowledgment) {
+  public void consumePublishedPostEvent(PostEventDto dto, Acknowledgment acknowledgment) {
 
     logger.info("MESSAGE SUCCESSFULLY RECEIVED BY CONSUMER. POST ID = {}", dto.getPosId());
     logger.info("FOLLOWERS FEEDS TO Update {}", dto.getFollowers());
