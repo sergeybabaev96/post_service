@@ -20,13 +20,13 @@ public class LikeValidator {
     }
 
     public void validatePostExists(Long postId) {
-        if (!postRepository.existsById(postId)) {
+        if (postId == null || !postRepository.existsById(postId)) {
             throw new DataValidationException("Post with id " + postId + " not found.");
         }
     }
 
     public void validateCommentExists(Long commentId) {
-        if (!commentRepository.existsById(commentId)) {
+        if (commentId == null || !commentRepository.existsById(commentId)) {
             throw new DataValidationException("Comment with id " + commentId + " not found.");
         }
     }

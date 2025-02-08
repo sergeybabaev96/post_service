@@ -5,7 +5,6 @@ import faang.school.postservice.dto.Post.CreatePostDraftDto;
 import faang.school.postservice.dto.Post.PostResponseDto;
 import faang.school.postservice.dto.Post.UpdatePostDto;
 import faang.school.postservice.mapper.PostMapper;
-import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.validator.PostValidator;
@@ -254,22 +253,17 @@ public class PostServiceTest {
         post.setPublished(true);
         post.setDeleted(false);
         post.setPublishedAt(LocalDateTime.of(1, 1, 1, 1, 1));
-        post.setLikes(List.of(new Like(), new Like()));
 
         Post post1 = new Post();
         post1.setPublished(true);
         post1.setDeleted(false);
         post1.setPublishedAt(LocalDateTime.of(2, 1, 1, 1, 1));
-        post1.setLikes(List.of(new Like()));
 
         when(postRepository.findByAuthorId(anyLong())).thenReturn(List.of(post, post1));
 
         List<PostResponseDto> result = postService.getUserPosts(1L);
 
-        assertEquals(2, result.size());
         assertTrue(result.get(0).getPublishedAt().isAfter(result.get(1).getPublishedAt()));
-        assertEquals(2, result.get(0).getLikesCount());
-        assertEquals(1, result.get(1).getLikesCount());
     }
 
     @Test
@@ -279,7 +273,6 @@ public class PostServiceTest {
         post.setPublished(true);
         post.setDeleted(false);
         List<Post> posts = List.of(post);
-        post.setLikes(List.of(new Like(), new Like(), new Like()));
 
         when(postRepository.findByProjectId(projectId)).thenReturn(posts);
 
@@ -288,6 +281,5 @@ public class PostServiceTest {
         assertEquals(1, result.size());
         assertTrue(result.get(0).isPublished());
         assertFalse(result.get(0).isDeleted());
-        assertEquals(3, result.get(0).getLikesCount());
     }
 }

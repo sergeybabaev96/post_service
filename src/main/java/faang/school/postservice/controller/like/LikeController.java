@@ -1,6 +1,7 @@
 package faang.school.postservice.controller.like;
 
-import faang.school.postservice.dto.like.LikeDto;
+import faang.school.postservice.dto.like.CommentLikeDto;
+import faang.school.postservice.dto.like.PostLikeDto;
 import faang.school.postservice.service.LikeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,27 +15,27 @@ public class LikeController {
 
     private final LikeService likeService;
 
-    @PostMapping("/post/{postId}")
-    public ResponseEntity<Void> likePost(@PathVariable Long postId, @Valid @RequestBody LikeDto likeDto) {
-        likeService.likePost(postId, likeDto);
+    @PostMapping("/post")
+    public ResponseEntity<Void> likePost(@Valid @RequestBody PostLikeDto postLikeDto) {
+        likeService.likePost(postLikeDto);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/post/{postId}")
-    public ResponseEntity<Void> unlikePost(@PathVariable Long postId, @Valid @RequestBody LikeDto likeDto) {
-        likeService.unlikePost(postId, likeDto);
+    @DeleteMapping("/post")
+    public ResponseEntity<Void> unlikePost(@Valid @RequestBody PostLikeDto postLikeDto) {
+        likeService.unlikePost(postLikeDto);
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/comment/{commentId}")
-    public ResponseEntity<Void> likeComment(@PathVariable Long commentId, @Valid @RequestBody LikeDto likeDto) {
-        likeService.likeComment(commentId, likeDto);
+    @PostMapping("/comment")
+    public ResponseEntity<Void> likeComment(@Valid @RequestBody CommentLikeDto commentLikeDto) {
+        likeService.likeComment(commentLikeDto);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/comment/{commentId}")
-    public ResponseEntity<Void> unlikeComment(@PathVariable Long commentId, @Valid @RequestBody LikeDto likeDto) {
-        likeService.unlikeComment(commentId, likeDto);
+    @DeleteMapping("/comment")
+    public ResponseEntity<Void> unlikeComment(@Valid @RequestBody CommentLikeDto commentLikeDto) {
+        likeService.unlikeComment(commentLikeDto);
         return ResponseEntity.ok().build();
     }
 }

@@ -8,12 +8,10 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LikeDto {
-
+public class PostLikeDto {
     @NotNull
     private Long userId;
 
+    @NotNull
     private Long postId;
-
-    private Long commentId;
 }
