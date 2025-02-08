@@ -19,6 +19,7 @@ public interface PostMapper {
     @Mapping(target = "adId", source = "ad.id")
     @Mapping(target = "likesIds", expression = "java(mapEntitiesToIds(post.getLikes(), like -> like.getId()))")
     @Mapping(target = "commentsIds", expression = "java(mapEntitiesToIds(post.getComments(), comment -> comment.getId()))")
+    @Mapping(target = "likesCount", expression = "java(post.getLikes().size())")
     PostResponseDto toResponseDto(Post post);
 
     Post update(@MappingTarget Post post, UpdatePostDto postDto);
