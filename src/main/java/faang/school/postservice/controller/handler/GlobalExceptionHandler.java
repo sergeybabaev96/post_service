@@ -1,7 +1,7 @@
 package faang.school.postservice.controller.handler;
 
 import faang.school.postservice.dto.error.ErrorModel;
-import faang.school.postservice.exception.AlbumAccessDeniedException;
+import faang.school.postservice.exception.album.AlbumAccessDeniedException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -18,7 +18,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AlbumAccessDeniedException.class)
     public ErrorModel handleAccessDeniedException(AlbumAccessDeniedException ex) {
         log.error("Album access denied exception", ex);
-        return createError("Album access denied exception", HttpStatus.FORBIDDEN.value());
+        return createError(ex.getMessage(), HttpStatus.FORBIDDEN.value());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ErrorModel handleArgumentException(IllegalArgumentException ex) {
+        log.error("Illegal argument exception", ex);
+        return createError(ex.getMessage(), HttpStatus.BAD_REQUEST.value());
     }
 
     @ExceptionHandler(Exception.class)

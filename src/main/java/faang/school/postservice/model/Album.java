@@ -2,18 +2,7 @@ package faang.school.postservice.model;
 
 import faang.school.postservice.enums.Visibility;
 import faang.school.postservice.model.post.Post;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
-import jakarta.persistence.Temporal;
-import jakarta.persistence.TemporalType;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -60,7 +49,7 @@ public class Album {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private Visibility visibility;
 
     public void addPost(Post post) {

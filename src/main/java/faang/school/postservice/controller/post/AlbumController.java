@@ -1,16 +1,15 @@
 package faang.school.postservice.controller.post;
 
 import faang.school.postservice.dto.post.AlbumResponseDto;
+import faang.school.postservice.dto.post.AlbumUsersDto;
+import faang.school.postservice.enums.Visibility;
 import faang.school.postservice.service.post.AlbumService;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -28,12 +27,19 @@ public class AlbumController {
     }
 
     @GetMapping("/author/{authorId}")
-    public List<AlbumResponseDto> findAlbumByAuthorId(@PathVariable @NotNull @Min(0) long authorId) {
+    public List<AlbumResponseDto> findAlbumsByAuthorId(@PathVariable @NotNull @Min(0) long authorId) {
         return albumService.getAlbumsByAuthorId(authorId);
     }
 
-    @PutMapping("/{id}/visibility")
-    public AlbumResponseDto changeVisibilityAlbum(@PathVariable @NotNull @Min(0) long id) {
-        return albumService.changeVisibilityAlbum(id);
+    @PutMapping("/{id}/visibility/{visibility}")
+    public void changeVisibilityAlbum(@PathVariable @NotNull @Min(0) long id,
+                                      @PathVariable @NotNull Visibility visibility) {
+        albumService.changeVisibilityAlbum(id, visibility);
+    }
+
+    @PutMapping("/{id}/add-users-for-access")
+    public void addUsersForAccessAlbum(@PathVariable @NotNull @Min(0) long id,
+                                       @RequestBody @Valid AlbumUsersDto albumUsersDto) {
+        albumService.addUsersForAccessAlbum(id, albumUsersDto);
     }
 }

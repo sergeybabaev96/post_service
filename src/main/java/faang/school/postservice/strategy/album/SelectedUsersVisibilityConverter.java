@@ -1,35 +1,40 @@
 package faang.school.postservice.strategy.album;
 
-import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.post.AlbumResponseDto;
-import faang.school.postservice.dto.user.UserDto;
-import faang.school.postservice.exception.AlbumAccessDeniedException;
+import faang.school.postservice.enums.Visibility;
+import faang.school.postservice.exception.album.AlbumAccessDeniedException;
 import faang.school.postservice.mapper.post.AlbumMapper;
 import faang.school.postservice.model.Album;
+import faang.school.postservice.repository.post.AlbumRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.function.Function;
+
+import static faang.school.postservice.enums.Visibility.SELECTED_USERS;
 
 @Component
 @RequiredArgsConstructor
-public class FollowersVisibilityFunction implements Function<Album, AlbumResponseDto> {
+public class SelectedUsersVisibilityConverter implements VisibilityConverter {
 
+    private final AlbumRepository albumRepository;
     private final AlbumMapper albumMapper;
     private final UserContext userContext;
-    private final UserServiceClient userServiceClient;
 
     @Override
     public AlbumResponseDto apply(Album album) {
         long userId = userContext.getUserId();
-        List<UserDto> followers = userServiceClient.getFollowersByUserId(album.getAuthorId());
-        boolean isUserFollower = followers.stream().map(UserDto::id).anyMatch(followerId -> followerId == userId);
-        if (isUserFollower) {
+        List<Long> selectedUsersForAlbum = albumRepository.findSelectedUsersForAlbum(album.getId());
+        if (selectedUsersForAlbum.contains(userId)) {
             return albumMapper.toDto(album);
         }
         throw new AlbumAccessDeniedException(
                 String.format("Access denied for user with id = %d for album with id = %d", userId, album.getId()));
+    }
+
+    @Override
+    public Visibility getVisibility() {
+        return SELECTED_USERS;
     }
 }
