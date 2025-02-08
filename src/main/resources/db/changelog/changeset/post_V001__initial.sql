@@ -11,7 +11,7 @@ CREATE TABLE post (
     updated_at timestamptz DEFAULT current_timestamp
 );
 
-CREATE TABLE IF NOT EXISTS comment (
+CREATE TABLE comment (
     id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY UNIQUE,
     content varchar(4096) NOT NULL,
     author_id bigint NOT NULL,
