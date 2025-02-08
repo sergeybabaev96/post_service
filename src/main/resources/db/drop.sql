@@ -7,4 +7,4 @@ DROP INDEX album_author_title_idx;
 DROP TABLE album;
 DROP TABLE post_resource;
 DROP TABLE hashtag;
-DROP TABLE post_hashtag;
+DROP TABLE post_to_hashtag;

@@ -54,7 +54,7 @@ public class Post {
 
     @ManyToMany
     @JoinTable(
-            name = "post_hashtag",
+            name = "post_to_hashtag",
             joinColumns = @JoinColumn(name = "post_id"),
             inverseJoinColumns = @JoinColumn(name = "hashtag_id")
     )

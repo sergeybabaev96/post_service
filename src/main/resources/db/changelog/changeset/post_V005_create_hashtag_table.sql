@@ -5,8 +5,7 @@
     updated_at timestamptz DEFAULT current_timestamp
 );
 
-CREATE TABLE post_hashtag (
-    id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY UNIQUE,
+CREATE TABLE post_to_hashtag (
     post_id bigint NULL,
     hashtag_id bigint NULL,
 
