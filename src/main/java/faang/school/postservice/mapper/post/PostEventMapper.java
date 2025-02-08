@@ -15,4 +15,6 @@ public interface PostEventMapper {
     @Mapping(target = "viewsCount", ignore = true)
     @Mapping(target = "ttl", ignore = true)
     PostEvent toEvent(Post post);
+
+    Post toEntity(PostEvent event);
 }

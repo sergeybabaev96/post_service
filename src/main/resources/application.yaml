@@ -77,7 +77,7 @@ services:
 
 user-service:
   host: localhost
-  port: 8099
+  port: 8080
 project-service:
   host: localhost
   port: 8082

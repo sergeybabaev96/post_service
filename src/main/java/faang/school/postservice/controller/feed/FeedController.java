@@ -2,6 +2,7 @@ package faang.school.postservice.controller.feed;
 
 import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.post.PostResponseDto;
+import faang.school.postservice.model.Post;
 import faang.school.postservice.model.event.PostEvent;
 import faang.school.postservice.service.FeedHeater;
 import faang.school.postservice.service.feed.FeedService;
@@ -23,7 +24,7 @@ public class FeedController {
     private final FeedHeater feedHeater;
 
     @GetMapping
-    public Set<PostEvent> getUserFeed(@RequestParam(required = false) long postId) {
+    public List<Post> getUserFeed(@RequestParam(required = false) Long postId) {
        return feedService.getUserFeed(postId, userContext.getUserId());
     }
 

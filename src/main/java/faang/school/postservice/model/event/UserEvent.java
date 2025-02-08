@@ -5,9 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.core.TimeToLive;
+
+import java.util.List;
 
 @RedisHash(value = "user")
 @AllArgsConstructor
@@ -20,6 +23,7 @@ public class UserEvent {
     private String username;
     private String email;
     private String phone;
+    private List<Long> followeesIds;
 
     @TimeToLive
     @Value("${spring.data.redis.cache.ttl}")

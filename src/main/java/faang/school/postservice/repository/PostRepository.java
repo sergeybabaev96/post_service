@@ -37,15 +37,15 @@ public interface PostRepository extends CrudRepository<Post, Long> {
     List<Long> findFollowersByAuthorId(Long authorId);
 
     @Query(value = """
-            SELECT p 
-            FROM post p 
-            WHERE p.published = true AND p.deleted = false AND p.authorId 
-            IN :authors AND p.id >= :postId 
-            ORDER BY p.id DESC LIMIT :postCount
+            SELECT *
+            FROM post
+            WHERE published = true AND deleted = false AND author_id IN (:authors)
+            ORDER BY id DESC
+            LIMIT :postCount
             """,
             nativeQuery = true
     )
-    List<Post> findByAuthorsId(List<Long> authors, long postId, int postCount);
+    List<Post> findByAuthorsId(@Param("authors") List<Long> authors, @Param("postCount") int postCount);
 
     default Post getPostById(Long id) {
         return findById(id).orElseThrow(() -> new EntityNotFoundException("Post with id " + id + " not found"));
