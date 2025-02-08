@@ -102,6 +102,7 @@ public class PostService {
     }
 
     public List<ReadPostDto> getFilteredPosts(FilterDto filterDto) {
+
         postValidator.validateFilterDto(filterDto);
 
         if (filterDto.authorId() != null) {
