@@ -1,31 +1,29 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.dto.filter.FilterDto;
 import faang.school.postservice.dto.post.CreatePostDto;
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.post.UpdatePostDto;
-import faang.school.postservice.dto.filter.FilterDto;
 import faang.school.postservice.exception.EntityNotFound;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
-import jakarta.persistence.EntityNotFoundException;
 import faang.school.postservice.validator.PostValidator;
-
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import static java.lang.String.format;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
+import static java.lang.String.format;
+
 @Service
 @RequiredArgsConstructor
 public class PostService {
-
-    private static final String POST_NOT_FOUND = "Пост не найден";
 
     private final PostRepository postRepository;
     private final PostMapper postMapper;
@@ -43,16 +41,16 @@ public class PostService {
     }
 
     public PostResponseDto getPost(long postId) {
-        Post post = findPostById(postId);
+        Post post = findById(postId);
         if (post.isDeleted()) {
-            throw new EntityNotFound(POST_NOT_FOUND + " ID поста: " + postId);
+            throw new EntityNotFound(format("Пост с id=%d не найден", postId));
         }
         return postMapper.toDto(post);
     }
 
     @Transactional
     public PostResponseDto update(long postId, UpdatePostDto updatePostDto) {
-        Post post = findPostById(postId);
+        Post post = findById(postId);
 
         post.setContent(updatePostDto.content());
 
@@ -64,7 +62,7 @@ public class PostService {
     @Transactional
     public PostResponseDto delete(long id) {
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFound(POST_NOT_FOUND + " ID поста: " + id));
+                .orElseThrow(() -> new EntityNotFound(format("Пост с id=%d не найден", id)));
         postValidator.validateNotDeleted(post);
         post.setDeleted(true);
         Post updatedPost = postRepository.save(post);
@@ -73,7 +71,7 @@ public class PostService {
 
     @Transactional
     public PostResponseDto publish(long id) {
-        Post post = findPostById(id);
+        Post post = findById(id);
 
         postValidator.validateNotPublished(post);
         postValidator.validateNotDeleted(post);
@@ -87,10 +85,8 @@ public class PostService {
         return postMapper.toDto(updatedPost);
     }
 
-    private Post findPostById(@NotNull long id) {
     public Post findById(@NotNull Long id) {
         return postRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFound(POST_NOT_FOUND+ " ID поста: " + id));
                 .orElseThrow(() -> new EntityNotFoundException(format("Пост с id=%d не найден", id)));
     }
 
@@ -104,7 +100,6 @@ public class PostService {
 
         return postMapper.toDtoList(posts);
     }
-}
 
     public List<PostResponseDto> getFilteredPosts(FilterDto filterDto) {
         postValidator.validateFilterDto(filterDto);

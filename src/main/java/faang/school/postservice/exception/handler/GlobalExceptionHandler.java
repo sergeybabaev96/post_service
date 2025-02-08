@@ -24,11 +24,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleEntityNotFoundException(EntityNotFoundException e) {
         return new ErrorResponse(e.getMessage());
+    }
 
     @ExceptionHandler(DataValidationException.class)
     public ResponseEntity<String> handleDataValidationException(DataValidationException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-    }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());}
+
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -39,8 +40,5 @@ public class GlobalExceptionHandler {
                 .map(error -> new Violation(error.getField(), error.getDefaultMessage()))
                 .toList()
         );
-    @ExceptionHandler(EntityNotFound.class)
-    public ResponseEntity<String> handleDataNotFoundException(EntityNotFound e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
     }
 }

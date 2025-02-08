@@ -10,6 +10,7 @@ import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.validator.PostValidator;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -190,9 +191,9 @@ public class PostServiceTest {
     void exceptionWhenPostNotFoundTest() {
         when(postRepository.findById(ID)).thenReturn(Optional.empty());
 
-        Exception exception = assertThrows(EntityNotFound.class, () -> postService.getPost(ID));
+        Exception exception = assertThrows(EntityNotFoundException.class, () -> postService.getPost(ID));
 
-        assertEquals(POST_NOT_FOUND + " ID поста: " + ID, exception.getMessage());
+        assertEquals(String.format("Пост с id=%d не найден", ID), exception.getMessage());
         verify(postRepository).findById(ID);
         verifyNoInteractions(postMapper);
     }
@@ -204,7 +205,7 @@ public class PostServiceTest {
 
         Exception exception = assertThrows(EntityNotFound.class, () -> postService.getPost(ID));
 
-        assertEquals(POST_NOT_FOUND + " ID поста: " + ID, exception.getMessage());
+        assertEquals(String.format("Пост с id=%d не найден", ID), exception.getMessage());
         verify(postRepository).findById(ID);
         verifyNoInteractions(postMapper);
     }
