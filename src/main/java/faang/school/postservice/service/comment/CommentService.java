@@ -15,6 +15,7 @@ import faang.school.postservice.service.UserService;
 import faang.school.postservice.service.s3.S3Service;
 import faang.school.postservice.service.post.PostService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,7 +25,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class CommentService {
-    private static final int MAX_IMAGE_SIZE_MB = 5;
+    @Value("$(services.s3.max_image_size)")
+    private int maxImageSize;
     private static final int MB_TO_BYTES = 1048576;
     private final CommentMapper commentMapper;
     private final CommentRepository commentRepository;
@@ -65,13 +67,13 @@ public class CommentService {
     }
 
     public CommentReadDto uploadImage(long commentId, MultipartFile file) {
+        Comment comment = getCommentById(commentId);
         validateImageUpload(file);
 
         String folder = commentId + "_comment_attachments";
         File newFile = s3Service.uploadFile(file, folder);
         newFile = fileRepository.save(newFile);
 
-        Comment comment = getCommentById(commentId);
         comment.getFiles().add(newFile);
 
         comment = commentRepository.save(comment);
@@ -106,12 +108,12 @@ public class CommentService {
     }
 
     public void validateImageUpload(MultipartFile file) {
-        if (file.getSize() > MAX_IMAGE_SIZE_MB * MB_TO_BYTES) {
-            throw new DataValidationException("Размер файла не должен превышать " + MAX_IMAGE_SIZE_MB + " Мб");
+        if (file.getSize() > maxImageSize * MB_TO_BYTES) {
+            throw new DataValidationException("Размер файла не должен превышать " + maxImageSize + " Мб");
         }
         String fileType = file.getContentType();
         if (fileType == null || !fileType.startsWith("image/")) {
-            throw new IllegalArgumentException("Неверный тип файла. Разрешено загружать только изображения");
+            throw new DataValidationException("Неверный тип файла. Разрешено загружать только изображения");
         }
     }
 

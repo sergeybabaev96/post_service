@@ -58,6 +58,7 @@ services:
     accessKey: user
     secretKey: password
     bucketName: postbucket
+    max_image_size: 5
 
 user-service:
   host: localhost
