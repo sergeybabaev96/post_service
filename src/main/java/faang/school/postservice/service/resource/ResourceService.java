@@ -75,8 +75,8 @@ public class ResourceService {
         log.info("вызван removeFileFromPost, resourceDto ={}", resourceDto);
 
         try {
-            resourceRepository.deleteById(resourceDto.id()); // сначала удаляем из БД
-            minioService.completeRemoval(resourceDto.key()); // потом удаляем из MinIO
+            resourceRepository.deleteById(resourceDto.id());
+            minioService.completeRemoval(resourceDto.key());
         } catch (Exception e) {
             log.error("Ошибка при удалении файла: {}", e.getMessage());
             throw new RuntimeException(e);
