@@ -59,6 +59,7 @@ logging:
 
 moderation:
   dictionary: classpath:obscene_words.txt
+  cron-ban-user: "0 30 3 * * ?"
 
 user-service:
   host: localhost

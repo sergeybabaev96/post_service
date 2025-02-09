@@ -1,6 +1,7 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.dto.comment.CommentCreateEventDto;
+import faang.school.postservice.config.redis.RedisPublisher;
 import faang.school.postservice.dto.comment.CommentResponse;
 import faang.school.postservice.dto.comment.CommentUpdateRequest;
 import faang.school.postservice.dto.comment.CreateCommentRequest;
@@ -15,26 +16,31 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static faang.school.postservice.config.MinioBuckets.COMMENT_IMAGE_BUCKET_NAME;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommentService {
 
+    private static final int SMALL_IMAGE_SIZE = 170;
+    private static final int LARGE_IMAGE_SIZE = 1080;
     private final ValidateService validateService;
     private final CommentMapper commentMapper;
     private final CommentRepository commentRepository;
-    private static final int SMALL_IMAGE_SIZE = 170;
-    private static final int LARGE_IMAGE_SIZE = 1080;
     private final ImageService imageService;
     private final KafkaService kafkaService;
     private final PostService postService;
+    private final RedisPublisher redisPublisher;
 
     @Transactional
     public CommentResponse create(@Valid CreateCommentRequest createCommentRequest) {
@@ -106,4 +112,20 @@ public class CommentService {
         return commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment with id " + commentId + " not found"));
     }
+
+    public void processUnverifiedComments() {
+        List<Comment> unverifiedComments = commentRepository.findByVerifiedFalse();
+
+        Map<Long, List<Comment>> groupedByAuthor = unverifiedComments.stream()
+                .collect(Collectors.groupingBy(Comment::getAuthorId));
+
+        groupedByAuthor.forEach((authorId, comments) -> {
+            if (comments.size() > 5) {
+                redisPublisher.publishUserBanEvent(authorId);
+            }
+        });
+
+        log.info("User ban events sent successfully.");
+    }
+
 }
