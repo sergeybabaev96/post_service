@@ -6,9 +6,9 @@ import org.springframework.context.annotation.Configuration;
 
 @Data
 @Configuration
-@ConfigurationProperties(prefix = "post")
-public class PostProperties {
+@ConfigurationProperties(prefix = "post.unverified")
+public class PostUnverifiedProperties {
 
-    private int maxUnverified;
+    private int max;
 
 }

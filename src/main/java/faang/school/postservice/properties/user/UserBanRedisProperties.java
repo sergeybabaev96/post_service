@@ -6,8 +6,8 @@ import org.springframework.context.annotation.Configuration;
 
 @Data
 @Configuration
-@ConfigurationProperties(prefix = "user.ban")
-public class UserBanProperties {
+@ConfigurationProperties(prefix = "user.ban.redis")
+public class UserBanRedisProperties {
 
     private String channel;
 

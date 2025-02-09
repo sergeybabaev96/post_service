@@ -4,10 +4,10 @@ import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.post.Hashtag;
 import faang.school.postservice.model.post.Post;
-import faang.school.postservice.properties.post.PostProperties;
-import faang.school.postservice.properties.user.UserBanProperties;
+import faang.school.postservice.properties.post.PostUnverifiedProperties;
+import faang.school.postservice.properties.user.UserBanRedisProperties;
 import faang.school.postservice.repository.post.PostRepository;
-import faang.school.postservice.service.redis.RedisPublisher;
+import faang.school.postservice.publisher.redis.RedisPublisher;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -34,10 +34,10 @@ class PostServiceImplTest {
     private PostMapper postMapper;
 
     @Mock
-    private UserBanProperties userBanProperties;
+    private UserBanRedisProperties userBanRedisProperties;
 
     @Mock
-    private PostProperties postProperties;
+    private PostUnverifiedProperties postUnverifiedProperties;
 
     @Mock
     private RedisPublisher redisPublisher;
@@ -57,8 +57,8 @@ class PostServiceImplTest {
     @Test
     public void testBanUsers() {
         when(postRepository.findByVerified(eq(false))).thenReturn(List.of(getPost()));
-        when(postProperties.getMaxUnverified()).thenReturn(0);
-        when(userBanProperties.getChannel()).thenReturn("channel");
+        when(postUnverifiedProperties.getMax()).thenReturn(0);
+        when(userBanRedisProperties.getChannel()).thenReturn("channel");
         doNothing().when(redisPublisher).publish(eq("channel"), eq(String.valueOf(1)));
 
         postService.banUsersWithManyUnverifiedPosts();

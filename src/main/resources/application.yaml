@@ -58,7 +58,9 @@ author:
 
 user:
   ban:
-    channel: user_ban
+    redis:
+      channel: user_ban
 
 post:
-  max-unverified: 5
+  unverified:
+    max: 5
