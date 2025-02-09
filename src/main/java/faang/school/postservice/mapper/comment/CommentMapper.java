@@ -4,6 +4,7 @@ import faang.school.postservice.dto.comment.CommentRequestDto;
 import faang.school.postservice.dto.comment.CommentResponseDto;
 import faang.school.postservice.dto.like.LikeDto;
 import faang.school.postservice.dto.post.PostDto;
+import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
@@ -19,7 +20,7 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public abstract class CommentMapper {
     private LikeMapper likeMapper;
-    private PostMapperForComment postMapper;
+    private PostMapper postMapper;
 
     @Autowired
     public void setLikeMapper(LikeMapper likeMapper) {
@@ -27,7 +28,7 @@ public abstract class CommentMapper {
     }
 
     @Autowired
-    public void setPostMapper(PostMapperForComment postMapper) {
+    public void setPostMapper(PostMapper postMapper) {
         this.postMapper = postMapper;
     }
 
