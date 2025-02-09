@@ -1,5 +1,6 @@
 package faang.school.postservice.service.comment;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
@@ -15,15 +16,11 @@ import java.util.Set;
 @Component
 public class ModerationDictionary {
 
-    @Value("${moderation.dictionary.path}")
-    private static String path;
-
     private final Set<String> blacklist = new HashSet<>();
+    @Value("${moderation.dictionary.path}")
+    private String path;
 
-    public ModerationDictionary() {
-        loadBlackList();
-    }
-
+    @PostConstruct
     private void loadBlackList() {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(new ClassPathResource(path).getInputStream(), StandardCharsets.UTF_8))) {
