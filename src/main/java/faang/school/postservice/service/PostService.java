@@ -35,7 +35,7 @@ public class PostService {
     private final UserContext userContext;
     private final PostSchedulerService postSchedulerService;
 
-    @Value("${post.batch-size}")
+    @Value("${post.schedule.batch-size}")
     private int batchSize;
 
     public PostReadDto createPostDraft(PostCreateDto dto) {

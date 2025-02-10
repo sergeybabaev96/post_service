@@ -45,14 +45,14 @@ payment-service:
   port: 9080
 
 post:
-  batch-size: 1000
-  scheduled-cron: "0 * * * * *"
-  max-retries: 5
-  timeout: 10
-  initial-delay: 500
-  delay-multiplier: 2
-  batchCount: 3
-
+  schedule:
+    batch-size: 1000
+    scheduled-cron: "0 * * * * *"
+    max-retries: 5
+    timeout: 10
+    initial-delay: 500
+    delay-multiplier: 2
+    batchCount: 3
 
 thread:
   pool:

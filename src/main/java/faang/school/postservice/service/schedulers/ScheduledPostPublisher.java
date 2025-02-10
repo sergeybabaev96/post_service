@@ -1,8 +1,8 @@
-package faang.school.postservice.service;
+package faang.school.postservice.service.schedulers;
 
+import faang.school.postservice.service.PostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 public class ScheduledPostPublisher {
     private final PostService postService;
 
-    @Scheduled(cron = "${post.scheduled-cron}")
+    @Scheduled(cron = "${post.schedule.scheduled-cron}")
     public void publishScheduledPosts() {
         postService.publishScheduledPosts();
     }

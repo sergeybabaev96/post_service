@@ -22,19 +22,19 @@ public class PostSchedulerService {
     private final PostRepository postRepository;
     private final ExecutorService executorService;
 
-    @Value("${post.max-retries}")
+    @Value("${post.schedule.max-retries}")
     private int maxRetries;
 
-    @Value("${post.timeout}")
+    @Value("${post.schedule.timeout}")
     private int timeout;
 
-    @Value("${post.initial-delay}")
+    @Value("${post.schedule.initial-delay}")
     private long delay;
 
-    @Value("${post.delay-multiplier}")
+    @Value("${post.schedule.delay-multiplier}")
     private long delayMultiplier;
 
-    @Value("${post.batchCount}")
+    @Value("${post.schedule.batchCount}")
     private int batchCount;
 
     public void publishScheduledPosts(int batchSize) {
