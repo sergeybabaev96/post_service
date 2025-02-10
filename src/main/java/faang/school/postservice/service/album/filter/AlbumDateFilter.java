@@ -17,7 +17,8 @@ public class AlbumDateFilter implements AlbumFilter {
     @Override
     public Stream<Album> apply(Stream<Album> albumStream, AlbumFilterDto filter) {
         return albumStream.filter(album ->
-                (filter.fromDate() == null) || album.getCreatedAt().isAfter(filter.fromDate())
-                        && (filter.toDate() == null) || album.getCreatedAt().isBefore(filter.toDate()));
+                ((filter.fromDate() == null) || album.getCreatedAt().isAfter(filter.fromDate()))
+                        && ((filter.toDate() == null) || album.getCreatedAt().isBefore(filter.toDate()))
+        );
     }
 }

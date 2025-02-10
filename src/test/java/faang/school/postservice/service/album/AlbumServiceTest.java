@@ -155,7 +155,9 @@ class AlbumServiceTest {
     @Test
     void createAlbum_ThrowsExceptionIfTitleExists() {
         Long userId = 1L;
-        CreateAlbumRequestDto request = new CreateAlbumRequestDto("Existing Album", "Existing description");
+        CreateAlbumRequestDto request = new CreateAlbumRequestDto(
+                "Existing Album",
+                "Existing description");
         when(albumRepository.existsByTitleAndAuthorId("Existing Album", userId)).thenReturn(true);
         when(userServiceClient.getUser(userId)).thenReturn(dummyUser);
 
@@ -255,7 +257,9 @@ class AlbumServiceTest {
     void updateAlbum_ThrowsIfDuplicateTitle() {
         Long userId = 1L;
         Long albumId = 1L;
-        UpdateAlbumRequestDto request = new UpdateAlbumRequestDto("Duplicate Title", "Duplicate description");
+        UpdateAlbumRequestDto request = new UpdateAlbumRequestDto(
+                "Duplicate Title",
+                "Duplicate description");
 
         Album album = new Album();
         album.setId(albumId);
@@ -360,7 +364,8 @@ class AlbumServiceTest {
         when(userServiceClient.getUser(userId)).thenThrow(new RuntimeException());
 
         EntityNotFoundException ex = assertThrows(EntityNotFoundException.class,
-                () -> albumService.getUserAlbums(userId, new AlbumFilterDto(null, null, null, null)));
+                () -> albumService.getUserAlbums(userId, new AlbumFilterDto(null, null,
+                        null, null)));
         assertEquals("Пользователь не найден", ex.getMessage());
     }
 }
