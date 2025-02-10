@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class ModerationScheduler {
+public class PostScheduler {
 
     private final PostService postService;
 

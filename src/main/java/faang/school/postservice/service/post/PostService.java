@@ -122,15 +122,16 @@ public class PostService {
             int pageSize,
             int batchSize
     ) {
-        Pageable firstPageable = PageRequest.of(0, pageSize);
-        Page<Post> firstPage = getPostsFunction.apply(firstPageable);
-        int totalPages = firstPage.getTotalPages();
+        Pageable pageable = PageRequest.of(0, pageSize);
+        Page<Post> page;
+        int pageNumber = 0;
 
-        for (int pageNumber = 0; pageNumber < totalPages; pageNumber++) {
-            Pageable pageable = PageRequest.of(pageNumber, pageSize);
-            Page<Post> page = getPostsFunction.apply(pageable);
+        do {
+            page = getPostsFunction.apply(pageable);
             concurrencyProcessPostsPages(page.getContent(), processFunction, batchSize);
-        }
+            pageNumber++;
+            pageable = PageRequest.of(pageNumber, pageSize);
+        } while (!page.isLast());
     }
 
     private void concurrencyProcessPostsPages(
