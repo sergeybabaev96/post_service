@@ -8,6 +8,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 import java.time.LocalDateTime;
 
 @Data
@@ -23,6 +25,7 @@ public class PostUpdateDto {
             requiredMode = Schema.RequiredMode.NOT_REQUIRED
     )
     private String content;
+    private List<Long> hashtagIds;
 
     @FutureOrPresent(message = "Дата запланированной публикации не может быть меньше текущей")
     private LocalDateTime scheduledAt;
