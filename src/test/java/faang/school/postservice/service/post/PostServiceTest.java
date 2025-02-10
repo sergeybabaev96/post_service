@@ -14,6 +14,7 @@ import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.mapper.PostMapperImpl;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.service.HashtagService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -77,6 +78,7 @@ public class PostServiceTest {
         postService = new PostService(
                 userServiceClient,
                 projectServiceClient,
+                hashtagService,
                 postRepository,
                 postMapper,
                 userContext,
