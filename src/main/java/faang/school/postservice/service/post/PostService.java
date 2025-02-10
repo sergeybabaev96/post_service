@@ -1,8 +1,9 @@
-package faang.school.postservice.service;
+package faang.school.postservice.service.post;
 
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
+import faang.school.postservice.config.props.PostProperties;
 import faang.school.postservice.dto.post.PostCreateDto;
 import faang.school.postservice.dto.post.PostOwnerType;
 import faang.school.postservice.dto.post.PostReadDto;
@@ -13,15 +14,19 @@ import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Hashtag;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.service.HashtagService;
+import faang.school.postservice.service.PaginationService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-
 import java.util.List;
+import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +39,9 @@ public class PostService {
     private final PostMapper postMapper;
     private final UserContext userContext;
     private final PostSchedulerService postSchedulerService;
-
+    private final ModerationDictionary moderationDictionary;
+    private final PaginationService paginationService;
+    private final PostProperties postProperties;
     @Value("${post.schedule.batch-size}")
     private int batchSize;
 
@@ -122,11 +129,53 @@ public class PostService {
                 .toList();
     }
 
+    public void moderatePosts() {
+        concurrencyProcessPosts(
+                postRepository::findAllNotVerified,
+                this::moderatePostsBatch,
+                postProperties.getPageSize(),
+                postProperties.getBatchSize()
+        );
+    }
+
+    private Stream<Post> moderatePostsBatch(List<Post> posts) {
+        LocalDateTime verifiedDate = LocalDateTime.now();
+        return posts.parallelStream()
+                .filter(post -> moderationDictionary.isAllowed(post.getContent()))
+                .peek(post -> {
+                    post.setVerified(true);
+                    post.setVerifiedDate(verifiedDate);
+                });
+    }
+
+    private void concurrencyProcessPosts(
+            Function<Pageable, Page<Post>> getPostsFunction,
+            Function<List<Post>, Stream<Post>> processFunction,
+            int pageSize,
+            int batchSize
+    ) {
+        Pageable pageable = PageRequest.of(0, pageSize);
+        Page<Post> page;
+        int pageNumber = 0;
+
+        do {
+            page = getPostsFunction.apply(pageable);
+            List<Post> postsToSave = paginationService.processInParallel(
+                    page.getContent(),
+                    batchSize,
+                    processFunction
+            );
+            postRepository.saveAll(postsToSave);
+            pageNumber++;
+            pageable = PageRequest.of(pageNumber, pageSize);
+        } while (!page.isLast());
+    }
+
     private List<PostReadDto> getAllPostByCondition(
             PostOwnerType ownerType,
             Supplier<List<Post>> authorSupplier,
             Supplier<List<Post>> projetcSupplier
-            ) {
+    ) {
         List<Post> postStream = switch (ownerType) {
             case AUTHOR:
                 yield authorSupplier.get();

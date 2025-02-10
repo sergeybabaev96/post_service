@@ -51,6 +51,9 @@ public interface PostRepository extends CrudRepository<Post, Long> {
     """)
     List<Post> findAllPublishedByProjectId(long projectId);
 
+    @Query("SELECT p FROM Post p WHERE p.verifiedDate is NULL")
+    Page<Post> findAllNotVerified(Pageable pageable);
+
     @Query("SELECT p FROM Post p JOIN p.hashtags h WHERE h.id = :hashtagId")
     List<Post> findAllByHashtagId(long hashtagId);
 

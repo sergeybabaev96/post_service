@@ -34,6 +34,16 @@ logging:
   level:
     root: info
 
+post:
+  moderation:
+    batch-size: 10
+    page-size: 20
+    cronPeriod: "0 0 0 * * *"
+
+thread:
+  pool:
+    size: 10
+
 user-service:
   host: localhost
   port: 8080
