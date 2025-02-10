@@ -26,29 +26,13 @@ public class S3ServiceImpl implements S3Service {
         ObjectMetadata objectMetadata = new ObjectMetadata();
         objectMetadata.setContentLength(fileSize);
         objectMetadata.setContentType(contentType);
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(byteArray);
 
-        try {
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(byteArray)) {
             PutObjectRequest putObjectRequest = new PutObjectRequest(
                     awsProperties.getBucketName(), key, inputStream, objectMetadata);
             s3Client.putObject(putObjectRequest);
         } catch (Exception e) {
-            throw new UploadFileException("Error uploading file:" + e);
+            throw new RuntimeException("Error uploading file: ", e);
         }
-    }
-
-    @Override
-    public ByteArrayOutputStream resizeImage(MultipartFile file, int targetSize) {
-        ByteArrayOutputStream thumbnailOutputStream = new ByteArrayOutputStream();
-        try {
-            Thumbnails.of(file.getInputStream())
-                    .size(targetSize, targetSize)
-                    .keepAspectRatio(true)
-                    .toOutputStream(thumbnailOutputStream);
-        } catch (IOException e) {
-            log.error("Failed to resize image", e);
-            throw new UploadFileException("Failed to resize image");
-        }
-       return thumbnailOutputStream;
     }
 }

@@ -82,8 +82,17 @@ public class CommentController {
     }
 
     @PostMapping("/{commentId}/image")
-    public void uploadImage(@Valid @Positive @PathVariable Long commentId,
-                            @NotEmpty @RequestParam("file") MultipartFile file) {
+    @Operation(summary = "Upload an image for a comment", description = "Uploads an image for a specific comment")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Image uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file or comment ID provided"),
+            @ApiResponse(responseCode = "404", description = "Comment not found")
+    })
+    public void uploadImage(
+            @Parameter(description = "ID of the comment to upload the image for", required = true)
+            @Valid @Positive @PathVariable Long commentId,
+            @Parameter(description = "Image file to upload", required = true)
+            @NotEmpty @RequestParam("file") MultipartFile file) {
         commentService.uploadImage(commentId, file);
     }
 }

@@ -12,13 +12,13 @@ import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.exception.UploadFileException;
 import faang.school.postservice.mapper.comment.CommentMapperImpl;
 import faang.school.postservice.mapper.comment.LikeMapperImpl;
-import faang.school.postservice.mapper.comment.PostMapperImpl;
+import faang.school.postservice.mapper.PostMapperImpl;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.service.image.S3Service;
+import faang.school.postservice.service.image.ImageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,8 +30,6 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
-import static faang.school.postservice.service.comment.CommentServiceImpl.LARGE_IMAGE_SIZE;
-import static faang.school.postservice.service.comment.CommentServiceImpl.SMALL_IMAGE_SIZE;
 import static faang.school.postservice.service.comment.TestData.createLike;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -45,7 +43,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -56,8 +53,8 @@ import static faang.school.postservice.service.comment.TestData.createUserDto;
 
 @ExtendWith(MockitoExtension.class)
 public class CommentServiceTest {
-    public static long MILLISECOND_IN_SEC = 1000;
-    public static long SLEEP_TIME_SEC = 1;
+    private static long MILLISECOND_IN_SEC = 1000;
+    private static long SLEEP_TIME_SEC = 1;
 
     @Mock
     private UserServiceClient userServiceClient;
@@ -81,7 +78,7 @@ public class CommentServiceTest {
     private UserContext userContext;
 
     @Mock
-    private S3Service s3Service;
+    private ImageService imageService;
 
     @InjectMocks
     private CommentServiceImpl commentService;
@@ -267,31 +264,20 @@ public class CommentServiceTest {
         long fileSize = 1024L;
         long bigFileSize = 960000L;
         String fileName = "image001.jpg";
-        String contentType = "image/jpeg";
-        byte[] byteArray = new byte[(int) fileSize];
-        byte[] largeByteArray = new byte[(int) bigFileSize];
 
         when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
         MultipartFile mockFile = mock(MultipartFile.class);
         when(mockFile.isEmpty()).thenReturn(false);
         when(mockFile.getOriginalFilename()).thenReturn(fileName);
-        when(mockFile.getContentType()).thenReturn(contentType);
-
-        ByteArrayOutputStream smallOutputStream = new ByteArrayOutputStream(byteArray.length);
-        ByteArrayOutputStream largeOutputStream = new ByteArrayOutputStream(largeByteArray.length);
-        when(s3Service.resizeImage(any(MultipartFile.class), eq(SMALL_IMAGE_SIZE)))
-                .thenReturn(smallOutputStream);
-        when(s3Service.resizeImage(any(MultipartFile.class), eq(LARGE_IMAGE_SIZE)))
-                .thenReturn(largeOutputStream);
 
         commentService.uploadImage(commentId, mockFile);
 
         verify(commentRepository, times(1)).findById(commentId);
         verify(commentRepository, times(1)).save(any(Comment.class));
-        verify(s3Service, times(1)).resizeImage(mockFile, SMALL_IMAGE_SIZE);
-        verify(s3Service, times(1)).resizeImage(mockFile, LARGE_IMAGE_SIZE);
-        verify(s3Service, times(2)).uploadFile(anyLong(), eq(contentType), anyString(),
-                any(byte[].class));
+        verify(imageService, times(1)).resizeAndUploadImage(anyString(), eq(true),
+                any(MultipartFile.class));
+        verify(imageService, times(1)).resizeAndUploadImage(anyString(), eq(false),
+                any(MultipartFile.class));
     }
 
     @Test
@@ -306,7 +292,6 @@ public class CommentServiceTest {
     @Test
     void testUploadFileIfFileIsEmptyFailed() {
         MultipartFile mockFile = mock(MultipartFile.class);
-        when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
         when(mockFile.isEmpty()).thenReturn(true);
         UploadFileException exception = assertThrows(UploadFileException.class,
                 () -> commentService.uploadImage(commentId, mockFile));

@@ -15,14 +15,13 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.service.image.S3Service;
+import faang.school.postservice.service.image.ImageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayOutputStream;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
@@ -31,14 +30,12 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 public class CommentServiceImpl implements CommentService {
-    public static final int SMALL_IMAGE_SIZE = 170;
-    public static final int LARGE_IMAGE_SIZE = 1080;
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserServiceClient userServiceClient;
     private final CommentMapper commentMapper;
     private final UserContext userContext;
-    private final S3Service s3Service;
+    private final ImageService imageService;
 
     @Override
     public CommentResponseDto createComment(CommentRequestDto commentDto) {
@@ -79,10 +76,10 @@ public class CommentServiceImpl implements CommentService {
     @Transactional
     @Override
     public void uploadImage(Long commentId, MultipartFile file) {
-        Comment foundComment = getById(commentId);
         if (file.isEmpty()) {
             throw new UploadFileException("File is empty");
         }
+        Comment foundComment = getById(commentId);
         String originalFileName = file.getOriginalFilename();
         String uniqueId = UUID.randomUUID().toString();
         String smallImageFileId = "small_" + uniqueId + "_" + originalFileName;
@@ -91,13 +88,8 @@ public class CommentServiceImpl implements CommentService {
         foundComment.setLargeImageFileKey(largeImageFileId);
         commentRepository.save(foundComment);
 
-        String contentType = file.getContentType();
-        ByteArrayOutputStream byteArrayOutputStream = s3Service.resizeImage(file, SMALL_IMAGE_SIZE);
-        s3Service.uploadFile(byteArrayOutputStream.size(), contentType, smallImageFileId,
-                byteArrayOutputStream.toByteArray());
-        ByteArrayOutputStream byteArrayOutputStreamLarge = s3Service.resizeImage(file, LARGE_IMAGE_SIZE);
-        s3Service.uploadFile(byteArrayOutputStreamLarge.size(), contentType, largeImageFileId,
-                byteArrayOutputStreamLarge.toByteArray());
+        imageService.resizeAndUploadImage(smallImageFileId, true, file);
+        imageService.resizeAndUploadImage(largeImageFileId, false, file);
     }
 
     private Comment getById(Long id) {
