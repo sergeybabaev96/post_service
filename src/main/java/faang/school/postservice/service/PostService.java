@@ -4,8 +4,8 @@ import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.post.PostCreateDto;
-import faang.school.postservice.dto.post.PostReadDto;
 import faang.school.postservice.dto.post.PostOwnerType;
+import faang.school.postservice.dto.post.PostReadDto;
 import faang.school.postservice.dto.post.PostUpdateDto;
 import faang.school.postservice.exception.BusinessException;
 import faang.school.postservice.exception.EntityNotFoundException;
@@ -85,11 +85,15 @@ public class PostService {
                 .orElseThrow(() -> new EntityNotFoundException("Пост с ID " + id + " не найден"));
     }
 
+    public void checkGrammar() {
+
+    }
+
     private List<PostReadDto> getAllPostByCondition(
             PostOwnerType ownerType,
             Supplier<List<Post>> authorSupplier,
             Supplier<List<Post>> projetcSupplier
-            ) {
+    ) {
         List<Post> postStream = switch (ownerType) {
             case AUTHOR:
                 yield authorSupplier.get();
