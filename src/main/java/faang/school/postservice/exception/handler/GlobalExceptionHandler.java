@@ -3,7 +3,6 @@ package faang.school.postservice.exception.handler;
 import faang.school.postservice.exception.BusinessException;
 import jakarta.persistence.EntityNotFoundException;
 import faang.school.postservice.exception.DataValidationException;
-import faang.school.postservice.exception.EntityNotFound;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.http.ResponseEntity;

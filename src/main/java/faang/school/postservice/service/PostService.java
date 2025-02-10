@@ -4,7 +4,6 @@ import faang.school.postservice.dto.filter.PostFilterDto;
 import faang.school.postservice.dto.post.CreatePostDto;
 import faang.school.postservice.dto.post.ReadPostDto;
 import faang.school.postservice.dto.post.UpdatePostDto;
-import faang.school.postservice.exception.EntityNotFound;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
@@ -43,7 +42,7 @@ public class PostService {
     public ReadPostDto getPost(long postId) {
         Post post = findById(postId);
         if (post.isDeleted()) {
-            throw new EntityNotFound(format("Пост с id=%d не найден", postId));
+            throw new EntityNotFoundException(format("Пост с id=%d не найден", postId));
         }
         return postMapper.toDto(post);
     }
@@ -61,8 +60,7 @@ public class PostService {
 
     @Transactional
     public ReadPostDto delete(long id) {
-        Post post = postRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFound(format("Пост с id=%d не найден", id)));
+        Post post = findById(id);
         postValidator.validateNotDeleted(post);
         post.setDeleted(true);
         Post updatedPost = postRepository.save(post);

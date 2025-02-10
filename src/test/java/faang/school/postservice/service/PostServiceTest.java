@@ -5,7 +5,6 @@ import faang.school.postservice.dto.post.CreatePostDto;
 import faang.school.postservice.dto.post.ReadPostDto;
 import faang.school.postservice.dto.post.UpdatePostDto;
 import faang.school.postservice.exception.DataValidationException;
-import faang.school.postservice.exception.EntityNotFound;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
@@ -202,7 +201,7 @@ public class PostServiceTest {
         post.setDeleted(true);
         when(postRepository.findById(ID)).thenReturn(Optional.of(post));
 
-        Exception exception = assertThrows(EntityNotFound.class, () -> postService.getPost(ID));
+        Exception exception = assertThrows(EntityNotFoundException.class, () -> postService.getPost(ID));
 
         assertEquals(String.format("Пост с id=%d не найден", ID), exception.getMessage());
         verify(postRepository).findById(ID);
