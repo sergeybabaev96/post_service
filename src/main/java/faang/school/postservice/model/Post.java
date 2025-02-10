@@ -76,7 +76,7 @@ public class Post {
     @Column(name = "verified")
     private boolean verified;
 
-    @Column(name = "verified_date")
+    @Column(name = "verified_at")
     private LocalDateTime verifiedDate;
 
     @CreationTimestamp

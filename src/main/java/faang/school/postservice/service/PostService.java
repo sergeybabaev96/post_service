@@ -173,6 +173,7 @@ public class PostService {
         Set<String> moderationSet = moderationDictionary.getModerationSet();
         int page = 0;
         int pageSize = 100;
+
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         Page<Post> postPage;
         do {

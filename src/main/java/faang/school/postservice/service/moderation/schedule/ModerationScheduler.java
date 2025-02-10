@@ -11,7 +11,7 @@ public class ModerationScheduler {
 
     private final PostService postService;
 
-    @Scheduled(cron = "0/5 * * * * *")
+    @Scheduled(cron = "0 0 0 * * *")
     public void moderationPosts() {
         postService.moderationPosts();
     }
