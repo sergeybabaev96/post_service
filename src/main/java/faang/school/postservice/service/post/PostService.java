@@ -15,6 +15,7 @@ import faang.school.postservice.model.Hashtag;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.HashtagService;
+import faang.school.postservice.service.PaginationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,12 +23,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +38,7 @@ public class PostService {
     private final PostMapper postMapper;
     private final UserContext userContext;
     private final ModerationDictionary moderationDictionary;
-    private final ExecutorService executorService;
+    private final PaginationService paginationService;
     private final PostProperties postProperties;
 
     public PostReadDto createPostDraft(PostCreateDto dto) {
@@ -135,20 +134,19 @@ public class PostService {
         );
     }
 
-    private List<Post> moderatePostsBatch(List<Post> posts) {
+    private Stream<Post> moderatePostsBatch(List<Post> posts) {
         LocalDateTime verifiedDate = LocalDateTime.now();
-        return posts.stream()
+        return posts.parallelStream()
                 .filter(post -> moderationDictionary.isAllowed(post.getContent()))
                 .peek(post -> {
                     post.setVerified(true);
                     post.setVerifiedDate(verifiedDate);
-                })
-                .toList();
+                });
     }
 
     private void concurrencyProcessPosts(
             Function<Pageable, Page<Post>> getPostsFunction,
-            Function<List<Post>, List<Post>> processFunction,
+            Function<List<Post>, Stream<Post>> processFunction,
             int pageSize,
             int batchSize
     ) {
@@ -158,34 +156,15 @@ public class PostService {
 
         do {
             page = getPostsFunction.apply(pageable);
-            concurrencyProcessPostsPages(page.getContent(), processFunction, batchSize);
+            List<Post> postsToSave = paginationService.processInParallel(
+                    page.getContent(),
+                    batchSize,
+                    processFunction
+            );
+            postRepository.saveAll(postsToSave);
             pageNumber++;
             pageable = PageRequest.of(pageNumber, pageSize);
         } while (!page.isLast());
-    }
-
-    private void concurrencyProcessPostsPages(
-            List<Post> posts,
-            Function<List<Post>, List<Post>> processFunction,
-            int batchSize
-    ) {
-        int notVerifiedPostsSize = posts.size();
-        List<CompletableFuture<List<Post>>> futuresList = new ArrayList<>();
-
-        for (int i = 0; i < notVerifiedPostsSize; i += batchSize) {
-            int end = Math.min(i + batchSize, notVerifiedPostsSize);
-            List<Post> partition = posts.subList(i, end);
-            futuresList.add(CompletableFuture.supplyAsync(
-                    () -> processFunction.apply(partition),
-                    executorService
-            ));
-        }
-
-        List<Post> postsToSave = futuresList
-                .stream()
-                .flatMap(future -> future.join().stream())
-                .toList();
-        postRepository.saveAll(postsToSave);
     }
 
     private List<PostReadDto> getAllPostByCondition(

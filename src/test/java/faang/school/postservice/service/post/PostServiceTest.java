@@ -15,11 +15,14 @@ import faang.school.postservice.mapper.PostMapperImpl;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.HashtagService;
+import faang.school.postservice.service.PaginationService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,8 +33,6 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -54,14 +55,15 @@ public class PostServiceTest {
     private PostRepository postRepository;
     @Mock
     private UserContext userContext;
-    private final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    @Spy
+    private PaginationService paginationService;
     @Mock
     private ModerationDictionary moderationDictionary;
     @Spy
     private PostMapper postMapper = new PostMapperImpl();
     @Spy
     private PostProperties postProperties;
-
+    @InjectMocks
     private PostService postService;
 
     private Post post;
@@ -75,17 +77,6 @@ public class PostServiceTest {
                 .content("content")
                 .id(1L)
                 .build();
-        postService = new PostService(
-                userServiceClient,
-                projectServiceClient,
-                hashtagService,
-                postRepository,
-                postMapper,
-                userContext,
-                moderationDictionary,
-                executorService,
-                postProperties
-        );
     }
 
     @Test
@@ -256,7 +247,7 @@ public class PostServiceTest {
         verify(postRepository, atLeastOnce()).findAllPublishedByProjectId(projectId);
     }
 
-    @Test
+    @RepeatedTest(5)
     void testModeratePostsSuccessCase() {
         int pageSize = 2;
         postProperties.setPageSize(pageSize);
