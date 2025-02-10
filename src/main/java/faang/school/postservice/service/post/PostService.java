@@ -99,7 +99,9 @@ public class PostService {
     public void moderatePosts() {
         concurrencyProcessPosts(
                 postRepository::findAllNotVerified,
-                this::moderatePostsBatch
+                this::moderatePostsBatch,
+                postProperties.getPageSize(),
+                postProperties.getBatchSize()
         );
     }
 
@@ -116,9 +118,10 @@ public class PostService {
 
     private void concurrencyProcessPosts(
             Function<Pageable, Page<Post>> getPostsFunction,
-            Function<List<Post>, List<Post>> processFunction
+            Function<List<Post>, List<Post>> processFunction,
+            int pageSize,
+            int batchSize
     ) {
-        int pageSize = postProperties.getPageSize();
         Pageable firstPageable = PageRequest.of(0, pageSize);
         Page<Post> firstPage = getPostsFunction.apply(firstPageable);
         int totalPages = firstPage.getTotalPages();
@@ -126,16 +129,16 @@ public class PostService {
         for (int pageNumber = 0; pageNumber < totalPages; pageNumber++) {
             Pageable pageable = PageRequest.of(pageNumber, pageSize);
             Page<Post> page = getPostsFunction.apply(pageable);
-            concurrencyProcessPostsPages(page.getContent(), processFunction);
+            concurrencyProcessPostsPages(page.getContent(), processFunction, batchSize);
         }
     }
 
     private void concurrencyProcessPostsPages(
             List<Post> posts,
-            Function<List<Post>, List<Post>> processFunction
+            Function<List<Post>, List<Post>> processFunction,
+            int batchSize
     ) {
         int notVerifiedPostsSize = posts.size();
-        int batchSize = postProperties.getBatchSize();
         List<CompletableFuture<List<Post>>> futuresList = new ArrayList<>();
 
         for (int i = 0; i < notVerifiedPostsSize; i += batchSize) {
