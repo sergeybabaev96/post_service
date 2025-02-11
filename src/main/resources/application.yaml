@@ -2,8 +2,8 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/postgres
-    username: user
-    password: password
+    username: postgres
+    password: root
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
@@ -58,3 +58,10 @@ cron:
 comment:
   check:
     size: 100
+    
+post-service:
+  publish:
+    scheduled:
+      cron: "0 * * * * *"
+    batch-size: 1000
+    thread-amount: 10

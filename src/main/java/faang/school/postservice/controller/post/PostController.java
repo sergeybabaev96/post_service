@@ -113,6 +113,7 @@ public class PostController {
     @GetMapping("/published-posts-by-user/{user-id}")
     public ResponseEntity<List<ResponsePostDto>> getPublishedPostsByUser(
             @PathVariable("user-id") final Long userId) {
+
         final List<Post> notPublishedPosts = postService.getPublishedPostsByUser(userId);
         List<ResponsePostDto> responsePostDtos = postMapper.toDto(notPublishedPosts);
 
