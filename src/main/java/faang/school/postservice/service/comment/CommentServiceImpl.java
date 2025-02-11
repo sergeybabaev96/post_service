@@ -9,16 +9,22 @@ import faang.school.postservice.dto.comment.CommentUpdateDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.CommentValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
+import faang.school.postservice.exception.UploadFileException;
 import faang.school.postservice.mapper.comment.CommentMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.service.image.ImageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -29,6 +35,7 @@ public class CommentServiceImpl implements CommentService {
     private final UserServiceClient userServiceClient;
     private final CommentMapper commentMapper;
     private final UserContext userContext;
+    private final ImageService imageService;
 
     @Override
     public CommentResponseDto createComment(CommentRequestDto commentDto) {
@@ -64,6 +71,25 @@ public class CommentServiceImpl implements CommentService {
     public void deleteComment(long commentId) {
         getById(commentId);
         commentRepository.deleteById(commentId);
+    }
+
+    @Transactional
+    @Override
+    public void uploadImage(Long commentId, MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new UploadFileException("File is empty");
+        }
+        Comment foundComment = getById(commentId);
+        String originalFileName = file.getOriginalFilename();
+        String uniqueId = UUID.randomUUID().toString();
+        String smallImageFileId = "small_" + uniqueId + "_" + originalFileName;
+        String largeImageFileId = "large_" + uniqueId + "_" + originalFileName;
+        foundComment.setSmallImageFileKey(smallImageFileId);
+        foundComment.setLargeImageFileKey(largeImageFileId);
+        commentRepository.save(foundComment);
+
+        imageService.resizeAndUploadImage(smallImageFileId, true, file);
+        imageService.resizeAndUploadImage(largeImageFileId, false, file);
     }
 
     private Comment getById(Long id) {

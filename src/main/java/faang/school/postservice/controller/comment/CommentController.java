@@ -11,7 +11,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +22,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -75,5 +79,20 @@ public class CommentController {
     })
     public List<CommentResponseDto> getCommentsByFilters(@Valid CommentFiltersDto commentFiltersDto) {
         return commentService.getComments(commentFiltersDto);
+    }
+
+    @PostMapping("/{commentId}/image")
+    @Operation(summary = "Upload an image for a comment", description = "Uploads an image for a specific comment")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Image uploaded successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid file or comment ID provided"),
+            @ApiResponse(responseCode = "404", description = "Comment not found")
+    })
+    public void uploadImage(
+            @Parameter(description = "ID of the comment to upload the image for", required = true)
+            @Valid @Positive @PathVariable Long commentId,
+            @Parameter(description = "Image file to upload", required = true)
+            @NotEmpty @RequestParam("file") MultipartFile file) {
+        commentService.uploadImage(commentId, file);
     }
 }
