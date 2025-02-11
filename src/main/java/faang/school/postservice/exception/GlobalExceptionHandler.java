@@ -1,6 +1,12 @@
 package faang.school.postservice.exception;
 
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -15,69 +21,40 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    public static final String ERROR_MESSAGE = "error";
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ApiError handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
 
-        log.warn("Validation failed: {}", ex.getMessage(), ex);
+        List<ApiError.FieldErrorDetail> validationErrors = ex.getBindingResult().getFieldErrors().stream()
+                .map(fieldError -> new ApiError.FieldErrorDetail(fieldError.getField(), fieldError.getDefaultMessage()))
+                .collect(Collectors.toList());
 
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error -> {
-            log.warn("Invalid field: {} - {}", error.getField(), error.getDefaultMessage());
-            errors.put(error.getField(), error.getDefaultMessage());
-        });
-
-        return errors;
+        return new ApiError("Validation failed", validationErrors);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> handleEntityNotFoundException(EntityNotFoundException ex) {
+    public ApiError handleEntityNotFoundException(EntityNotFoundException ex) {
 
         log.warn("Entity not found: {}", ex.getMessage(), ex);
-        return Collections.singletonMap(ERROR_MESSAGE, ex.getMessage());
+        return new ApiError(ex.getMessage(), Collections.emptyList());
     }
 
     @ExceptionHandler(DataValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleDataValidationException(DataValidationException ex) {
-
+    public ApiError handleDataValidationException(DataValidationException ex) {
         log.warn("Data validation error: {}", ex.getMessage(), ex);
-        return Map.of(ERROR_MESSAGE, ex.getMessage());
+        return new ApiError(ex.getMessage(), Collections.emptyList());
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleIllegalArgumentException(IllegalArgumentException ex) {
 
-        log.warn("Illegal argument: {}", ex.getMessage(), ex);
-        return Map.of(ERROR_MESSAGE, ex.getMessage());
-    }
 
-    @ExceptionHandler(ConstraintViolationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String> handleConstraintViolationException(ConstraintViolationException ex) {
 
-        log.warn("Constraint violation exception: {}", ex.getMessage(), ex);
-
-        Map<String, String> errors = new HashMap<>();
-        for (ConstraintViolation<?> violation : ex.getConstraintViolations()) {
-            errors.put(violation.getPropertyPath().toString(), violation.getMessage());
-        }
-        return errors;
-    }
-
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Map<String, String> handleGenericException(Exception ex) {
-
-        log.error("Unexpected error occurred: {}", ex.getMessage(), ex);
-        return Map.of(ERROR_MESSAGE, "Internal server error. Please try again later.");
-    }
 }
