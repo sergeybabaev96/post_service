@@ -36,6 +36,8 @@ public class PostService {
     private final RewriterService rewriterService;
     private final ObjectFactory<ModerationDictionary> moderationDictionaryObjectFactory;
 
+    private final int MODERATIONS_PER_PAGE = 100;
+
     @Transactional
     public PostResultResponse createPost(PostCreatingRequest postCreatingDto) {
         Post post = Post.builder()
@@ -172,12 +174,11 @@ public class PostService {
         ModerationDictionary moderationDictionary = moderationDictionaryObjectFactory.getObject();
         Set<String> moderationSet = moderationDictionary.getModerationSet();
         int page = 0;
-        int pageSize = 100;
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
         Page<Post> postPage;
         do {
-            Pageable pageable = PageRequest.of(page, pageSize);
+            Pageable pageable = PageRequest.of(page, MODERATIONS_PER_PAGE);
             postPage = postRepository.findUnverifiedPosts(pageable);
             List<Post> content = postPage.getContent();
 
@@ -202,7 +203,7 @@ public class PostService {
                 .anyMatch(moderationWord -> content.contains(moderationWord));
 
         post.setVerified(!containsObsceneWord);
-        post.setVerifiedDate(LocalDateTime.now());
+        post.setVerifiedAt(LocalDateTime.now());
         postRepository.save(post);
         log.info("moderated post with id: {}. Verified: {}", post.getId(), post.isVerified());
     }
