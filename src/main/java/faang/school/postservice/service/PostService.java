@@ -193,20 +193,4 @@ public class PostService {
         postRepository.save(post);
         log.info("Rewriting post with id : {}", post.getId());
     }
-
-    private List<List<Post>> divideListIntoGroups(List<Post> items, int groupSize) {
-        List<List<Post>> groups = new ArrayList<>();
-        List<Post> currentGroup = new ArrayList<>();
-        for (Post item : items) {
-            currentGroup.add(item);
-            if (currentGroup.size() >= groupSize) {
-                groups.add(currentGroup);
-                currentGroup = new ArrayList<>();
-            }
-        }
-        if (!currentGroup.isEmpty()) {
-            groups.add(currentGroup);
-        }
-        return groups;
-    }
 }

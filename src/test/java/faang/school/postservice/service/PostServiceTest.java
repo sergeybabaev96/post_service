@@ -1,4 +1,4 @@
-package faang.school.postservice;
+package faang.school.postservice.service;
 
 import faang.school.postservice.dto.posts.PostCreatingRequest;
 import faang.school.postservice.dto.posts.PostResultResponse;
@@ -6,7 +6,6 @@ import faang.school.postservice.dto.posts.PostUpdatingDto;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.service.PostService;
 import faang.school.postservice.utils.PostUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,11 +18,10 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -76,7 +74,7 @@ public class PostServiceTest {
 
         PostResultResponse result = postService.createPost(postCreatingRequest);
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(result, postResultResponse);
+        assertEquals(result, postResultResponse);
         verify(postUtil, times(1)).validateCreator(postCreatingRequest.authorId(), postCreatingRequest.projectId());
         verify(postRepository, times(1)).save(any(Post.class));
     }
@@ -87,7 +85,7 @@ public class PostServiceTest {
 
         PostResultResponse result = postService.publishPost(post.getId());
 
-        Assertions.assertEquals(postResultResponse, result);
+        assertEquals(postResultResponse, result);
     }
 
     @Test
@@ -130,7 +128,7 @@ public class PostServiceTest {
 
         PostResultResponse result = postService.updatePost(postUpdatingDto);
 
-        Assertions.assertEquals(result, postResultResponse);
+        assertEquals(result, postResultResponse);
     }
 
     @Test
@@ -168,7 +166,7 @@ public class PostServiceTest {
 
         PostResultResponse result = postService.softDelete(postId);
 
-        Assertions.assertEquals(result, postResultResponse);
+        assertEquals(result, postResultResponse);
     }
 
     @Test
