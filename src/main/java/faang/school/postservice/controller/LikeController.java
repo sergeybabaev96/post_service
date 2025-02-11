@@ -1,38 +1,45 @@
 package faang.school.postservice.controller;
 
-import faang.school.postservice.dto.like.LikeCommentDto;
-import faang.school.postservice.dto.like.LikePostDto;
+import faang.school.postservice.dto.like.LikeDto;
 import faang.school.postservice.service.LikeService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
 @RestController
+@RequestMapping("/likes")
 public class LikeController {
-    private static final String USER_PATH_POST = "/user/post";
-    private static final String USER_PATH_COMMENT = "/user/post/comment";
-    private static final String REMOVE = "/remove/{likeId}";
 
     private final LikeService likeService;
 
-    @PostMapping(USER_PATH_POST)
-    public LikePostDto userLikeThePost(@Valid @RequestBody LikePostDto dto) {
+    @PostMapping("/post")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LikeDto userLikeThePost(@Valid @RequestBody LikeDto dto) {
         return likeService.userLikeThePost(dto);
     }
 
-    @PostMapping(USER_PATH_COMMENT)
-    public LikeCommentDto userLikeTheComment(@Valid @RequestBody LikeCommentDto dto) {
+    @DeleteMapping("/post/{likeId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeLikeFromPost(@PathVariable @NotNull @Positive Long likeId,
+                                   @Valid @RequestBody LikeDto dto) {
+        likeService.removeLikePost(likeId, dto);
+    }
+
+    @PostMapping("/post/comment")
+    @ResponseStatus(HttpStatus.CREATED)
+    public LikeDto userLikeTheComment(@Valid @RequestBody LikeDto dto) {
         return likeService.userLikeTheComment(dto);
     }
 
-    @DeleteMapping(USER_PATH_COMMENT + REMOVE)
-    public LikeCommentDto removeLikeFromComment(@PathVariable Long likeId, @Valid @RequestBody LikeCommentDto dto) {
-        return likeService.removeLikeComment(likeId, dto);
+    @DeleteMapping("/post/comment/{likeId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void removeLikeFromComment(@PathVariable @NotNull @Positive Long likeId,
+                                      @Valid @RequestBody LikeDto dto) {
+        likeService.removeLikeComment(likeId, dto);
     }
 
-    @DeleteMapping(USER_PATH_POST + REMOVE)
-    public LikePostDto removeLikeFromPost(@PathVariable Long likeId, @Valid @RequestBody LikePostDto dto) {
-        return likeService.removeLikePost(likeId, dto);
-    }
 }

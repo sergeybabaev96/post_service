@@ -1,14 +1,13 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.dto.like.LikeCommentDto;
-import faang.school.postservice.dto.like.LikePostDto;
+import faang.school.postservice.config.context.UserContext;
+import faang.school.postservice.dto.like.LikeDto;
+import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.BusinessException;
-import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.mapper.like.LikeMapper;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.repository.LikeRepository;
-import faang.school.postservice.validator.like.LikeValidator;
-import faang.school.postservice.validator.like.UserValidator;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +21,9 @@ public class LikeService {
     private final LikeRepository likeRepository;
     private final PostService postService;
     private final CommentService commentService;
-    private final LikeValidator likeValidator;
-    private final UserValidator userValidator;
+    private final UserContext userContext;
+    private final UserService userService;
+
 
     public Like findById(@NotNull Long likeId) {
         return likeRepository.findById(likeId)
@@ -32,71 +32,67 @@ public class LikeService {
                 );
     }
 
-    public LikePostDto userLikeThePost(LikePostDto dto) {
-        likeValidator.validateLikePost(dto);
-        userValidator.validateUser(dto.userId());
-
-        return likeThePost(dto);
-    }
-
-    public LikeCommentDto userLikeTheComment(LikeCommentDto dto) {
-        likeValidator.validateLikeComment(dto);
-        userValidator.validateUser(dto.userId());
-
-        return likeTheComment(dto);
-    }
-
     @Transactional
-    public LikePostDto removeLikePost(Long likeId, LikePostDto dto) {
-        likeValidator.validateLikePost(dto);
-        userValidator.validateUser(dto.userId());
+    public LikeDto userLikeThePost(LikeDto dto) {
+        UserDto userDto = userService.getUserByContext();
 
-        if (!likeMapper.toPostDto(findById(likeId)).equals(dto)) {
-            throw new BusinessException("Пользователь не может удалить лайк на этом посту");
-        }
-
-        likeRepository.deleteByPostIdAndUserId(dto.postId(), dto.userId());
-
-        return dto;
-    }
-
-    @Transactional
-    public LikeCommentDto removeLikeComment(Long likeId, LikeCommentDto dto) {
-        likeValidator.validateLikeComment(dto);
-        userValidator.validateUser(dto.userId());
-
-        if (!likeMapper.toCommentDto(findById(likeId)).equals(dto)) {
-            throw new BusinessException("Пользователь не может удалить лайк на этом комментарии");
-        }
-
-        likeRepository.deleteByCommentIdAndUserId(dto.commentId(), dto.userId());
-
-        return dto;
-    }
-
-    private LikePostDto likeThePost(LikePostDto dto) {
         if (likeRepository
-                .findByPostIdAndUserId(dto.postId(), dto.userId())
+                .findByPostIdAndUserId(dto.elementId(), userDto.id())
                 .isPresent()) {
             throw new BusinessException("Под постом у юзера уже стоит лайк");
         }
 
         Like like = likeMapper.toEntity(dto);
-        like.setPost(postService.findById(dto.postId()));
+        like.setUserId(userDto.id());
+        like.setPost(postService.findById(dto.elementId()));
 
         return likeMapper.toPostDto(likeRepository.save(like));
     }
 
-    private LikeCommentDto likeTheComment(LikeCommentDto dto) {
+    @Transactional
+    public LikeDto userLikeTheComment(LikeDto dto) {
+
+        UserDto userDto = userService.getUser(userContext.getUserId());
+
         if (likeRepository
-                .findByCommentIdAndUserId(dto.commentId(), dto.userId())
+                .findByCommentIdAndUserId(dto.elementId(), userDto.id())
                 .isPresent()) {
             throw new BusinessException("Под комментом у юзера уже стоит лайк");
         }
 
         Like like = likeMapper.toEntity(dto);
-        like.setComment(commentService.findById(dto.commentId()));
+        like.setUserId(userDto.id());
+        like.setComment(commentService.getCommentById(dto.elementId()));
 
         return likeMapper.toCommentDto(likeRepository.save(like));
+    }
+
+    @Transactional
+    public void removeLikePost(Long likeId, LikeDto dto) {
+
+        UserDto userDto = userService.getUserByContext();
+
+        if (canUserDeleteLike(likeId, userDto.id())) {
+            throw new BusinessException("Пользователь не может удалить лайк на этом посту " +
+                    "так как id не совпадают");
+        }
+
+        likeRepository.deleteByPostIdAndUserId(dto.elementId(), userDto.id());
+    }
+
+    @Transactional
+    public void removeLikeComment(Long likeId, LikeDto dto) {
+        UserDto userDto = userService.getUserByContext();
+
+        if (canUserDeleteLike(likeId, userDto.id())) {
+            throw new BusinessException("Пользователь не может удалить лайк на этом комментарии " +
+                    "так как id не совпадают");
+        }
+
+        likeRepository.deleteByCommentIdAndUserId(dto.elementId(), userDto.id());
+    }
+
+    private boolean canUserDeleteLike(Long likeId, Long userId) {
+        return !findById(likeId).getUserId().equals(userId);
     }
 }

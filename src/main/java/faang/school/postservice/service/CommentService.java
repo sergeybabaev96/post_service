@@ -4,7 +4,7 @@ import faang.school.postservice.dto.comment.CommentCreateDto;
 import faang.school.postservice.dto.comment.CommentReadDto;
 import faang.school.postservice.dto.comment.CommentUpdateDto;
 import faang.school.postservice.exception.BusinessException;
-import faang.school.postservice.mapper.CommentMapper;
+import faang.school.postservice.mapper.comment.CommentMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
@@ -36,7 +36,7 @@ public class CommentService {
         return commentMapper.toReadDto(commentRepository.save(comment));
     }
 
-    private Comment getCommentById(long commentId) {
+    public Comment getCommentById(long commentId) {
         return commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException(
                         format("Комментарий с id=%d не найден", commentId)));
@@ -66,13 +66,5 @@ public class CommentService {
         if (!userService.isUserExists(authorId)) {
             throw new BusinessException("Невозможно создать комментарий, т.к пользователя не существует");
         }
-    }
-
-    public List<Comment> findAllByPostId(Long postId) {
-        return commentRepository.findAllByPostId(postId);
-    }
-
-    public boolean existsById(Long commentId) {
-        return commentRepository.existsById(commentId);
     }
 }
