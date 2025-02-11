@@ -17,6 +17,7 @@ import faang.school.postservice.mapper.AlbumMapperImpl;
 import faang.school.postservice.model.Album;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.AlbumRepository;
+import faang.school.postservice.service.post.PostService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -66,12 +67,13 @@ public class AlbumServiceTest {
 
     @BeforeEach
     public void init(){
-        album = new Album();
-        album.setId(ALBUM_ID);
-        album.setTitle("Title");
-        album.setDescription("Description");
-        album.setAuthorId(USER_ID);
-        album.setPosts(new ArrayList<>(List.of()));
+        album = Album.builder()
+                .id(ALBUM_ID)
+                .title("Title")
+                .description("Description")
+                .authorId(USER_ID)
+                .posts(new ArrayList<>())
+                .build();
 
         createDto = new AlbumCreateDto();
         createDto.setTitle("Test album");
@@ -210,8 +212,10 @@ public class AlbumServiceTest {
 
     @Test
     void addPostToAlbumShouldAddSuccessfully() {
-        post = new Post();
-        post.setId(POST_ID);
+        post = Post.builder()
+                .id(POST_ID)
+                .build();
+
 
         mockFindUserById(userDto);
         mockFindAlbumById(album);
@@ -226,8 +230,9 @@ public class AlbumServiceTest {
 
     @Test
     void removePostFromAlbumShouldRemoveSuccessfully() {
-        post = new Post();
-        post.setId(POST_ID);
+        post = Post.builder()
+                .id(POST_ID)
+                .build();
         album.setPosts(new ArrayList<>(List.of(post)));
 
         mockFindUserById(userDto);
