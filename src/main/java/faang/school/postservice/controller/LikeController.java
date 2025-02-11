@@ -20,12 +20,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/api/v1/likes")
+@RequestMapping("/api/v1")
 public class LikeController {
 
     private final LikeService likeService;
 
-    @PostMapping("/post")
+    @PostMapping("/likes/post")
     @ResponseStatus(HttpStatus.CREATED)
     public LikePostDtoResponse likeForPost(
             @RequestBody @Validated({LikePostDto.Before.class}) LikePostDto likePostDto) {
@@ -33,7 +33,7 @@ public class LikeController {
         return likeService.createLikeForPost(likePostDto);
     }
 
-    @PostMapping("/comment")
+    @PostMapping("/likes/comment")
     @ResponseStatus(HttpStatus.CREATED)
     public LikeCommentDtoResponse likeForComment(
             @RequestBody @Validated({LikeCommentDto.Before.class}) LikeCommentDto likeCommentDto) {

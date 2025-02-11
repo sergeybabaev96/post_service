@@ -7,7 +7,9 @@ import faang.school.postservice.dto.like.comment.LikeCommentDtoResponse;
 import faang.school.postservice.dto.like.post.LikePostDto;
 import faang.school.postservice.dto.like.post.LikePostDtoResponse;
 import faang.school.postservice.mapper.LikeMapper;
+import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
+import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.LikeRepository;
 import faang.school.postservice.validator.LikeValidator;
 import lombok.RequiredArgsConstructor;
@@ -33,10 +35,13 @@ public class LikeServiceImpl implements LikeService {
         log.info("Creating a user id = {}, like for a post = {}", userId, postId);
 
         likeValidator.validateUserExists(userId);
-        likeValidator.validatePostExists(postId);
+
+        Post post = likeValidator.validateAndGetPost(postId);
         likeValidator.validatePostLiked(postId, userId);
 
         final Like like = likeMapper.toLike(likePostDto);
+        like.setPost(post);
+
         final Like savedLike = likeRepository.save(like);
 
         log.info("UserId = {} successfully liked postId = {} with {} ", userId, postId, savedLike);
@@ -47,14 +52,17 @@ public class LikeServiceImpl implements LikeService {
     public LikeCommentDtoResponse createLikeForComment(LikeCommentDto likeCommentDto) {
 
         final long userId = getUserId(likeCommentDto);
-        final long commentId = likeCommentDto.postId();
+        final long commentId = likeCommentDto.commentId();
         log.info("Creating like with userId = {} like for a commentId = {}", userId, commentId);
 
         likeValidator.validateUserExists(userId);
-        likeValidator.validateCommentExists(commentId);
+
+        Comment comment = likeValidator.validateAndGetComment(commentId);
         likeValidator.validateCommentLiked(commentId, userId);
 
         final Like like = likeMapper.toLike(likeCommentDto);
+        like.setComment(comment);
+
         final Like savedLike = likeRepository.save(like);
 
         log.info("UserId = {} successfully liked commentId = {} with {}", userId, commentId, savedLike);

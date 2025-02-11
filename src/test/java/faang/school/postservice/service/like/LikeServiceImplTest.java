@@ -1,10 +1,12 @@
 package faang.school.postservice.service.like;
 
 import faang.school.postservice.config.context.UserContext;
+import faang.school.postservice.dto.comment.CommentResponseDto;
 import faang.school.postservice.dto.like.comment.LikeCommentDto;
 import faang.school.postservice.dto.like.comment.LikeCommentDtoResponse;
 import faang.school.postservice.dto.like.post.LikePostDto;
 import faang.school.postservice.dto.like.post.LikePostDtoResponse;
+import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.mapper.LikeMapper;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.repository.LikeRepository;
@@ -54,8 +56,12 @@ class LikeServiceImplTest {
         like = new Like();
         like.setId(1L);
         like.setUserId(2L);
-        likePostDtoResponse = new LikePostDtoResponse(1L, 2L, 3L);
-        likeCommentDtoResponse = new LikeCommentDtoResponse(1L, 2L, 3L, 4L);
+
+        PostResponseDto postResponseDto = PostResponseDto.builder().build();
+        likePostDtoResponse = new LikePostDtoResponse(1L, 2L, postResponseDto);
+
+        CommentResponseDto commentResponseDto = CommentResponseDto.builder().build();
+        likeCommentDtoResponse = new LikeCommentDtoResponse(1L, 2L, 3L, commentResponseDto);
     }
 
     @Test
@@ -70,7 +76,7 @@ class LikeServiceImplTest {
         assertNotNull(response);
         assertEquals(likePostDtoResponse, response);
         verify(likeValidator).validateUserExists(likePostDto.userId());
-        verify(likeValidator).validatePostExists(likePostDto.postId());
+        verify(likeValidator).validateAndGetPost(likePostDto.postId());
         verify(likeValidator).validatePostLiked(likePostDto.postId(), likePostDto.userId());
         verify(likeRepository).save(like);
     }
@@ -87,8 +93,8 @@ class LikeServiceImplTest {
         assertNotNull(response);
         assertEquals(likeCommentDtoResponse, response);
         verify(likeValidator).validateUserExists(likeCommentDto.userId());
-        verify(likeValidator).validateCommentExists(likeCommentDto.postId());
-        verify(likeValidator).validateCommentLiked(likeCommentDto.postId(), likeCommentDto.userId());
+        verify(likeValidator).validateAndGetComment(likeCommentDto.commentId());
+        verify(likeValidator).validateCommentLiked(likeCommentDto.commentId(), likeCommentDto.userId());
         verify(likeRepository).save(like);
     }
 

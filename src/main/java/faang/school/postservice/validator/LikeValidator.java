@@ -2,9 +2,11 @@ package faang.school.postservice.validator;
 
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.exception.DataValidationException;
+import faang.school.postservice.model.Comment;
+import faang.school.postservice.model.Post;
+import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.LikeRepository;
-import faang.school.postservice.service.comment.CommentService;
-import faang.school.postservice.service.post.PostService;
+import faang.school.postservice.repository.PostRepository;
 import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +20,8 @@ public class LikeValidator {
 
     private final UserServiceClient userServiceClient;
     private final LikeRepository likeRepository;
-    private final PostService postService;
-    private final CommentService commentService;
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
 
     public void validateUserExists(long userId) {
 
@@ -31,13 +33,14 @@ public class LikeValidator {
         }
     }
 
-    public void validatePostExists(long postId) {
+    public Post validateAndGetPost(long postId) {
 
-        if (postService.isPostNotExist(postId)) {
-            log.error("Post id = {} does not exist", postId);
-            throw new EntityNotFoundException("This post does not exist!");
-        }
+        return postRepository.findById(postId).orElseThrow(() -> {
+            log.error("Post with ID = {} does not exist", postId);
+            return new EntityNotFoundException("Post does not exist!");
+        });
     }
+
 
     public void validatePostLiked(long postId, long userId) {
 
@@ -47,13 +50,14 @@ public class LikeValidator {
         }
     }
 
-    public void validateCommentExists(long commentId) {
+    public Comment validateAndGetComment(long commentId) {
 
-        if (commentService.isCommentNotExist(commentId)) {
-            log.error("CommentId = {} does not exist", commentId);
-            throw new EntityNotFoundException("This comment does not exist!");
-        }
+        return commentRepository.findById(commentId).orElseThrow(() -> {
+            log.error("Comment with ID = {} does not exist", commentId);
+            return new EntityNotFoundException("Comment does not exist!");
+        });
     }
+
 
     public void validateCommentLiked(long commentId, long userId) {
 

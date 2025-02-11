@@ -1,26 +1,55 @@
 package faang.school.postservice.mapper;
 
+import faang.school.postservice.dto.comment.CommentResponseDto;
 import faang.school.postservice.dto.like.comment.LikeCommentDto;
 import faang.school.postservice.dto.like.comment.LikeCommentDtoResponse;
 import faang.school.postservice.dto.like.post.LikePostDto;
 import faang.school.postservice.dto.like.post.LikePostDtoResponse;
+import faang.school.postservice.dto.post.PostResponseDto;
+import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
+import faang.school.postservice.model.Post;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 import org.mapstruct.ReportingPolicy;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
-public interface LikeMapper {
+public abstract class LikeMapper {
 
-    @Mapping(source = "post.id", target = "postId")
-    LikePostDtoResponse toLikePostDtoResponse(Like like);
+    @Autowired
+    private PostMapper postMapper;
+    @Lazy
+    @Autowired
+    private CommentMapper commentMapper;
 
-    @Mapping(source = "comment.id", target = "commentId")
-    LikeCommentDtoResponse toLikeCommentDtoResponse(Like like);
+    @Mapping(source = "post", target = "postResponseDto", qualifiedByName = "mapPost")
+    public abstract LikePostDtoResponse toLikePostDtoResponse(Like like);
+
+    @Mapping(source = "comment", target = "commentResponseDto", qualifiedByName = "mapComment")
+    public abstract LikeCommentDtoResponse toLikeCommentDtoResponse(Like like);
 
     @Mapping(target = "post", ignore = true)
-    Like toLike(LikePostDto likePostDto);
+    public abstract Like toLike(LikePostDto likePostDto);
 
     @Mapping(target = "comment", ignore = true)
-    Like toLike(LikeCommentDto likeCommentDto);
+    public abstract Like toLike(LikeCommentDto likeCommentDto);
+
+    @Named("mapPost")
+    protected PostResponseDto mapPost(Post post) {
+        if (post != null) {
+            return postMapper.toPostResponseDto(post);
+        }
+        return null;
+    }
+
+    @Named("mapComment")
+    protected CommentResponseDto mapPost(Comment comment) {
+        if (comment != null) {
+            return commentMapper.toCommentResponseDto(comment);
+        }
+        return null;
+    }
 }
