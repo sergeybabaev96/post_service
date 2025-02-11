@@ -71,7 +71,7 @@ public class PostController {
     }
 
     @PostMapping("/{postId}/images")
-    public List<UploadedImageResponseDto> uploadImages(Long postId, MultipartFile[] images) {
+    public List<UploadedImageResponseDto> uploadImages(@PathVariable Long postId, @RequestBody MultipartFile[] images) {
         return postService.uploadImages(postId, images);
     }
 }

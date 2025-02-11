@@ -4,8 +4,10 @@ import faang.school.postservice.dto.Post.CreatePostDraftDto;
 import faang.school.postservice.dto.Post.PostResponseDto;
 import faang.school.postservice.dto.Post.UpdatePostDto;
 import faang.school.postservice.dto.Post.UploadedImageResponseDto;
+import faang.school.postservice.mapper.ImageMapper;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.model.Resource;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.validator.PostValidator;
 import jakarta.persistence.EntityNotFoundException;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
@@ -23,7 +26,9 @@ import java.util.function.Function;
 public class PostService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
+    private final ImageMapper imageMapper;
     private final PostValidator postValidator;
+    private final S3Service s3Service;
 
     public PostResponseDto createDraft(CreatePostDraftDto postDraftDto) {
         Post post = postMapper.fromCreateDto(postDraftDto);
@@ -84,7 +89,14 @@ public class PostService {
     }
 
     public List<UploadedImageResponseDto> uploadImages(Long postId, MultipartFile[] images) {
-return null;
+        Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post not found."));
+        List<UploadedImageResponseDto> uploadedImages = new ArrayList<>();
+        for (MultipartFile image : images) {
+            String folder = image.getOriginalFilename() + post.getId().toString();
+            Resource resource = s3Service.uploadFile(image, folder);
+            uploadedImages.add(imageMapper.toDto(resource));
+        }
+return uploadedImages;
     }
 
     private List<PostResponseDto> getExistingPostsSortedByDate(

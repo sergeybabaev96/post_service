@@ -50,15 +50,15 @@ payment-service:
   host: localhost
   port: 9080
 
-  services:
-    s3:
-      endpoint: http://127.0.0.1:9000
-      accessKey: user
-      secretKey: password
-      bucketName: corpbucket
+services:
+  s3:
+    endpoint: http://localhost:9000
+    accessKey: user
+    secretKey: password
+    bucketName: corpbucket
 
-  resource:
-    limit: 10
-    folder: files
-    max-width: 1080
-    max-height: 566
+resource:
+  limit: 10
+  folder: files
+  max-width: 1080
+  max-height: 566
