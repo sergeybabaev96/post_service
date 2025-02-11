@@ -95,6 +95,7 @@ newsfeed:
   posts:
     limit: 500
     clean: 50
+    page-size: 20
 
 executor-service:
   core-pool-size: 5

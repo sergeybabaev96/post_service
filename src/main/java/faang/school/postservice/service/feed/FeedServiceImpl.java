@@ -15,14 +15,15 @@ import faang.school.postservice.service.post.PostService;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FeedServiceImpl implements FeedService {
@@ -56,7 +57,7 @@ public class FeedServiceImpl implements FeedService {
 
   @Override
   public void updateUserFeed(Long userId, Long postId) {
-    FeedCache testFeed = getUserFeed(userId);
+    FeedCache testFeed = getCachedFeed(userId);
 
     LinkedHashSet<Long> posts = testFeed.getPostsIds();
 
@@ -70,8 +71,7 @@ public class FeedServiceImpl implements FeedService {
     feedCacheRepository.save(testFeed);
   }
 
-  @Override
-  public FeedCache getUserFeed(Long userId) {
+  public FeedCache getCachedFeed(Long userId) {
     return feedCacheRepository.findById(userId)
         .orElseGet(() ->
             FeedCache.builder()
@@ -81,8 +81,7 @@ public class FeedServiceImpl implements FeedService {
         );
   }
 
-  @Override
-  public FeedCache getUserFeed(Long userId, int previousPostId, int pageSize) {
+  private FeedCache getCachedFeed(Long userId, Long previousPostId, int pageSize) {
     FeedCache feed = feedCacheRepository.findById(userId)
         .orElseGet(() ->
             FeedCache.builder()
@@ -94,39 +93,68 @@ public class FeedServiceImpl implements FeedService {
     LinkedHashSet<Long> postsIds = feed.getPostsIds();
 
     if (!postsIds.isEmpty()) {
-      var nextPosts = postsIds.stream()
-//          .limit()
-          .skip(Math.max(0, postsIds.size() - pageSize))
-          .sorted(Comparator.reverseOrder())
-          .collect(Collectors.toCollection(LinkedHashSet::new));
 
-      feed.setPostsIds(nextPosts);
+      List<Long> postsIdsList = List.copyOf(postsIds);
+
+      int toIndex;
+
+      if (previousPostId == null) {
+
+        toIndex = postsIdsList.size();
+
+      } else {
+
+        toIndex = postsIdsList.indexOf(previousPostId);
+
+        if (toIndex == -1) {
+          throw new IllegalArgumentException("previous last post not found");
+
+        }
+      }
+
+      int fromIndex = Math.max(0, toIndex - pageSize);
+
+      List<Long> postsIdsToGetList = postsIdsList.subList(fromIndex, toIndex).stream().sorted(
+          Comparator.reverseOrder()).toList();
+
+      LinkedHashSet<Long> postsToGet = new LinkedHashSet<>(postsIdsToGetList);
+
+      feed.setPostsIds(postsToGet);
     }
     return feed;
   }
 
+  @Override
+  public FeedDto getFeed(Long userId, Long previousPostId, int pageSize) {
+    return mapToFeedDto(getCachedFeed(userId, previousPostId, pageSize));
+  }
+
   private FeedDto mapToFeedDto(FeedCache feedCache) {
-
     long userId = feedCache.getId();
-    //может быть ситуация, что юзера нет в редисе, если он не автор или давно не постил
-    // Редис упал (при правильном масштабировании мало вероятно, но всме-таки
-    // идем тогда в БД
     UserCache userCache = userCacheRepository.findById(userId)
-        .orElse(userMapper.toUserCache(userServiceClient.getUser(userId)));
+        .orElseGet(() -> getUserFromDB(userId));
+    //TODO - и еще надо в кэш сразу добавить полученного из БД юзера (когда из БД берем)
 
-    // посты есть в Редис, но он может упасть и тогда все пусто, тогда надо в БД идти
+    log.info("getting user: {}", userCache.getUsername());
+
     List<PostCache> posts = feedCache.getPostsIds().stream()
-        .map(id -> postCacheRepository.findById(id)
-            .orElse(postMapper.toPostCache(postService.findPostById(userId))))
+        .map(postId -> postCacheRepository.findById(postId)
+            .orElseGet(() -> getPostFromDB(postId)))
         .toList();
-
-    //TODO выносить в отдельные методы + исключения, когда и в БД не нашли
-    //и в контроллер выдвать dto нормальную (пока данные из кэша)
+    //TODO - и еще надо в кэш сразу добавить полученные из БД посты (когда из БД берем)
 
     return FeedDto.builder()
         .user(userCache)
         .posts(posts)
         .build();
+  }
+
+  private UserCache getUserFromDB(Long userId) {
+    return userMapper.toUserCache(userServiceClient.getUser(userId));
+  }
+
+  private PostCache getPostFromDB(Long postId) {
+    return postMapper.toPostCache(postService.findPostById(postId));
   }
 
 }

@@ -1,7 +1,7 @@
 package faang.school.postservice.service.feed;
 
 import faang.school.postservice.dto.event.PostEventDto;
-import faang.school.postservice.model.redis.FeedCache;
+import faang.school.postservice.dto.feed.FeedDto;
 
 public interface FeedService {
 
@@ -9,7 +9,5 @@ public interface FeedService {
 
   void updateUserFeed(Long userId, Long postId);
 
-  FeedCache getUserFeed(Long userId);
-
-  FeedCache getUserFeed(Long userId, int previousPostId, int pageSize);
+  FeedDto getFeed(Long userId, Long previousPostId, int pageSize);
 }
