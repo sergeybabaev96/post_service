@@ -58,11 +58,12 @@ services:
     accessKey: user
     secretKey: password
     bucketName: corpbucket
-<<<<<<<<< Temporary merge branch 1
-=========
 
 redis:
   pubsub:
     topics:
       like-event
->>>>>>>>> Temporary merge branch 2
+
+scheduler:
+  post-corrector:
+    cron: 0 * * * * *
