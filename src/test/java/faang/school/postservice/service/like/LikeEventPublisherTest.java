@@ -4,8 +4,6 @@ import faang.school.postservice.event.LikeEvent;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
@@ -23,14 +21,10 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LikeEventPublisherTest {
-    @Mock
-    private KafkaTemplate<String, LikeEvent> kafkaTemplate;
-
-    @InjectMocks
-    private LikeEventPublisher likeEventPublisher;
-
     @Test
     void publish() {
+        KafkaTemplate<String, Object> kafkaTemplate = mock(KafkaTemplate.class);
+        LikeEventPublisher likeEventPublisher = new LikeEventPublisher(kafkaTemplate, "add-like");
         CompletableFuture future = mock(CompletableFuture.class);
         SendResult<String, LikeEvent> sendResult = mock(SendResult.class);
         ProducerRecord<String, LikeEvent> producerRecord = mock(ProducerRecord.class);

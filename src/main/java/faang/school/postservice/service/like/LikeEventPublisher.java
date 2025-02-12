@@ -20,9 +20,6 @@ public class LikeEventPublisher {
     public SendResult<String, Object> publish(LikeEvent event) {
         log.info("User {} add like to post {}", event.getUserId(), event.getPostId());
         String uniqueKey = UUID.randomUUID().toString();
-        if (addLikeEventTopicName == null) {
-            addLikeEventTopicName = "add-like";
-        }
         return kafkaTemplate.send(addLikeEventTopicName, uniqueKey, event).join();
     }
 }
