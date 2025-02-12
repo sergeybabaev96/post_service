@@ -27,6 +27,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -257,4 +260,52 @@ public class PostServiceTest {
         assertEquals(post2, result.get(0)); // post2 is more recent
         assertEquals(post1, result.get(1));
     }
+
+    @Test
+    void testCorrectPosts_WithUnpublishedPosts() {
+        Post post3 = Post.builder()
+                .id(1L)
+                .content("Helo world")
+                .published(false)
+                .build();
+
+        Post post4 = Post.builder()
+                .id(2L)
+                .content("This is a tst")
+                .published(false)
+                .build();
+
+        List<Post> unpublishedPosts = List.of(post3, post4);
+
+        when(postRepository.findByPublishedFalse()).thenReturn(unpublishedPosts);
+
+        postService.correctPosts();
+
+        assertEquals("Hello world", post3.getContent());
+        assertEquals("This is a test", post4.getContent());
+
+        verify(postRepository, times(1)).save(post3);
+        verify(postRepository, times(1)).save(post4);
+    }
+
+    @Test
+    void testCorrectPosts_NoCorrectionNeeded() {
+        Post post5 = Post.builder()
+                .id(1L)
+                .content("Correct text")
+                .published(false)
+                .build();
+
+        List<Post> unpublishedPosts = List.of(post5);
+
+        when(postRepository.findByPublishedFalse()).thenReturn(unpublishedPosts);
+
+        postService.correctPosts();
+
+        assertEquals("Correct text", post5.getContent());
+
+        verify(postRepository, never()).save(post5);
+    }
+
+
 }

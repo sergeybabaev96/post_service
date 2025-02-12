@@ -7,7 +7,11 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class SpellCheckResponse {
     private String word;
     private List<String> s;
+    private int pos;
+    private int len;
 }
