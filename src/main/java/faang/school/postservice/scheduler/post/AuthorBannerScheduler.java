@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 public class AuthorBannerScheduler {
     private final PostService postService;
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(cron = "${author.ban.cron}")
     @SchedulerLock(name = "banUsersWithUnverifiedPosts")
     public void banUsersWithUnverifiedPosts() {
         log.info("Send request to ban users");
