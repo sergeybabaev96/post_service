@@ -33,6 +33,9 @@ spring:
     bootstrap:
       server:
         address: localhost:9092
+    topics:
+      analytic-topics:
+        add-like-topic-name: "user-like-post"
 
   services:
     s3:
