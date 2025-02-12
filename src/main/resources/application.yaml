@@ -29,6 +29,11 @@ spring:
         calculations_channel:
           name: calculations_channel
 
+  kafka:
+    bootstrap:
+      server:
+        address: localhost:9092
+
   services:
     s3:
      endpoint: http://127.0.0.1:9000
@@ -48,13 +53,6 @@ server:
 logging:
   level:
     root: info
-
-services:
-  s3:
-    endpoint: http://localhost:9000
-    accessKey: user
-    secretKey: password
-    bucketName: corpbucket
 
 user-service:
   host: localhost
