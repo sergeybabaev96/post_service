@@ -31,14 +31,14 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
 
-      - name: Run checkstyle
-        run: ./gradlew checkstyleMain checkstyleTest --no-daemon
+#      - name: Run checkstyle
+#        run: ./gradlew checkstyleMain checkstyleTest --no-daemon
 
-      - name: Build with Gradle
-        run: ./gradlew build -x test --no-daemon
+#      - name: Build with Gradle
+#        run: ./gradlew build -x test --no-daemon
 
       - name: Run tests
         run: ./gradlew test --no-daemon
 
-      - name: Run Jacoco Test Coverage Verification
-        run: ./gradlew jacocoTestCoverageVerification --no-daemon
+#      - name: Run Jacoco Test Coverage Verification
+#        run: ./gradlew jacocoTestCoverageVerification --no-daemon

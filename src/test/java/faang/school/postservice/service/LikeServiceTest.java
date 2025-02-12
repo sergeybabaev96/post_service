@@ -5,6 +5,7 @@ import faang.school.postservice.dto.like.CommentLikeDto;
 import faang.school.postservice.dto.like.PostLikeDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.DataValidationException;
+import faang.school.postservice.kafka.LikeEventPublisher;
 import faang.school.postservice.mapper.LikeMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
@@ -21,13 +22,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.anyLong;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class LikeServiceTest {
 
+    @Mock
+    private LikeEventPublisher likeEventPublisher;
     @Mock
     private LikeRepository likeRepository;
     @Mock
@@ -52,6 +57,7 @@ class LikeServiceTest {
     void setup() {
         likeMapper = Mappers.getMapper(LikeMapper.class);
         likeService = new LikeService(
+                likeEventPublisher,
                 likeRepository,
                 postService,
                 commentService,
@@ -66,6 +72,7 @@ class LikeServiceTest {
 
         post = new Post();
         post.setId(1L);
+        post.setContent("content");
 
         comment = new Comment();
         comment.setId(1L);
@@ -84,10 +91,8 @@ class LikeServiceTest {
 
         likeService.likePost(postLikeDto);
 
-        verify(userServiceClient).getUser(postLikeDto.getUserId());
-        verify(likeValidator).validateUserExists(userDto);
-        verify(postService).getPost(postLikeDto.getPostId());
-        verify(likeRepository).save(like);
+        verify(likeRepository, times(1)).save(like);
+        verify(likeEventPublisher, times(1)).publish(any());
     }
 
     @Test

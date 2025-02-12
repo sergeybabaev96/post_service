@@ -5,9 +5,11 @@ import faang.school.postservice.dto.like.CommentLikeDto;
 import faang.school.postservice.dto.like.PostLikeDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.DataValidationException;
+import faang.school.postservice.kafka.LikeEventPublisher;
 import faang.school.postservice.mapper.LikeMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
+import faang.school.postservice.model.LikeEvent;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.LikeRepository;
 import faang.school.postservice.validator.LikeValidator;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class LikeService {
 
+    private final LikeEventPublisher likeEventPublisher;
     private final LikeRepository likeRepository;
     private final PostService postService;
     private final CommentService commentService;
@@ -26,12 +29,12 @@ public class LikeService {
     private final UserServiceClient userServiceClient;
     private final LikeValidator likeValidator;
 
+    @Transactional
     public void likePost(PostLikeDto postLikeDto) {
         UserDto user = userServiceClient.getUser(postLikeDto.getUserId());
         likeValidator.validateUserExists(user);
 
         Post post = postService.getPost(postLikeDto.getPostId());
-        likeValidator.validatePostExists(post);
 
         if (likeRepository.findByPostIdAndUserId(
                 postLikeDto.getPostId(),
@@ -40,7 +43,11 @@ public class LikeService {
             throw new DataValidationException("User already liked this post.");
         }
 
-        createAndSaveLike(likeMapper.toLike(postLikeDto), post, null);
+        Like like = likeMapper.toLike(postLikeDto);
+        like.setPost(post);
+        likeRepository.save(like);
+
+        sendLikeEvent(like, user.username());
     }
 
     @Transactional
@@ -49,11 +56,11 @@ public class LikeService {
         likeValidator.validateUserExists(user);
 
         Post post = postService.getPost(postLikeDto.getPostId());
-        likeValidator.validatePostExists(post);
 
         likeRepository.deleteByPostIdAndUserId(postLikeDto.getPostId(), postLikeDto.getUserId());
     }
 
+    @Transactional
     public void likeComment(CommentLikeDto commentLikeDto) {
         UserDto user = userServiceClient.getUser(commentLikeDto.getUserId());
         likeValidator.validateUserExists(user);
@@ -67,8 +74,9 @@ public class LikeService {
         ).isPresent()) {
             throw new DataValidationException("User already liked this comment.");
         }
-
-        createAndSaveLike(likeMapper.toLike(commentLikeDto), null, comment);
+        Like like = likeMapper.toLike(commentLikeDto);
+        like.setComment(comment);
+        likeRepository.save(like);
     }
 
     @Transactional
@@ -82,13 +90,9 @@ public class LikeService {
         likeRepository.deleteByCommentIdAndUserId(commentLikeDto.getCommentId(), commentLikeDto.getUserId());
     }
 
-    private void createAndSaveLike(Like like, Post post, Comment comment) {
-        if (post != null) {
-            like.setPost(post);
-        }
-        if (comment != null) {
-            like.setComment(comment);
-        }
-        likeRepository.save(like);
+    private void sendLikeEvent(Like like, String username) {
+        LikeEvent likeEvent = likeMapper.toLikeEvent(like);
+        likeEvent.setLikerUsername(username);
+        likeEventPublisher.publish(likeEvent);
     }
 }
