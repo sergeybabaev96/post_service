@@ -1,6 +1,5 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.filter.PostFilterDto;
 import faang.school.postservice.dto.post.CreatePostDto;
 import faang.school.postservice.dto.post.ReadPostDto;
@@ -8,18 +7,13 @@ import faang.school.postservice.dto.post.UpdatePostDto;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.validator.PostValidator;
 import faang.school.postservice.service.corrector.PostCorrector;
+import faang.school.postservice.validator.PostValidator;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -32,10 +26,10 @@ import static java.lang.String.format;
 @Service
 @RequiredArgsConstructor
 public class PostService {
-
     private final PostRepository postRepository;
     private final PostMapper postMapper;
     private final PostValidator postValidator;
+    private final PostCorrector postCorrector;
 
     @Transactional
     public ReadPostDto create(CreatePostDto createPostDto) {
@@ -91,21 +85,28 @@ public class PostService {
 
         return postMapper.toDto(updatedPost);
     }
-    private final PostCorrector postCorrector;
-
-    public void correctAllUnpublishedPosts() {
-        log.info("Начало запланированного события");
-
-        List<Post> posts = postRepository.findReadyToPublish();
-        posts.forEach(postCorrector::correctContentPost);
-        postRepository.saveAll(posts);
-
-        log.info("Конец запланированного события");
-    }
 
     public Post findById(@NotNull Long id) {
         return postRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException(format("Пост с id=%d не найден", id)));
+    }
+
+    public List<ReadPostDto> getFilteredPosts(PostFilterDto postFilterDto) {
+        postValidator.validateFilterDto(postFilterDto);
+
+        if (postFilterDto.authorId() != null) {
+            return getPosts(postFilterDto.authorId(), postFilterDto.isPublished(), true);
+        } else {
+            return getPosts(postFilterDto.projectId(), postFilterDto.isPublished(), false);
+        }
+    }
+
+    public void correctAllUnpublishedPosts() {
+        log.info("Начало запланированного события");
+        List<Post> posts = postRepository.findReadyToPublish();
+        posts.forEach(postCorrector::correctContentPost);
+        postRepository.saveAll(posts);
+        log.info("Конец запланированного события");
     }
 
     private List<ReadPostDto> getPosts(Long id, boolean published, boolean byAuthor) {
@@ -117,16 +118,5 @@ public class PostService {
                 .toList();
 
         return postMapper.toDtoList(posts);
-    }
-
-    public List<ReadPostDto> getFilteredPosts(PostFilterDto postFilterDto) {
-
-        postValidator.validateFilterDto(postFilterDto);
-
-        if (postFilterDto.authorId() != null) {
-            return getPosts(postFilterDto.authorId(), postFilterDto.isPublished(), true);
-        } else {
-            return getPosts(postFilterDto.projectId(), postFilterDto.isPublished(), false);
-        }
     }
 }
