@@ -107,16 +107,16 @@ public class CommentService {
                 .orElseThrow(() -> new CommentNotFoundException("There is no comment with id: " + commentId));
 
         commentValidator.validateAuthor(comment, userId);
+        commentValidator.validateImageSize(image);
         commentValidator.validateImageFormat(image);
 
         clearCommentResourcesIfExist(comment);
 
-        String fileName = image.getOriginalFilename();
-        String format = fileName.substring(fileName.lastIndexOf('.') + 1);
+        String fileName = image.getContentType();
+        String format = fileName.substring(fileName.lastIndexOf('/') + 1);
 
-        String baseKey = "/posts/" + comment.getPost().getId() + "/Img_" + LocalDateTime.now();
-        String keyLarge = baseKey + "_large" + "." + format;
-        String keySmall = baseKey + "_small" + "." + format;
+        String keyLarge = generateImageKey(comment, format, "large");
+        String keySmall = generateImageKey(comment, format, "small");
 
         long largeSize = resizeUploadImage(image, bucketName, keyLarge, format, LARGE_IMAGE_MAX_SIZE);
         long smallSize = resizeUploadImage(image, bucketName, keySmall, format, SMALL_IMAGE_MAX_SIZE);
@@ -146,15 +146,13 @@ public class CommentService {
         return commentRepository.save(comment);
     }
 
-    public byte[] getCommentImage(@PathVariable Long commentId, Function<Comment, String> keyExtractor) throws IOException {
+    public byte[] getCommentImage(@PathVariable Long commentId, Function<Comment, String> keyExtractor) {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentNotFoundException("There is no comment with id " + commentId));
 
         String key = keyExtractor.apply(comment);
-        InputStream file = awsService.downloadFile(bucketName, key);
-        byte[] data = file.readAllBytes();
-        file.close();
-        return data;
+
+        return awsService.downloadFile(bucketName, key);
     }
 
 
@@ -173,16 +171,18 @@ public class CommentService {
     private long resizeUploadImage(MultipartFile image, String bucketName, String key, String format, int maxSize) {
         try {
             BufferedImage resized = imageProcessor.resizeImage(image, maxSize);
-            InputStream imageStream = imageProcessor.convertInputStream(resized, format);
-
-            long sizeBytes = imageStream.available();
-
-            awsService.uploadFile(bucketName, key, imageStream);
-            imageStream.close();
-            return sizeBytes;
+            byte[] imageBytes = imageProcessor.bufferedImageToByteArray(resized, format);
+            awsService.uploadFile(bucketName, key, imageBytes);
+            return imageBytes.length;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private String generateImageKey(Comment comment, String format, String size) {
+        String timestamp = LocalDateTime.now().toString();
+        return String.format("/posts/%d/Img_%s_%s.%s",
+                comment.getPost().getId(), timestamp, size, format);
     }
 
     private void clearCommentResourcesIfExist(Comment comment) {

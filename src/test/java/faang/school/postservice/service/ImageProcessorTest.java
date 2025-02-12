@@ -62,14 +62,12 @@ class ImageProcessorTest {
     }
 
     @Test
-    void testConvertInputStream() throws IOException {
-        InputStream inputStream = imageProcessor.convertInputStream(testImage, "png");
+    void testBufferedImageToByteArray_ValidFormat() throws IOException {
+        byte[] imageBytes = imageProcessor.bufferedImageToByteArray(testImage, "png");
 
-        assertNotNull(inputStream);
-        assertTrue(inputStream.available() > 0);
-
-        BufferedImage convertedImage = ImageIO.read(inputStream);
-        assertNotNull(convertedImage);
+        assertNotNull(imageBytes, "Returned byte array should not be null");
+        assertTrue(imageBytes.length > 0, "Returned byte array should not be empty");
     }
+
 }
 

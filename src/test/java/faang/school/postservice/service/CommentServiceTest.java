@@ -79,6 +79,7 @@ public class CommentServiceTest {
     private Post post;
     private MultipartFile image;
     private InputStream inputStream;
+    private byte[] testBytes = {1, 2, 3, 4};
     private final Long POST_ID = 1L;
     private final Long AUTHOR_ID = 1L;
     private final Long COMMENT_ID = 1L;
@@ -107,8 +108,7 @@ public class CommentServiceTest {
                 "image/png",
                 "exampledata".getBytes());
 
-        byte[] dummyBytes = {1, 2, 3, 4};
-        inputStream = new ByteArrayInputStream(dummyBytes);
+        inputStream = new ByteArrayInputStream(testBytes);
     }
 
     @Test
@@ -204,7 +204,7 @@ public class CommentServiceTest {
     public void attachImageToCommentTest() throws IOException {
         when(commentRepository.findById(COMMENT_ID)).thenReturn(Optional.of(comment));
         when(imageProcessor.resizeImage(any(MultipartFile.class), anyInt())).thenReturn(mock(BufferedImage.class));
-        when(imageProcessor.convertInputStream(any(BufferedImage.class), anyString())).thenReturn(inputStream);
+        when(imageProcessor.bufferedImageToByteArray(any(BufferedImage.class), anyString())).thenReturn(testBytes);
 
         commentService.attachImageToComment(COMMENT_ID, image, AUTHOR_ID);
 
@@ -216,8 +216,8 @@ public class CommentServiceTest {
 
         verify(imageProcessor, times(1)).resizeImage(image, SMALL_IMAGE_MAX_SIZE);
         verify(imageProcessor, times(1)).resizeImage(image, LARGE_IMAGE_MAX_SIZE);
-        verify(imageProcessor, times(2)).convertInputStream(any(BufferedImage.class), anyString());
-        verify(awsService, times(2)).uploadFile(anyString(), anyString(), any(InputStream.class));
+        verify(imageProcessor, times(2)).bufferedImageToByteArray(any(BufferedImage.class), anyString());
+        verify(awsService, times(2)).uploadFile(anyString(), anyString(), any(byte[].class));
 
         verify(resourceService, times(2)).createResource(resourceCaptor.capture());
         List<Resource> resources = resourceCaptor.getAllValues();
@@ -240,14 +240,12 @@ public class CommentServiceTest {
     @Test
     public void getCommentImageTest() throws IOException {
         when(commentRepository.findById(COMMENT_ID)).thenReturn(Optional.of(comment));
-        when(awsService.downloadFile(anyString(), anyString())).thenReturn(inputStream);
-
-        byte[] dummyBytes = {1, 2, 3, 4};
+        when(awsService.downloadFile(anyString(), anyString())).thenReturn(testBytes);
 
         Function<Comment, String> keyExtractor = Comment::getLargeImageFileKey;
         byte[] result = commentService.getCommentImage(COMMENT_ID, keyExtractor);
 
-        assertArrayEquals(dummyBytes, result);
+        assertArrayEquals(testBytes, result);
         verify(awsService, times(1)).downloadFile(anyString(), anyString());
     }
 

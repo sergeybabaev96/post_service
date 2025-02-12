@@ -18,33 +18,31 @@ import java.io.InputStream;
 public class AwsService {
     private final S3Client s3;
 
-    public void uploadFile(String bucketName, String keyName, InputStream file) {
-        RequestBody requestBody;
-        try {
-            requestBody = RequestBody.fromBytes(file.readAllBytes());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public void uploadFile(String bucketName, String keyName, byte[] fileBytes) {
+            RequestBody requestBody = RequestBody.fromBytes(fileBytes);
 
-        PutObjectRequest putOb = PutObjectRequest.builder()
-                        .bucket(bucketName)
-                        .key(keyName)
-                        .build();
+            PutObjectRequest putOb = PutObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(keyName)
+                    .build();
 
-
-        s3.putObject(putOb, requestBody);
-        log.info("File uploaded to bucket({}): {}", bucketName, keyName);
+            s3.putObject(putOb, requestBody);
+            log.info("File uploaded to bucket({}): {}", bucketName, keyName);
     }
 
-    public InputStream downloadFile(String bucketName, String keyName) {
+    public byte[] downloadFile(String bucketName, String keyName) {
         GetObjectRequest getObjectRequest = GetObjectRequest.builder()
                 .bucket(bucketName)
                 .key(keyName)
                 .build();
-        InputStream inputStream = s3.getObject(getObjectRequest);
 
-        log.info("File {} was downloaded from bucket: ({})", keyName, bucketName);
-        return inputStream;
+        try (InputStream inputStream = s3.getObject(getObjectRequest)) {
+            log.info("File {} was downloaded from bucket: ({})", keyName, bucketName);
+            return inputStream.readAllBytes();
+        } catch (IOException e) {
+            log.error("Error uploading file with key: ({}) to S3", keyName);
+            throw new RuntimeException(e);
+        }
     }
 
     public void deleteFile(String bucketName, String keyName) {

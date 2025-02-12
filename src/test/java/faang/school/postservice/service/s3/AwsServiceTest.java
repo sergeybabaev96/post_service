@@ -29,44 +29,34 @@ class AwsServiceTest {
 
     private static final String BUCKET_NAME = "test-bucket";
     private static final String FILE_KEY = "test-file.txt";
-    private InputStream mockInputStream;
+    private byte[] mockData;
 
     @BeforeEach
     void setUp() {
-        byte[] mockData = "data".getBytes();
-        mockInputStream = new ByteArrayInputStream(mockData);
+         mockData = "data".getBytes();
     }
 
     @Test
     void testUploadFile_Success() {
-        awsService.uploadFile(BUCKET_NAME, FILE_KEY, mockInputStream);
+        awsService.uploadFile(BUCKET_NAME, FILE_KEY, mockData);
 
         verify(s3Client, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     }
 
     @Test
-    void testUploadFile_IOException() throws IOException {
-        InputStream failingStream = mock(InputStream.class);
-        when(failingStream.readAllBytes()).thenThrow(new IOException());
-
-        assertThrows(RuntimeException.class, () -> awsService.uploadFile(BUCKET_NAME, FILE_KEY, failingStream));
-    }
-
-    @Test
     void testDownloadFile_Success() {
-        ResponseInputStream<GetObjectResponse> mockResponseStream = new ResponseInputStream<>(
-                GetObjectResponse.builder().build(), mockInputStream);
-
+        InputStream inputStream = new ByteArrayInputStream(mockData);
+        ResponseInputStream<GetObjectResponse> mockResponseStream = new ResponseInputStream<>(GetObjectResponse.builder().build(), inputStream);
         when(s3Client.getObject(any(GetObjectRequest.class))).thenReturn(mockResponseStream);
 
-        InputStream downloadedStream = awsService.downloadFile(BUCKET_NAME, FILE_KEY);
+        byte[] actualBytes = awsService.downloadFile(BUCKET_NAME, FILE_KEY);
 
-        assertNotNull(downloadedStream);
         verify(s3Client, times(1)).getObject(any(GetObjectRequest.class));
+        assertArrayEquals(mockData, actualBytes);
     }
 
     @Test
-    void testDeleteFile_Success() {
+    void testDeleteFile() {
         awsService.deleteFile(BUCKET_NAME, FILE_KEY);
 
         verify(s3Client, times(1)).deleteObject(any(DeleteObjectRequest.class));

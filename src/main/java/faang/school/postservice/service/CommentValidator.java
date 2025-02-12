@@ -5,6 +5,7 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.utils.ImageType;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -16,6 +17,9 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @Service
 public class CommentValidator {
+
+    @Value("${comment.image.max-file-size}")
+    private String maxFileSize;
 
     public void validateCommentUpdate(Comment updatedComment) {
         if (updatedComment.getId() != null) {
@@ -38,6 +42,17 @@ public class CommentValidator {
     public void validateAuthor(Comment comment, Long userId) {
         if (!Objects.equals(userId, comment.getAuthorId())) {
             throw new IllegalArgumentException("You can't modify comment of another user");
+        }
+    }
+
+    public void validateImageSize(MultipartFile image) {
+        maxFileSize = maxFileSize.toUpperCase();
+        if (!maxFileSize.endsWith("MB")) {
+            throw new IllegalArgumentException("Max file size should be in MB");
+        }
+        long maxSizeBytes = Long.parseLong(maxFileSize.replaceAll("[^0-9]", "")) * 1024 * 1024;
+        if (image.getSize() > maxSizeBytes) {
+            throw new FileFormatException("Uploaded file " + image.getOriginalFilename() + " is larger than " + maxFileSize);
         }
     }
 

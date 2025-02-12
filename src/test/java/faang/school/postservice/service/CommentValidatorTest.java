@@ -8,11 +8,14 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@ActiveProfiles("test")
 @ExtendWith(MockitoExtension.class)
 public class CommentValidatorTest {
 
@@ -84,6 +87,38 @@ public class CommentValidatorTest {
     }
 
     @Test
+    public void validateImageSize() {
+        ReflectionTestUtils.setField(commentValidator, "maxFileSize", "2MB");
+
+
+        assertDoesNotThrow(() ->
+                commentValidator.validateImageSize(image));
+    }
+
+    @Test
+    public void validateImageSize_InvalidFileSizeBound() {
+        ReflectionTestUtils.setField(commentValidator, "maxFileSize", "5GB");
+
+        assertThrows(IllegalArgumentException.class, () ->
+                        commentValidator.validateImageSize(image));
+    }
+
+    @Test
+    public void validateImageSize_fileIsTooLarge() {
+        ReflectionTestUtils.setField(commentValidator, "maxFileSize", "1MB");
+
+        byte[] largeFileContent = new byte[2 * 1024 * 1024];
+        MultipartFile largeImage = new MockMultipartFile(
+                "file",
+                "large-file.png",
+                "image/png",
+                largeFileContent);
+
+        assertThrows(FileFormatException.class, () ->
+                        commentValidator.validateImageSize(largeImage));
+    }
+
+    @Test
     public void validateImageFormat() {
         assertDoesNotThrow(() ->
                 commentValidator.validateImageFormat(image));
@@ -97,4 +132,5 @@ public class CommentValidatorTest {
                 "exampledata".getBytes());
         assertThrows(FileFormatException.class, () -> commentValidator.validateImageFormat(image));
     }
+
 }

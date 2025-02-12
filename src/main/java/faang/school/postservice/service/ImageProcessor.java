@@ -2,7 +2,7 @@ package faang.school.postservice.service;
 
 import faang.school.postservice.exception.FileFormatException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.imageio.ImageIO;
@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @RequiredArgsConstructor
-@Component
+@Service
 public class ImageProcessor {
 
     public BufferedImage resizeImage(MultipartFile file, int maxSize) throws IOException {
@@ -49,10 +49,10 @@ public class ImageProcessor {
         return resizedImage;
     }
 
-    public InputStream convertInputStream(BufferedImage image, String format) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(image, format, baos);
-        byte[] bytes = baos.toByteArray();
-        return new ByteArrayInputStream(bytes);
+    public byte[] bufferedImageToByteArray(BufferedImage image, String format) throws IOException {
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+            ImageIO.write(image, format, baos);
+            return baos.toByteArray();
+        }
     }
 }
