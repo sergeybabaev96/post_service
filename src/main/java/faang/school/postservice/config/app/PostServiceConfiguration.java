@@ -1,4 +1,4 @@
-package faang.school.postservice.config.corrector;
+package faang.school.postservice.config.app;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -8,13 +8,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Configuration
-public class PostCorrectorConfiguration {
+public class PostServiceConfiguration {
 
-    @Value("${spell-service.thread-pool-size}")
-    private int pollSize;
+    @Value("${post-service.thread-pool-size}")
+    private int poolSize;
 
     @Bean
-    public ExecutorService spellServicePool() {
-        return Executors.newFixedThreadPool(pollSize);
+    public ExecutorService threadPool() {
+        return Executors.newFixedThreadPool(poolSize);
     }
 }

@@ -5,7 +5,6 @@ import faang.school.postservice.exception.IntegrationException;
 import faang.school.postservice.service.PostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
@@ -26,7 +25,7 @@ public class Scheduler {
 
     @Transactional
     @Scheduled(cron = "${spell-service.cron}")
-    @Async("spellServicePool")
+    @Async("threadPool")
     @Retryable(retryFor = IntegrationException.class,
             maxAttemptsExpression = "${spell-service.retry.attempts}",
             backoff = @Backoff(delayExpression = "${spell-service.retry.delay}",
