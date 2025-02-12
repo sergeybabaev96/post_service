@@ -102,11 +102,9 @@ public class PostService {
     }
 
     public void correctAllUnpublishedPosts() {
-        log.info("Начало запланированного события");
         List<Post> posts = postRepository.findReadyToPublish();
         posts.forEach(postCorrector::correctContentPost);
         postRepository.saveAll(posts);
-        log.info("Конец запланированного события");
     }
 
     private List<ReadPostDto> getPosts(Long id, boolean published, boolean byAuthor) {

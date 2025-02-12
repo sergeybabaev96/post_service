@@ -32,7 +32,9 @@ public class Scheduler {
                     multiplierExpression = "${spell-service.retry.multiplier}"))
     public void correctAllUnpublishedPosts() {
         if (Optional.ofNullable(userContext.getUserId()).isPresent()) {
+            log.info("Начало запланированного события");
             postService.correctAllUnpublishedPosts();
+            log.info("Конец запланированного события");
         }
     }
 
