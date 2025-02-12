@@ -25,12 +25,6 @@ import java.util.List;
 public class CommentController {
 
     private final CommentService commentService;
-//    private final PostService postService;
-//
-//    @GetMapping("/check")
-//    public void checkText() {
-//        postService.correctAllUnpublishedPosts();
-//    }
 
     @PostMapping
     public CommentReadDto addComment(@Valid @RequestBody CommentCreateDto commentCreateDto) {

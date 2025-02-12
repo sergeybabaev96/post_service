@@ -45,7 +45,7 @@ payment-service:
   port: 9080
 
 post-service:
-  thread-pool-size: 2
+  thread-pool-size: 1
 
 spell-service:
   url: https://speller.yandex.net/services/spellservice.json
