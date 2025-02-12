@@ -32,9 +32,7 @@ public class Scheduler {
             backoff = @Backoff(delayExpression = "${spell-service.retry.delay}",
                     multiplierExpression = "${spell-service.retry.multiplier}"))
     public void correctAllUnpublishedPosts() {
-        userContext.setUserId(1);
         if (Optional.ofNullable(userContext.getUserId()).isPresent()) {
-            log.info("мы тут");
             postService.correctAllUnpublishedPosts();
         }
     }
