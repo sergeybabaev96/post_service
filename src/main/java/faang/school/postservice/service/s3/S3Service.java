@@ -1,5 +1,7 @@
 package faang.school.postservice.service.s3;
 
+import com.amazonaws.AmazonServiceException;
+import com.amazonaws.SdkClientException;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
@@ -26,9 +28,11 @@ public class S3Service {
 
     public File uploadFile(MultipartFile file, String folder) {
         long fileSize = file.getSize();
+        String fileType = file.getContentType();
+
         ObjectMetadata objectMetadata = new ObjectMetadata();
         objectMetadata.setContentLength(fileSize);
-        objectMetadata.setContentType(file.getContentType());
+        objectMetadata.setContentType(fileType);
         String key = String.format("%s/%d-%s", folder, System.currentTimeMillis(), file.getOriginalFilename());
 
         try {
@@ -44,16 +48,18 @@ public class S3Service {
                 .key(key)
                 .size(fileSize)
                 .createdAt(LocalDateTime.now())
-                .type(file.getContentType())
+                .type(fileType)
                 .build();
     }
 
     public void deleteFile(String key) {
-        if(s3Client.doesObjectExist(bucketName, key)) {
-            log.info("Файл {} удален", key);
+        try {
             s3Client.deleteObject(bucketName, key);
-        } else {
-            throw new EntityNotFoundException("Файл " + key + " не найден");
+            log.info("Файл {} удален", key);
+        } catch (AmazonServiceException e) {
+            log.error("Ошибка сервиса AWS при удалении файла {}: {}", key, e.getMessage());
+        } catch (SdkClientException  e) {
+            log.error("Ошибка клиента при удалении файла {}: {}", key, e.getMessage());
         }
     }
 
@@ -61,9 +67,8 @@ public class S3Service {
         try {
             S3Object s3Object = s3Client.getObject(bucketName, key);
             return s3Object.getObjectContent();
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            throw new RuntimeException(e);
+        } catch (AmazonServiceException e) {
+            throw new EntityNotFoundException("Файл " + key + " не найден");
         }
     }
 

@@ -25,7 +25,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class CommentService {
-    @Value("$(services.s3.max_image_size)")
+    @Value("${services.s3.max_image_size}")
     private int maxImageSize;
     private static final int MB_TO_BYTES = 1048576;
     private final CommentMapper commentMapper;
