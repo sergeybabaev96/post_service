@@ -60,6 +60,8 @@ spring:
           name: comments
         post-channel:
           name: posts
+        post_view-channel:
+          name: post_view
 
 server:
   port: 8089
