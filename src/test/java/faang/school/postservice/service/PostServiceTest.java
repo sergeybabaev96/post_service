@@ -1,4 +1,4 @@
-package faang.school.postservice;
+package faang.school.postservice.service;
 
 import faang.school.postservice.dto.posts.PostCreatingRequest;
 import faang.school.postservice.dto.posts.PostResultResponse;
@@ -6,7 +6,6 @@ import faang.school.postservice.dto.posts.PostUpdatingDto;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.service.PostService;
 import faang.school.postservice.utils.PostUtil;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,8 +18,10 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -32,6 +33,10 @@ public class PostServiceTest {
     private PostRepository postRepository;
     @Mock
     private PostUtil postUtil;
+    @Mock
+    private RewriterService rewriterService;
+    @Mock
+    private ExecutorService scheduledPublishPostThreadPool;
     @Spy
     private PostMapper postMapper = Mappers.getMapper(PostMapper.class);
 
@@ -69,7 +74,7 @@ public class PostServiceTest {
 
         PostResultResponse result = postService.createPost(postCreatingRequest);
         Assertions.assertNotNull(result);
-        Assertions.assertEquals(result, postResultResponse);
+        assertEquals(result, postResultResponse);
         verify(postUtil, times(1)).validateCreator(postCreatingRequest.authorId(), postCreatingRequest.projectId());
         verify(postRepository, times(1)).save(any(Post.class));
     }
@@ -80,7 +85,7 @@ public class PostServiceTest {
 
         PostResultResponse result = postService.publishPost(post.getId());
 
-        Assertions.assertEquals(postResultResponse, result);
+        assertEquals(postResultResponse, result);
     }
 
     @Test
@@ -123,7 +128,7 @@ public class PostServiceTest {
 
         PostResultResponse result = postService.updatePost(postUpdatingDto);
 
-        Assertions.assertEquals(result, postResultResponse);
+        assertEquals(result, postResultResponse);
     }
 
     @Test
@@ -161,7 +166,7 @@ public class PostServiceTest {
 
         PostResultResponse result = postService.softDelete(postId);
 
-        Assertions.assertEquals(result, postResultResponse);
+        assertEquals(result, postResultResponse);
     }
 
     @Test
@@ -188,5 +193,95 @@ public class PostServiceTest {
         when(postRepository.findById(postId)).thenReturn(Optional.of(setPost));
 
         Assertions.assertThrows(IllegalArgumentException.class, () -> postService.updatePost(postUpdatingDto));
+    }
+
+    @Test
+    public void publishScheduledPost_success6ThreadsRun() {
+        List<Post> posts = new ArrayList<>();
+
+        for (int i = 1; i < 5050; i++) {
+            posts.add(Post.builder()
+                    .id((long) i)
+                    .published(false)
+                    .build());
+        }
+
+        when(postRepository.findReadyToPublish()).thenReturn(posts);
+
+        postService.publishScheduledPost();
+
+        verify(scheduledPublishPostThreadPool, times(6)).submit(any(Runnable.class));
+    }
+    @Test
+    public void publishScheduledPost_success1ThreadsRun() {
+        List<Post> posts = new ArrayList<>();
+
+        for (int i = 1; i < 500; i++) {
+            posts.add(Post.builder()
+                    .id((long) i)
+                    .published(false)
+                    .build());
+        }
+
+        when(postRepository.findReadyToPublish()).thenReturn(posts);
+
+        postService.publishScheduledPost();
+
+        verify(scheduledPublishPostThreadPool, times(1)).submit(any(Runnable.class));
+    }
+    @Test
+    public void publishScheduledPost_zeroPostsToPublish() {
+        when(postRepository.findReadyToPublish()).thenReturn(Collections.emptyList());
+
+        postService.publishScheduledPost();
+
+        verify(scheduledPublishPostThreadPool, times(0)).submit(any(Runnable.class));
+    }
+
+    @Test
+    public void processRewritePost_Success() {
+        String postContent = "This is a test content";
+        String rewrittenContent = "rewritten content";
+
+        Post post = new Post();
+        post.setId(1L);
+        post.setContent(postContent);
+
+        when(rewriterService.rewriteText(postContent)).thenReturn(rewrittenContent);
+
+        postService.processRewritePost(post);
+
+        assertEquals(rewrittenContent, post.getContent());
+        verify(postRepository).save(post);
+    }
+
+    @Test
+    void testPostCorrections() {
+        Post post1 = new Post();
+        post1.setId(1L);
+        post1.setContent("original content 1");
+
+        Post post2 = new Post();
+        post2.setId(2L);
+        post2.setContent("original content 2");
+
+        List<Post> posts = Arrays.asList(post1, post2);
+
+        when(postRepository.findReadyToPublish()).thenReturn(posts);
+
+        when(rewriterService.rewriteText("original content 1"))
+                .thenReturn("rewritten content 1");
+        when(rewriterService.rewriteText("original content 2"))
+                .thenReturn("rewritten content 2");
+
+        postService.postCorrections();
+
+        verify(postRepository,
+                org.mockito.Mockito.timeout(2000).times(1)).save(post1);
+        verify(postRepository,
+                org.mockito.Mockito.timeout(2000).times(1)).save(post2);
+
+        assertEquals("rewritten content 1", post1.getContent());
+        assertEquals("rewritten content 2", post2.getContent());
     }
 }
