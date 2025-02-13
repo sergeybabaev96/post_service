@@ -86,10 +86,9 @@ public class FeedServiceImpl implements FeedService {
 
       if (allPostsIds != null) {
         feed.setPostsIds(allPostsIds);
-        feed.setPostsIds(null);
-//      feedCacheRepository.save(feed);
+        feedCacheRepository.save(feed);
       } else {
-        allPostsIds = new LinkedHashSet<>();
+        return feed;
       }
     }
 
@@ -157,10 +156,12 @@ public class FeedServiceImpl implements FeedService {
   }
 
   private FeedCache getCachedFeedAllPosts(Long userId) {
+    LinkedHashSet<Long> set = new LinkedHashSet<>();
     return feedCacheRepository.findById(userId)
         .orElseGet(() ->
             FeedCache.builder()
                 .id(userId)
+                .postsIds(set)
                 .build()
         );
   }
