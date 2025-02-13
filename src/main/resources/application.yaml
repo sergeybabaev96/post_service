@@ -45,4 +45,5 @@ payment-service:
 moderation:
   cron: "0 0 0 * * ?"
   threadSize: 100
-  api-url: "https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=YOUR_API_KEY"
+  api-url: "https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze?key=AIzaSyCvYJUwADYD2pGzdhoY5QunJEgrvgPbbpg"
+  bad-words-path: "classpath:moderation/bad-words.json"
