@@ -44,6 +44,8 @@ spring:
       ttl: 36000               #10 hours
       port: 6379
       host: localhost
+      comment:
+        ttl: 86400          #24 hours
       channels:
         calculations_channel:
           name: calculations_channel
@@ -60,6 +62,8 @@ spring:
           name: comments
         post-channel:
           name: posts
+        post_view-channel:
+          name: post_view
 
 server:
   port: 8089

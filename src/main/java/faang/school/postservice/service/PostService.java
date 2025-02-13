@@ -10,6 +10,7 @@ import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.producer.KafkaPostProducer;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.producer.KafkaPostViewProducer;
 import faang.school.postservice.publisher.PostViewEventPublisher;
 import faang.school.postservice.repository.PostRepository;
 import feign.FeignException;
@@ -46,6 +47,7 @@ public class PostService {
     private final OrthographyService orthographyService;
     private final PostViewEventPublisher postViewEventPublisher;
     private final KafkaPostProducer kafkaPostProducer;
+    private final KafkaPostViewProducer kafkaPostViewProducer;
 
     private final ThreadPoolTaskExecutor threadPoolTaskExecutor;
 
@@ -94,6 +96,8 @@ public class PostService {
             PostDto postDto = postMapper.toDto(post);
             postViewEventPublisher.publish(new PostViewEvent(postId, post.getAuthorId(),
                     userContext.getUserId(), LocalDateTime.now()));
+            kafkaPostViewProducer.send(new PostViewEvent(postId, post.getAuthorId(),
+                    userContext.getUserId(), LocalDateTime.now()));
             return postDto;
         } else throw new EntityNotFoundException("Post not found with ID: " + postId);
     }
@@ -129,6 +133,8 @@ public class PostService {
                 .toList();
         postList.forEach(post -> postViewEventPublisher.publish(new PostViewEvent(post.getId(),
                 post.getAuthorId(), userContext.getUserId(), LocalDateTime.now())));
+        postList.forEach(post -> kafkaPostViewProducer.send(new PostViewEvent(post.getId(),
+                post.getAuthorId(), userContext.getUserId(), LocalDateTime.now())));
         return postDtoList;
     }
 
@@ -141,6 +147,8 @@ public class PostService {
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed()).toList();
         List<PostDto> postDtoList = postList.stream().map(postMapper::toDto).toList();
         postList.forEach(post -> postViewEventPublisher.publish(new PostViewEvent(post.getId(),
+                post.getAuthorId(), userContext.getUserId(), LocalDateTime.now())));
+        postList.forEach(post -> kafkaPostViewProducer.send(new PostViewEvent(post.getId(),
                 post.getAuthorId(), userContext.getUserId(), LocalDateTime.now())));
         return postDtoList;
     }
