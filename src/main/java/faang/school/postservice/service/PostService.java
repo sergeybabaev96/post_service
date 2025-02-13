@@ -16,26 +16,30 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
-    private final ExternalService externalService;
+
     private final AsyncModerationService asyncModerationService;
     @Value("${moderation.threadSize}")
     private int threadSize;
 
+    private final InternalServices internalServices;
 
+
+    @Transactional
     public Post createDraft(Post post) {
-        if (post.getAuthorId() != null && !externalService.userExists(post.getAuthorId())) {
+        if (post.getAuthorId() != null && !internalServices.userExists(post.getAuthorId())) {
             throw new InvalidParameterException("Post author does not exist! id:" + post.getAuthorId());
         }
-        if (post.getProjectId() != null && !externalService.projectExists(post.getProjectId())) {
+        if (post.getProjectId() != null && !internalServices.projectExists(post.getProjectId())) {
             throw new InvalidParameterException("Post project does not exist! id:" + post.getProjectId());
         }
         return postRepository.save(post);
     }
 
+    @Transactional
     public Post publish(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new DataValidationException("Specified post not found. Id:" + postId));
@@ -47,6 +51,7 @@ public class PostService {
         return postRepository.save(post);
     }
 
+    @Transactional
     public Post update(Post post) {
         Post originalPost = postRepository.findById(post.getId())
                 .orElseThrow(() -> new DataValidationException("You are trying to update not existing post. Id:"
@@ -58,6 +63,7 @@ public class PostService {
         return postRepository.save(post);
     }
 
+    @Transactional
     public void delete(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new DataValidationException("Specified post not found. Id:" + postId));
@@ -112,5 +118,9 @@ public class PostService {
 
     private List<List<Post>> splitIntoThreads(List<Post> posts) {
         return ListUtils.partition(posts, threadSize);
+    }
+
+    public List<Post> findPostsByResourceKeys(List<String> resourceKeys) {
+        return postRepository.findPostsByResourceKeys(resourceKeys);
     }
 }

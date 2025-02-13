@@ -22,4 +22,7 @@ public interface PostRepository extends CrudRepository<Post, Long> {
     List<Post> findReadyToPublish();
 
     List<Post> findByVerifiedDateIsNull();
+
+    @Query("SELECT p FROM Post p JOIN p.resources r WHERE r.key IN :resourceKeys")
+    List<Post> findPostsByResourceKeys(List<String> resourceKeys);
 }

@@ -4,10 +4,9 @@ import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.AiModerationService;
-import faang.school.postservice.service.ExternalService;
+import faang.school.postservice.service.InternalServices;
 import faang.school.postservice.service.PostService;
 import faang.school.postservice.validation.ModerationDictionary;
-import liquibase.executor.ExecutorService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -44,7 +43,7 @@ public class PostServiceTest {
     private PostRepository postRepository;
 
     @Mock
-    private ExternalService externalService;
+    private InternalServices internalServices;
 
     @InjectMocks
     private PostService postService;
@@ -95,7 +94,7 @@ public class PostServiceTest {
     @Test
     @Order(1)
     public void createDraft_ValidAuthor() {
-        when(externalService.userExists(1L)).thenReturn(true);
+        when(internalServices.userExists(1L)).thenReturn(true);
         when(postRepository.save(any(Post.class))).thenReturn(post);
 
         Post result = postService.createDraft(post);
@@ -106,7 +105,7 @@ public class PostServiceTest {
     @Test
     @Order(2)
     public void createDraft_InvalidAuthor() {
-        when(externalService.userExists(1L)).thenReturn(false);
+        when(internalServices.userExists(1L)).thenReturn(false);
 
         assertThrows(InvalidParameterException.class, () -> postService.createDraft(post));
     }
@@ -114,7 +113,7 @@ public class PostServiceTest {
     @Test
     @Order(3)
     public void createDraft_InvalidProject() {
-        when(externalService.projectExists(1L)).thenReturn(false);
+        when(internalServices.projectExists(1L)).thenReturn(false);
 
         assertThrows(InvalidParameterException.class, () -> postService.createDraft(projectPost));
     }
