@@ -11,10 +11,13 @@ import org.springframework.stereotype.Service;
 public class ModerationScheduler {
     private static final Logger log = LoggerFactory.getLogger(ModerationScheduler.class);
     private final PostService postService;
+    private final CommentService commentService;
 
     @Scheduled(cron = "${moderation.cron}")
     public void runModeration() {
         log.info("Moderation scheduler started");
+        int moderatedCount = commentService.moderateComments();
+        log.info("Moderation job completed. Moderated {} comments.", moderatedCount);
         postService.moderatePosts();
         log.info("Moderation scheduler finished");
     }
