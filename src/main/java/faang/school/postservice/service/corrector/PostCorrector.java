@@ -4,7 +4,7 @@ import faang.school.postservice.client.spell.SpellServiceClient;
 import faang.school.postservice.dto.spell.SpellDto;
 import faang.school.postservice.exception.IntegrationException;
 import faang.school.postservice.model.Post;
-import jakarta.persistence.EntityNotFoundException;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -28,7 +28,7 @@ public class PostCorrector {
             }
 
             post.setContent(getCorrectText(originalText, spellList));
-        } catch (EntityNotFoundException ex) {
+        } catch (FeignException ex) {
             String errorMessage = "Вызов сервиса для корректировки орфографии завершился с ошибкой";
             log.error(errorMessage, ex);
             throw new IntegrationException(errorMessage);

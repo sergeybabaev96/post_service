@@ -49,7 +49,7 @@ post-service:
 
 spell-service:
   url: https://speller.yandex.net/services/spellservice.json
-  cron: "0 0 * * * *"
+  cron: "0 0 1 * * *"
   retry:
     attempts: 3
     delay: 1
