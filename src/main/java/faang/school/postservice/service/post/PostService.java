@@ -31,6 +31,7 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import java.util.LinkedHashSet;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -79,6 +80,10 @@ public class PostService {
 
   @Value("${size.not-verified-posts-for-users}")
   private int sizeNotVerifiedPostsForUsers;
+
+  public LinkedHashSet<Long> getUserFeed(Long userId, int feedSize) {
+    return new LinkedHashSet<>(postRepository.getUserFeedPostsIds(userId, feedSize));
+  }
 
   @Transactional
   public PostDraftResponseDto createDraftPost(@NotNull @Valid PostDraftCreateDto dto) {

@@ -57,71 +57,18 @@ public class FeedServiceImpl implements FeedService {
 
   @Override
   public void updateUserFeed(Long userId, Long postId) {
-    FeedCache testFeed = getCachedFeed(userId);
-
-    LinkedHashSet<Long> posts = testFeed.getPostsIds();
-
-    testFeed.addPost(postId);
-
-    if (posts.size() > postsLimit) {
-      for (int i = 0; i < postsToDrop; i++) {
-        posts.remove(posts.iterator().next());
-      }
-    }
-    feedCacheRepository.save(testFeed);
-  }
-
-  public FeedCache getCachedFeed(Long userId) {
-    return feedCacheRepository.findById(userId)
-        .orElseGet(() ->
-            FeedCache.builder()
-                .id(userId)
-                .postsIds(new LinkedHashSet<>())
-                .build()
-        );
-  }
-
-  private FeedCache getCachedFeed(Long userId, Long previousPostId, int pageSize) {
-    FeedCache feed = feedCacheRepository.findById(userId)
-        .orElseGet(() ->
-            FeedCache.builder()
-                .id(userId)
-                .postsIds(new LinkedHashSet<>())
-                .build()
-        );
+    FeedCache feed = getCachedFeedAllPosts(userId);
 
     LinkedHashSet<Long> postsIds = feed.getPostsIds();
 
-    if (!postsIds.isEmpty()) {
+    feed.addPost(postId);
 
-      List<Long> postsIdsList = List.copyOf(postsIds);
-
-      int toIndex;
-
-      if (previousPostId == null) {
-
-        toIndex = postsIdsList.size();
-
-      } else {
-
-        toIndex = postsIdsList.indexOf(previousPostId);
-
-        if (toIndex == -1) {
-          throw new IllegalArgumentException("previous last post not found");
-
-        }
+    if (postsIds.size() > postsLimit) {
+      for (int i = 0; i < postsToDrop; i++) {
+        postsIds.remove(postsIds.iterator().next());
       }
-
-      int fromIndex = Math.max(0, toIndex - pageSize);
-
-      List<Long> postsIdsToGetList = postsIdsList.subList(fromIndex, toIndex).stream().sorted(
-          Comparator.reverseOrder()).toList();
-
-      LinkedHashSet<Long> postsToGet = new LinkedHashSet<>(postsIdsToGetList);
-
-      feed.setPostsIds(postsToGet);
     }
-    return feed;
+    feedCacheRepository.save(feed);
   }
 
   @Override
@@ -129,19 +76,69 @@ public class FeedServiceImpl implements FeedService {
     return mapToFeedDto(getCachedFeed(userId, previousPostId, pageSize));
   }
 
+  private FeedCache getCachedFeed(Long userId, Long previousPostId, int pageSize) {
+    FeedCache feed = getCachedFeedAllPosts(userId);
+
+    LinkedHashSet<Long> allPostsIds = feed.getPostsIds();
+
+    if (allPostsIds == null || allPostsIds.isEmpty()) {
+      allPostsIds = postService.getUserFeed(userId, postsLimit);
+
+      if (allPostsIds != null) {
+        feed.setPostsIds(allPostsIds);
+        feed.setPostsIds(null);
+//      feedCacheRepository.save(feed);
+      } else {
+        allPostsIds = new LinkedHashSet<>();
+      }
+    }
+
+    LinkedHashSet<Long> onePagePostsIds = getPostsIds(previousPostId, pageSize,
+        allPostsIds);
+
+    feed.setPostsIds(onePagePostsIds);
+
+    return feed;
+  }
+
+  private static LinkedHashSet<Long> getPostsIds(Long previousPostId, int pageSize,
+      LinkedHashSet<Long> postsIds) {
+    List<Long> postsIdsList = List.copyOf(postsIds);
+
+    int toIndex;
+
+    if (previousPostId == null) {
+
+      toIndex = postsIdsList.size();
+
+    } else {
+
+      toIndex = postsIdsList.indexOf(previousPostId);
+
+      if (toIndex == -1) {
+        throw new IllegalArgumentException("previous last post not found");
+      }
+    }
+
+    int fromIndex = Math.max(0, toIndex - pageSize);
+
+    List<Long> postsIdsToGetList = postsIdsList.subList(fromIndex, toIndex).stream().sorted(
+        Comparator.reverseOrder()).toList();
+
+    return new LinkedHashSet<>(postsIdsToGetList);
+  }
+
   private FeedDto mapToFeedDto(FeedCache feedCache) {
     long userId = feedCache.getId();
     UserCache userCache = userCacheRepository.findById(userId)
-        .orElseGet(() -> getUserFromDB(userId));
-    //TODO - и еще надо в кэш сразу добавить полученного из БД юзера (когда из БД берем)
+        .orElseGet(() -> userCacheRepository.save(getUserFromDB(userId)));
 
     log.info("getting user: {}", userCache.getUsername());
 
     List<PostCache> posts = feedCache.getPostsIds().stream()
         .map(postId -> postCacheRepository.findById(postId)
-            .orElseGet(() -> getPostFromDB(postId)))
+            .orElseGet(() -> postCacheRepository.save(getPostFromDB(postId))))
         .toList();
-    //TODO - и еще надо в кэш сразу добавить полученные из БД посты (когда из БД берем)
 
     return FeedDto.builder()
         .user(userCache)
@@ -154,7 +151,18 @@ public class FeedServiceImpl implements FeedService {
   }
 
   private PostCache getPostFromDB(Long postId) {
-    return postMapper.toPostCache(postService.findPostById(postId));
+    PostCache postCache = postMapper.toPostCache(postService.findPostById(postId));
+    postCache.setAuthorName(userServiceClient.getUser(postCache.getAuthorId()).getUsername());
+    return postCache;
+  }
+
+  private FeedCache getCachedFeedAllPosts(Long userId) {
+    return feedCacheRepository.findById(userId)
+        .orElseGet(() ->
+            FeedCache.builder()
+                .id(userId)
+                .build()
+        );
   }
 
 }
