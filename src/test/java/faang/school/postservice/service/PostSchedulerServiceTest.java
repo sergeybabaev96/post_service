@@ -17,24 +17,23 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class PostSchedulerServiceTest {
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     @Mock
     private PostRepository postRepository;
-
-    @Mock
-    private ExecutorService executorService;
 
     @InjectMocks
     private PostSchedulerService postSchedulerService;
 
     @BeforeEach
     void setUp() {
-        postSchedulerService = new PostSchedulerService(postRepository, Executors.newFixedThreadPool(10));
-        ReflectionTestUtils.setField(postSchedulerService, "maxRetries", 5);
+        postSchedulerService = new PostSchedulerService(postRepository, executorService);
+        ReflectionTestUtils.setField(postSchedulerService, "maxRetries", 3);
         ReflectionTestUtils.setField(postSchedulerService, "batchCount", 3);
     }
 
@@ -66,8 +65,17 @@ class PostSchedulerServiceTest {
         postSchedulerService.publishScheduledPosts(2);
 
         executorService.shutdown();
+        try {
+            while (!executorService.awaitTermination(1, TimeUnit.SECONDS)) {
+                System.out.println(" Ожидание завершения задач...");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
 
-        verify(postRepository, times(1)).saveAll(argThat(savedPosts -> StreamSupport.stream(savedPosts.spliterator(), false)
-                .allMatch(post -> post.isPublished() && post.getPublishedAt() != null)));
+        verify(postRepository, times(1)).saveAll(argThat(savedPosts ->
+                StreamSupport.stream(savedPosts.spliterator(), false)
+                        .allMatch(post -> post.isPublished() && post.getPublishedAt() != null)
+        ));
     }
 }
