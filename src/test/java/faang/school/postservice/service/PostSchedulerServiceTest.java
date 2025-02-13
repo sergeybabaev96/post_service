@@ -49,7 +49,7 @@ class PostSchedulerServiceTest {
     }
 
     @Test
-    void shouldPublishScheduledPosts_whenPostsAreAvailable() {
+    void shouldPublishScheduledPosts_whenPostsAreAvailable() throws InterruptedException {
         Post post1 = new Post();
         post1.setAuthorId(1L);
         post1.setPublished(false);
@@ -65,6 +65,8 @@ class PostSchedulerServiceTest {
         postSchedulerService.publishScheduledPosts(2);
 
         executorService.shutdown();
+        executorService.awaitTermination(5, TimeUnit.SECONDS);
+
         try {
             while (!executorService.awaitTermination(1, TimeUnit.SECONDS)) {
                 System.out.println(" Ожидание завершения задач...");
