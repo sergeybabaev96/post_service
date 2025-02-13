@@ -1,4 +1,4 @@
-package faang.school.postservice.service;
+package faang.school.postservice.service.post;
 
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
@@ -14,6 +14,7 @@ import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Hashtag;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.service.GrammarService;
 import faang.school.postservice.service.HashtagService;
 import faang.school.postservice.service.PaginationService;
 import lombok.RequiredArgsConstructor;
@@ -44,8 +45,7 @@ public class PostService {
     private final ModerationDictionary moderationDictionary;
     private final PaginationService paginationService;
     private final PostProperties postProperties;
-    @Value("${post.schedule.batch-size}")
-    private int batchSize;
+    private final GrammarService grammarService;
 
     public PostReadDto createPostDraft(PostCreateDto dto) {
         validateCreateDraftDto(dto);
@@ -140,6 +140,22 @@ public class PostService {
         );
     }
 
+    public void checkGrammar() {
+        concurrencyProcessPosts(
+                postRepository::findAllNotPublishedAndVerifiedTrue,
+                this::checkGrammarBatch,
+                postProperties.getGrammar().getPageSize(),
+                postProperties.getGrammar().getBatchSize()
+        );
+    }
+
+    private Stream<Post> checkGrammarBatch(List<Post> posts) {
+        return posts.parallelStream()
+                .peek(post -> post.setContent(
+                        grammarService.correctText(post.getContent())
+                ));
+    }
+
     private Stream<Post> moderatePostsBatch(List<Post> posts) {
         LocalDateTime verifiedDate = LocalDateTime.now();
         return posts.parallelStream()
@@ -228,6 +244,8 @@ public class PostService {
     }
 
     public void publishScheduledPosts() {
-        postSchedulerService.publishScheduledPosts(batchSize);
+        postSchedulerService.publishScheduledPosts(
+                postProperties.getSchedule().getBatchSize()
+        );
     }
 }
