@@ -65,8 +65,6 @@ public class CommentService {
 
     public Comment getComment(Long commentId) {
         return commentRepository.findById(commentId)
-                .orElseThrow(() -> new EntityNotFoundException("Comment not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Comment not found with id: " + commentId));
     }
-
 }
-
