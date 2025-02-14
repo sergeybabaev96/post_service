@@ -32,8 +32,10 @@ public class CommentServiceImpl implements CommentService {
     public CommentDto createComment(CommentDto dto) {
         UserDto author = userServiceClient.getUser(dto.authorId());
         if (author == null) {
+            log.error("Author with id = {} not found", dto.authorId());
             throw new EntityNotFoundException(String.format("Author with id = %d not found", dto.authorId()));
         }
+        log.info("Get user with id = {} from user_service", author.id());
         return commentMapper.toDto(commentRepository.save(buildComment(dto)));
     }
 
@@ -42,7 +44,9 @@ public class CommentServiceImpl implements CommentService {
         Comment comment = commentRepository.findById(dto.id()).orElseThrow(() -> new EntityNotFoundException(
                 String.format("Comment with id = %d not found", dto.id())
         ));
+        log.info("Found comment with id = {}", comment.getId());
         if (comment.getAuthorId() != dto.authorId()) {
+            log.error("Access Access denied to comment for user id = {}", dto.authorId());
             throw new AccessDeniedCommentException(String.format(
                     "Access denied to comment for user id = %d", dto.authorId()));
         }
@@ -61,11 +65,13 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public void deleteCommentById(long id) {
         commentRepository.deleteById(id);
+        log.info("Deleted comment with id = {}", id);
     }
 
     private Comment buildComment(CommentDto dto) {
         Post post = postRepository.findById(dto.authorId()).orElseThrow(() ->
                 new EntityNotFoundException(String.format("Post with id = %d not found", dto.postId())));
+        log.info("Found post with id = {}", post.getId());
         return Comment.builder()
                 .authorId(dto.authorId())
                 .post(post)

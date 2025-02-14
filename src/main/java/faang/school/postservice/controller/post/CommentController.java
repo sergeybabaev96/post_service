@@ -20,7 +20,7 @@ import java.util.List;
 @Tag(name = "Комментарии")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/${domain.path}/comments")
+@RequestMapping("${domain.path}/comments")
 @Validated
 public class CommentController {
 
