@@ -1,7 +1,10 @@
 package faang.school.postservice.controller.album;
 
 import faang.school.postservice.config.context.UserContext;
-import faang.school.postservice.dto.album.*;
+import faang.school.postservice.dto.album.AlbumDto;
+import faang.school.postservice.dto.album.AlbumFilterDto;
+import faang.school.postservice.dto.album.CreateAlbumRequestDto;
+import faang.school.postservice.dto.album.UpdateAlbumRequestDto;
 import faang.school.postservice.service.album.AlbumService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -21,12 +24,14 @@ public class AlbumController {
 
     @GetMapping
     public ResponseEntity<List<AlbumDto>> getAllAlbums(@Valid AlbumFilterDto filter) {
-        return ResponseEntity.ok(albumService.getAllAlbums(filter));
+        Long userId = userContext.getUserId();
+        return ResponseEntity.ok(albumService.getAllAlbums(filter, userId));
     }
 
     @GetMapping("/{albumId}")
     public ResponseEntity<AlbumDto> getAlbum(@PathVariable @NotNull Long albumId) {
-        return ResponseEntity.ok(albumService.getAlbumById(albumId));
+        Long userId = userContext.getUserId();
+        return ResponseEntity.ok(albumService.getAlbumById(albumId, userId));
     }
 
     @GetMapping("/user")
