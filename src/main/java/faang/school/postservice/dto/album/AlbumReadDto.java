@@ -1,6 +1,5 @@
 package faang.school.postservice.dto.album;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Builder;
 import lombok.Data;
 
@@ -15,7 +14,5 @@ public class AlbumReadDto {
     private String description;
     private Long authorId;
     private List<Long> postIds;
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     private LocalDateTime createdAt;
 }

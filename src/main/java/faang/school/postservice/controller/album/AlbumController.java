@@ -25,47 +25,47 @@ import java.util.List;
 public class AlbumController {
     private final AlbumService albumService;
 
-    @PostMapping // не работает
+    @PostMapping
     public AlbumReadDto createAlbum(@Valid @RequestBody AlbumCreateDto albumCreateDto) {
         return albumService.createAlbum(albumCreateDto);
     }
 
-    @PostMapping("/favorite/add/{albumId}") // работает
+    @PostMapping("/favorite/add/{albumId}")
     public AlbumReadDto addAlbumToFavorite(@Valid @Positive @PathVariable long albumId) {
         return albumService.addAlbumToFavorites(albumId);
     }
 
-    @PostMapping("/favorite/delete/{albumId}") // работает
+    @PostMapping("/favorite/delete/{albumId}")
     public AlbumReadDto deleteAlbumFromFavorite(@Valid @Positive @PathVariable long albumId) {
         return albumService.deleteAlbumFromFavorites(albumId);
     }
 
-    @GetMapping("/{albumId}") // работает
+    @GetMapping("/{albumId}")
     public AlbumReadDto findAlbumById(@Valid @Positive @PathVariable long albumId) {
         return albumService.findAlbumById(albumId);
     }
 
-    @GetMapping("/filters/{authorId}") // частично работает (поиск по названию)
+    @GetMapping("/filters/{authorId}")
     public List<AlbumReadDto> findAuthorAlbumsByFilters(@Valid @RequestBody AlbumFilterDto filterDto, @Valid @Positive @PathVariable long authorId) {
         return albumService.findAuthorAlbumsByFilters(filterDto, authorId);
     }
 
-    @GetMapping("/filters") // частично работает (поиск по названию)
+    @GetMapping("/filters")
     public List<AlbumReadDto> findAllAlbumsByFilters(@Valid @RequestBody AlbumFilterDto filterDto) {
         return albumService.findAllAlbumsByFilters(filterDto);
     }
 
-    @GetMapping("/favorite/filters") // частично работает (поиск по названию)
+    @GetMapping("/favorite/filters")
     public List<AlbumReadDto> findFavoriteAlbumsByFilters(@Valid @RequestBody AlbumFilterDto filterDto) {
         return albumService.findFavoriteAlbumsByFilters(filterDto);
     }
 
-    @PutMapping // работает
+    @PutMapping
     public AlbumReadDto editAlbum(@Valid @RequestBody AlbumEditDto albumEditDto) {
         return albumService.editAlbum(albumEditDto);
     }
 
-    @DeleteMapping("/{albumId}") // работает
+    @DeleteMapping("/{albumId}")
     public void deleteAlbum(@Valid @Positive @PathVariable long albumId) {
         albumService.deleteAlbum(albumId);
     }

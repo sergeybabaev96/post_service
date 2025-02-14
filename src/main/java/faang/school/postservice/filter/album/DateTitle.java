@@ -4,6 +4,7 @@ import faang.school.postservice.dto.album.AlbumFilterDto;
 import faang.school.postservice.model.Album;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.stream.Stream;
 
@@ -11,11 +12,11 @@ import java.util.stream.Stream;
 public class DateTitle implements AlbumFilter {
     @Override
     public boolean isApplicable(AlbumFilterDto filter) {
-        return filter.getFromDate() != null && filter.getFromDate().isBefore(LocalDateTime.now());
+        return filter.getFromDate() != null && filter.getFromDate().isBefore(LocalDate.now());
     }
 
     @Override
     public Stream<Album> apply(Stream<Album> elements, AlbumFilterDto filter) {
-        return elements.filter(album -> album.getCreatedAt().equals(filter.getFromDate()));
+        return elements.filter(album -> album.getCreatedAt().toLocalDate().equals(filter.getFromDate()));
     }
 }

@@ -32,7 +32,7 @@ public interface AlbumRepository extends JpaRepository<Album, Long> {
     @Query(value = "DELETE FROM favorite_albums WHERE album_id = :albumId AND user_id = :userId", nativeQuery = true)
     void deleteAlbumFromFavorites(long albumId, long userId);
 
-    @Query(value = "SELECT album_id FROM favorite_albums WHERE user_id = :userId", nativeQuery = true)
+    @Query(value = "SELECT a.* FROM Album a WHERE a.id IN (SELECT album_id FROM favorite_albums WHERE user_id = :userId)", nativeQuery = true)
     List<Album> findFavoriteAlbumsByUserId(long userId);
 
 }
