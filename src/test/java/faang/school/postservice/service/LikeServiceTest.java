@@ -30,9 +30,9 @@ class LikeServiceTest {
     @Mock
     private LikeRepository likeRepository;
     @Mock
-    private PostRepository postRepository;
+    private PostService postService;
     @Mock
-    private CommentRepository commentRepository;
+    private CommentService commentService;
     @Mock
     private LikeValidator likeValidator;
     @Mock
@@ -77,7 +77,7 @@ class LikeServiceTest {
 
     @Test
     void likePost_ShouldValidateAndSave() {
-        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
+        when(postService.getPostById(postId)).thenReturn(post);
         when(likeRepository.findByPostIdAndUserId(postId, userId)).thenReturn(Optional.empty());
         when(likeMapper.toLike(postLikeDto)).thenReturn(like);
 
@@ -90,7 +90,7 @@ class LikeServiceTest {
 
     @Test
     void likePost_ShouldThrowException_WhenPostNotFound() {
-        when(postRepository.findById(postId)).thenReturn(Optional.empty());
+        when(postService.getPostById(postId)).thenThrow(new EntityNotFoundException("Post not found with id: " + postId));
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
                 () -> likeService.likePost(postLikeDto));
@@ -100,7 +100,7 @@ class LikeServiceTest {
 
     @Test
     void likePost_ShouldThrowException_WhenAlreadyLiked() {
-        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
+        when(postService.getPostById(postId)).thenReturn(post);
         when(likeRepository.findByPostIdAndUserId(postId, userId)).thenReturn(Optional.of(like));
 
         DataValidationException exception = assertThrows(DataValidationException.class,
@@ -118,7 +118,7 @@ class LikeServiceTest {
 
     @Test
     void likeComment_ShouldValidateAndSave() {
-        when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
+        when(commentService.getCommentById(commentId)).thenReturn(comment);
         when(likeRepository.findByCommentIdAndUserId(commentId, userId)).thenReturn(Optional.empty());
         when(likeMapper.toLike(commentLikeDto)).thenReturn(like);
 
@@ -131,7 +131,7 @@ class LikeServiceTest {
 
     @Test
     void likeComment_ShouldThrowException_WhenCommentNotFound() {
-        when(commentRepository.findById(commentId)).thenReturn(Optional.empty());
+        when(commentService.getCommentById(commentId)).thenThrow(new EntityNotFoundException("Comment not found with id: " + commentId));
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
                 () -> likeService.likeComment(commentLikeDto));
@@ -141,7 +141,7 @@ class LikeServiceTest {
 
     @Test
     void likeComment_ShouldThrowException_WhenAlreadyLiked() {
-        when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
+        when(commentService.getCommentById(commentId)).thenReturn(comment);
         when(likeRepository.findByCommentIdAndUserId(commentId, userId)).thenReturn(Optional.of(like));
 
         DataValidationException exception = assertThrows(DataValidationException.class,

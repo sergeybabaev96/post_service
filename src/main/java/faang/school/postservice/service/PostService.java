@@ -120,4 +120,9 @@ public class PostService {
                 .map(postMapper::toResponseDto)
                 .toList();
     }
+
+    public Post getPostById(Long postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found with id: " + postId));
+    }
 }

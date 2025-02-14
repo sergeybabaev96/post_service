@@ -21,8 +21,8 @@ import org.springframework.stereotype.Service;
 public class LikeService {
 
     private final LikeRepository likeRepository;
-    private final PostRepository postRepository;
-    private final CommentRepository commentRepository;
+    private final PostService postService;
+    private final CommentService commentService;
     private final LikeMapper likeMapper;
     private final LikeValidator likeValidator;
 
@@ -30,8 +30,7 @@ public class LikeService {
         likeValidator.validateUserExists(postLikeDto.getUserId());
         likeValidator.validatePostExists(postLikeDto.getPostId());
 
-        Post post = postRepository.findById(postLikeDto.getPostId())
-                .orElseThrow(() -> new EntityNotFoundException("Post not found with id: " + postLikeDto.getPostId()));
+        Post post = postService.getPostById(postLikeDto.getPostId());
 
         if (likeRepository.findByPostIdAndUserId(postLikeDto.getPostId(), postLikeDto.getUserId()).isPresent()) {
             throw new DataValidationException("User already liked this post.");
@@ -52,8 +51,7 @@ public class LikeService {
         likeValidator.validateUserExists(commentLikeDto.getUserId());
         likeValidator.validateCommentExists(commentLikeDto.getCommentId());
 
-        Comment comment = commentRepository.findById(commentLikeDto.getCommentId())
-                .orElseThrow(() -> new EntityNotFoundException("Comment not found with id: " + commentLikeDto.getCommentId()));
+        Comment comment = commentService.getCommentById(commentLikeDto.getCommentId());
 
         if (likeRepository.findByCommentIdAndUserId(commentLikeDto.getCommentId(), commentLikeDto.getUserId()).isPresent()) {
             throw new DataValidationException("User already liked this comment.");
