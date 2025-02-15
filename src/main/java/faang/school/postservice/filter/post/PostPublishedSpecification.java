@@ -6,15 +6,15 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ProjectSpecification implements PostSpecificationFilter {
+public class PostPublishedSpecification implements PostSpecificationFilter{
     @Override
     public boolean isApplicable(PostFilterDto filters) {
-        return filters.projectId() != null;
+        return filters.isPublished() != null;
     }
 
     @Override
     public Specification<Post> apply(PostFilterDto filters) {
         return (root, criteriaQuery, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("projectId"), filters.projectId());
+                criteriaBuilder.equal(root.get("published"), filters.isPublished());
     }
 }

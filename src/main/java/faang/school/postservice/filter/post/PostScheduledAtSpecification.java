@@ -6,15 +6,15 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PublishedSpecification implements PostSpecificationFilter{
+public class PostScheduledAtSpecification implements PostSpecificationFilter{
     @Override
     public boolean isApplicable(PostFilterDto filters) {
-        return filters.isPublished() != null;
+        return filters.scheduledAt() != null;
     }
 
     @Override
     public Specification<Post> apply(PostFilterDto filters) {
         return (root, criteriaQuery, criteriaBuilder) ->
-                criteriaBuilder.equal(root.get("published"), filters.isPublished());
+                criteriaBuilder.lessThan(root.get("scheduledAt"), filters.scheduledAt());
     }
 }

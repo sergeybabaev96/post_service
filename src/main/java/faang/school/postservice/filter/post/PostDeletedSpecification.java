@@ -6,7 +6,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 @Component
-public class DeletedSpecification implements PostSpecificationFilter{
+public class PostDeletedSpecification implements PostSpecificationFilter{
 
     @Override
     public boolean isApplicable(PostFilterDto filters) {

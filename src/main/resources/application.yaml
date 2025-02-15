@@ -42,6 +42,12 @@ server:
   tomcat:
     max-swallow-size: 5MB
 
+thread_pool:
+  max_threads: 10
+
+post_service:
+  batch_size: 1000
+
 logging:
   level:
     root: info

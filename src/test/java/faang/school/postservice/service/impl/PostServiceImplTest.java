@@ -4,10 +4,10 @@ import faang.school.postservice.dto.post.PostCreateRequestDto;
 import faang.school.postservice.dto.post.PostFilterDto;
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.post.PostUpdateRequestDto;
-import faang.school.postservice.filter.post.AuthorSpecification;
+import faang.school.postservice.filter.post.PostAuthorSpecification;
 import faang.school.postservice.filter.post.PostSpecificationFilter;
-import faang.school.postservice.filter.post.ProjectSpecification;
-import faang.school.postservice.filter.post.PublishedSpecification;
+import faang.school.postservice.filter.post.PostProjectSpecification;
+import faang.school.postservice.filter.post.PostPublishedSpecification;
 import faang.school.postservice.mapper.PostMapperImpl;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
@@ -47,9 +47,9 @@ class PostServiceImplTest {
     @BeforeEach
     void setUp() {
 
-        PostSpecificationFilter authorSpec = new AuthorSpecification();
-        PostSpecificationFilter projectSpec = new ProjectSpecification();
-        PostSpecificationFilter publishedSpec = new PublishedSpecification();
+        PostSpecificationFilter authorSpec = new PostAuthorSpecification();
+        PostSpecificationFilter projectSpec = new PostProjectSpecification();
+        PostSpecificationFilter publishedSpec = new PostPublishedSpecification();
 
         postSpecificationFilters.add(authorSpec);
         postSpecificationFilters.add(projectSpec);
