@@ -6,6 +6,7 @@ import faang.school.postservice.dto.album.AlbumFilterDto;
 import faang.school.postservice.dto.album.CreateAlbumRequestDto;
 import faang.school.postservice.dto.album.UpdateAlbumRequestDto;
 import faang.school.postservice.dto.user.UserDto;
+import faang.school.postservice.exceptions.AccessDeniedException;
 import faang.school.postservice.mapper.AlbumMapper;
 import faang.school.postservice.model.Album;
 import faang.school.postservice.model.Post;
@@ -24,10 +25,12 @@ import org.mockito.Spy;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -74,17 +77,150 @@ class AlbumServiceTest {
     }
 
     @Test
-    void getAllAlbums_ReturnsListDto() {
+    void getAlbumById_ThrowEntityNotFoundExceptionWhenAlbumNotFound() {
+        when(albumRepository.findById(1L)).thenThrow(EntityNotFoundException.class);
+        assertThrows(EntityNotFoundException.class, () -> albumService.getAlbumById(1L, 1L));
+    }
+
+    @Test
+    void getAlbumById_ReturnDtoWhenAccessAuthor() {
+        Album album = createAlbum(1L, 123L, LocalDateTime.now(), Visibility.AUTHOR);
+        when(albumRepository.findById(1L)).thenReturn(Optional.of(album));
+        AlbumDto result = albumService.getAlbumById(1L, 123L);
+        assertNotNull(result);
+        assertEquals(album.getId(), result.id());
+        verify(albumMapper).toDto(album);
+    }
+
+    @Test
+    void getAlbumById_ThrowAccessDeniedExceptionWhenAccessAuthor() {
+        Album album = createAlbum(1L, 123L, LocalDateTime.now(), Visibility.AUTHOR);
+        when(albumRepository.findById(1L)).thenReturn(Optional.of(album));
+        assertThrows(AccessDeniedException.class, () -> albumService.getAlbumById(1L, 1L));
+    }
+
+    @Test
+    void getAlbumById_ReturnDtoWhenAccessSubscribersAndUserIsFollower() {
+        Album album = createAlbum(1L, 123L, LocalDateTime.now(), Visibility.SUBSCRIBERS);
+        when(albumRepository.findById(1L)).thenReturn(Optional.of(album));
+        when(userServiceClient.isFollow(anyLong(), anyLong())).thenReturn(true);
+        AlbumDto result = albumService.getAlbumById(1L, 2L);
+        assertNotNull(result);
+        assertEquals(album.getId(), result.id());
+        verify(albumMapper).toDto(album);
+    }
+
+    @Test
+    void getAlbumById_ReturnDtoWhenAccessSubscribersAndUserIsAuthor() {
+        Album album = createAlbum(1L, 123L, LocalDateTime.now(), Visibility.SUBSCRIBERS);
+        when(albumRepository.findById(1L)).thenReturn(Optional.of(album));
+        when(userServiceClient.isFollow(anyLong(), anyLong())).thenReturn(false);
+        AlbumDto result = albumService.getAlbumById(1L, 123L);
+        assertNotNull(result);
+        assertEquals(album.getId(), result.id());
+        verify(albumMapper).toDto(album);
+    }
+
+    @Test
+    void getAlbumById_ThrowAccessDeniedExceptionWhenAccessSubscribersUserIsNotFollowerAndNotAuthor() {
+        Album album = createAlbum(1L, 123L, LocalDateTime.now(), Visibility.SUBSCRIBERS);
+        when(albumRepository.findById(1L)).thenReturn(Optional.of(album));
+        when(userServiceClient.isFollow(anyLong(), anyLong())).thenReturn(false);
+        assertThrows(AccessDeniedException.class, () -> albumService.getAlbumById(1L, 1L));
+    }
+
+    @Test
+    void getAlbumById_ReturnDtoWhenAccessSelectedUsersAndUserIsAuthor() {
+        Album album = createAlbum(1L, 123L, LocalDateTime.now(), Visibility.SELECT_USERS);
+        when(albumRepository.findById(1L)).thenReturn(Optional.of(album));
+        AlbumDto result = albumService.getAlbumById(1L, 123L);
+        assertNotNull(result);
+        assertEquals(album.getId(), result.id());
+        verify(albumMapper).toDto(album);
+    }
+
+    @Test
+    void getAlbumById_ReturnDtoWhenAccessSelectedUsers() {
+        Album album = createAlbum(1L, 123L, LocalDateTime.now(), Visibility.SELECT_USERS);
+        List<Long> allowedUserIds = Arrays.asList(2L, 3L);
+        album.setAllowedUsers(allowedUserIds);
+        when(albumRepository.findById(1L)).thenReturn(Optional.of(album));
+        AlbumDto result = albumService.getAlbumById(1L, 2L);
+        assertNotNull(result);
+        assertEquals(album.getId(), result.id());
+        verify(albumMapper).toDto(album);
+    }
+
+    @Test
+    void getAlbumById_ThrowAccessDeniedExceptionWhenAccessSelectedUsersIsNotSelectedAndAuthor() {
+        Album album = createAlbum(1L, 123L, LocalDateTime.now(), Visibility.SELECT_USERS);
+        when(albumRepository.findById(1L)).thenReturn(Optional.of(album));
+        assertThrows(AccessDeniedException.class, () -> albumService.getAlbumById(1L, 3L));
+    }
+
+    @Test
+    void getAllAlbums_ReturnsListDtoWithUsualUser() {
         Long userId = 1L;
         AlbumFilterDto filter = new AlbumFilterDto(null, null, null, null);
         Album album = createAlbum(1L, 123L, LocalDateTime.now(), Visibility.ALL);
-
-        when(albumRepository.findAll()).thenReturn(List.of(album));
-
+        Album album2 = createAlbum(2L, 123L, LocalDateTime.now(), Visibility.AUTHOR);
+        Album album3 = createAlbum(3L, 2L, LocalDateTime.now(), Visibility.SUBSCRIBERS);
+        Album album4 = createAlbum(4L, 6L, LocalDateTime.now(), Visibility.SELECT_USERS);
+        album4.setAllowedUsers(List.of(6L));
+        when(albumRepository.findAll()).thenReturn(List.of(album, album2, album3, album4));
         List<AlbumDto> result = albumService.getAllAlbums(filter, userId);
-
         assertEquals(1, result.size());
         assertEquals(album.getId(), result.get(0).id());
+    }
+
+    @Test
+    void getAllAlbums_ReturnsListDtoWithAuthor() {
+        Long userId = 123L;
+        AlbumFilterDto filter = new AlbumFilterDto(null, null, null, null);
+        Album album = createAlbum(1L, 123L, LocalDateTime.now(), Visibility.ALL);
+        Album album2 = createAlbum(2L, 123L, LocalDateTime.now(), Visibility.AUTHOR);
+        Album album3 = createAlbum(3L, 2L, LocalDateTime.now(), Visibility.SUBSCRIBERS);
+        Album album4 = createAlbum(4L, 6L, LocalDateTime.now(), Visibility.SELECT_USERS);
+        album4.setAllowedUsers(List.of(6L));
+        when(albumRepository.findAll()).thenReturn(List.of(album, album2, album3, album4));
+        List<AlbumDto> result = albumService.getAllAlbums(filter, userId);
+        assertEquals(2, result.size());
+        assertEquals(album.getId(), result.get(0).id());
+        assertEquals(album2.getId(), result.get(1).id());
+    }
+
+    @Test
+    void getAllAlbums_ReturnsListDtoWithSubscribers() {
+        Long userId = 123L;
+        AlbumFilterDto filter = new AlbumFilterDto(null, null, null, null);
+        Album album = createAlbum(1L, 123L, LocalDateTime.now(), Visibility.ALL);
+        Album album2 = createAlbum(2L, 123L, LocalDateTime.now(), Visibility.AUTHOR);
+        Album album3 = createAlbum(3L, 2L, LocalDateTime.now(), Visibility.SUBSCRIBERS);
+        Album album4 = createAlbum(4L, 6L, LocalDateTime.now(), Visibility.SELECT_USERS);
+        album4.setAllowedUsers(List.of(6L));
+        when(albumRepository.findAll()).thenReturn(List.of(album, album2, album3, album4));
+        when(userServiceClient.isFollow(anyLong(), anyLong())).thenReturn(true);
+        List<AlbumDto> result = albumService.getAllAlbums(filter, userId);
+        assertEquals(3, result.size());
+        assertEquals(album.getId(), result.get(0).id());
+        assertEquals(album2.getId(), result.get(1).id());
+        assertEquals(album3.getId(), result.get(2).id());
+    }
+
+    @Test
+    void getAllAlbums_ReturnsListDtoWithAllowedUsers() {
+        Long userId = 6L;
+        AlbumFilterDto filter = new AlbumFilterDto(null, null, null, null);
+        Album album = createAlbum(1L, 123L, LocalDateTime.now(), Visibility.ALL);
+        Album album2 = createAlbum(2L, 123L, LocalDateTime.now(), Visibility.AUTHOR);
+        Album album3 = createAlbum(3L, 2L, LocalDateTime.now(), Visibility.SUBSCRIBERS);
+        Album album4 = createAlbum(4L, 20L, LocalDateTime.now(), Visibility.SELECT_USERS);
+        album4.setAllowedUsers(List.of(userId));
+        when(albumRepository.findAll()).thenReturn(List.of(album, album2, album3, album4));
+        List<AlbumDto> result = albumService.getAllAlbums(filter, userId);
+        assertEquals(2, result.size());
+        assertEquals(album.getId(), result.get(0).id());
+        assertEquals(album4.getId(), result.get(1).id());
     }
 
     @Test

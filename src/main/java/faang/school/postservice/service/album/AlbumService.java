@@ -170,7 +170,8 @@ public class AlbumService {
             case AUTHOR -> album.getAuthorId() == userId;
             case SUBSCRIBERS -> userServiceClient.isFollow(userId, album.getAuthorId())
                     || album.getAuthorId() == userId;
-            case SELECT_USERS -> album.getAllowedUsers().contains(userId);
+            case SELECT_USERS -> (album.getAllowedUsers() != null && album.getAllowedUsers().contains(userId))
+                    || album.getAuthorId() == userId;
         };
     }
 }
