@@ -1,4 +1,4 @@
-package faang.school.postservice.util;
+package faang.school.postservice.validator;
 
 import faang.school.postservice.dto.post.PostDto;
 import faang.school.postservice.validation.PostDtoValidator;
@@ -31,7 +31,7 @@ public class PostDtoValidatorTest {
 
     @BeforeAll
     public static void setUp() {
-        postDto = new PostDto(1L, "qwe", null, null);
+        postDto = new PostDto(1L, "qwe", null, null, null);
     }
 
     @Test

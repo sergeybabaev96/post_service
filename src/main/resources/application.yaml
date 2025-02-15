@@ -87,3 +87,8 @@ file-controller:
   image:
     max-width: 1080
     max-height-rectangle: 566
+
+publish-scheduler:
+  config:
+    assignedTreads: 10
+    cronExpression: "0 * * * * *"

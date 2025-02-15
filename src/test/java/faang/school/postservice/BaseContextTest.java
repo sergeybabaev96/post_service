@@ -1,8 +1,7 @@
-package faang.school.postservice.util;
+package faang.school.postservice;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.redis.testcontainers.RedisContainer;
-import faang.school.postservice.PostServiceApp;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,7 +1,6 @@
-package faang.school.postservice.util;
+package faang.school.postservice.service;
 
 import faang.school.postservice.exception.ExternalServiceException;
-import faang.school.postservice.service.InternalServices;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

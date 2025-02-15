@@ -2,7 +2,7 @@ package faang.school.postservice.service;
 
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.validation.ModerationDictionary;
+import faang.school.postservice.validation.ModerationDictionaryValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -17,7 +17,7 @@ import java.util.concurrent.CompletableFuture;
 @Service
 public class AsyncModerationService {
     private final PostRepository postRepository;
-    private final ModerationDictionary moderationDictionary;
+    private final ModerationDictionaryValidator moderationDictionaryValidator;
     private final AiModerationService aiModerationService;
 
     @Async("commonTaskExecutor")
@@ -30,9 +30,20 @@ public class AsyncModerationService {
         return CompletableFuture.completedFuture(null);
     }
 
+//    @Async("commonTaskExecutor")
+//    public CompletableFuture<Void> moderateThreadAsync(List<Post> posts) {
+//        return CompletableFuture.runAsync(() -> {
+//            try {
+//                moderateThread(posts);
+//            } catch (Exception e) {
+//                log.error("Failed while moderation", e);
+//            }
+//        });
+//    }
+
     private void moderateThread(List<Post> posts) {
         posts.forEach((post)->{
-            boolean hasBadWord = moderationDictionary.containsBadWord(post.getContent());
+            boolean hasBadWord = moderationDictionaryValidator.containsBadWord(post.getContent());
             boolean isToxic = !hasBadWord && aiModerationService.isToxic(post.getContent());
 
             post.setVerified(!(hasBadWord || isToxic));

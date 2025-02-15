@@ -14,9 +14,11 @@ import software.amazon.awssdk.services.s3.model.PutObjectResponse;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -26,6 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -46,7 +50,7 @@ public class FileServiceTest {
     private FileService fileService;
 
     @Test
-    void testUploadFiles() throws IOException {
+    void testUploadFiles() throws IOException, NoSuchFieldException, IllegalAccessException {
         Long postId = 1L;
         MultipartFile file = mock(MultipartFile.class);
         when(file.getSize()).thenReturn(1024L);
@@ -69,7 +73,12 @@ public class FileServiceTest {
         when(post.getResources()).thenReturn(Collections.emptyList());
         when(postService.get(postId)).thenReturn(post);
 
-        //cannot be verified because of random uuid generation
+        Field maxFileSizeMbField = FileService.class.getDeclaredField("maxFileSizeMb");
+        maxFileSizeMbField.setAccessible(true);
+        maxFileSizeMbField.set(fileService, 5L);
+
+        lenient().when(awsS3ApiConfig.getBucket()).thenReturn("your-bucket-name");
+
         List<String> result = fileService.uploadFiles(postId, Collections.singletonList(file));
 
         assertNotNull(result);
@@ -78,7 +87,7 @@ public class FileServiceTest {
                 anyString(),
                 anyString(),
                 anyMap(),
-                any(byte[].class)
+                eq(new byte[]{1, 2, 3})
         );
         verify(postService, times(1)).update(any(Post.class));
     }
