@@ -2,7 +2,7 @@ package faang.school.postservice.controller.like;
 
 import faang.school.postservice.dto.like.CommentLikeDto;
 import faang.school.postservice.dto.like.PostLikeDto;
-import faang.school.postservice.service.LikeService;
+import faang.school.postservice.service.like.LikeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

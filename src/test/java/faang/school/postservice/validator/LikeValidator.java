@@ -24,7 +24,17 @@ class LikeValidatorTest {
         DataValidationException exception = assertThrows(DataValidationException.class,
                 () -> likeValidator.validateUserExists(null));
 
-        assertEquals("User not found.", exception.getMessage());
+        assertEquals("User not found or has invalid ID.", exception.getMessage());
+    }
+
+    @Test
+    void validateUserExists_ShouldThrowException_WhenUserIdIsNull() {
+        UserDto user = new UserDto(null, "Test User", "test@example.com");
+
+        DataValidationException exception = assertThrows(DataValidationException.class,
+                () -> likeValidator.validateUserExists(user));
+
+        assertEquals("User not found or has invalid ID.", exception.getMessage());
     }
 
     @Test

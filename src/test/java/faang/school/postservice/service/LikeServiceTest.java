@@ -10,6 +10,7 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.ad.LikeRepository;
+import faang.school.postservice.service.like.LikeService;
 import faang.school.postservice.validator.LikeValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,6 +67,7 @@ class LikeServiceTest {
         testLike = new Like();
         testLike.setUserId(testUser.id());
         testLike.setPost(testPost);
+        testLike.setComment(testComment);
 
         postLikeDto = new PostLikeDto();
         postLikeDto.setUserId(testUser.id());
@@ -88,27 +90,6 @@ class LikeServiceTest {
         verify(likeValidator).validateUserExists(testUser);
         verify(likeValidator).validatePostExists(testPost);
         verify(likeRepository).save(any(Like.class));
-    }
-
-    @Test
-    void likePost_ShouldThrowException_WhenUserNotFound() {
-        when(userServiceClient.getUser(postLikeDto.getUserId())).thenReturn(null);
-
-        DataValidationException exception = assertThrows(DataValidationException.class,
-                () -> likeService.likePost(postLikeDto));
-
-        assertEquals("User not found.", exception.getMessage());
-    }
-
-    @Test
-    void likePost_ShouldThrowException_WhenPostNotFound() {
-        when(userServiceClient.getUser(postLikeDto.getUserId())).thenReturn(testUser);
-        when(userServiceClient.getUser(anyLong())).thenReturn(null);
-
-        DataValidationException exception = assertThrows(DataValidationException.class,
-                () -> likeService.likePost(postLikeDto));
-
-        assertEquals("Post not found.", exception.getMessage());
     }
 
     @Test
@@ -145,27 +126,6 @@ class LikeServiceTest {
         verify(likeValidator).validateUserExists(testUser);
         verify(likeValidator).validateCommentExists(testComment);
         verify(likeRepository).save(any(Like.class));
-    }
-
-    @Test
-    void likeComment_ShouldThrowException_WhenUserNotFound() {
-        when(userServiceClient.getUser(commentLikeDto.getUserId())).thenReturn(null);
-
-        DataValidationException exception = assertThrows(DataValidationException.class,
-                () -> likeService.likeComment(commentLikeDto));
-
-        assertEquals("User not found.", exception.getMessage());
-    }
-
-    @Test
-    void likeComment_ShouldThrowException_WhenCommentNotFound() {
-        when(userServiceClient.getUser(commentLikeDto.getUserId())).thenReturn(testUser);
-        when(commentService.getCommentById(commentId)).thenReturn(null);
-
-        DataValidationException exception = assertThrows(DataValidationException.class,
-                () -> likeService.likeComment(commentLikeDto));
-
-        assertEquals("Comment not found.", exception.getMessage());
     }
 
     @Test

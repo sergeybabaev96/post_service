@@ -11,8 +11,8 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class LikeValidator {
     public void validateUserExists(UserDto user) {
-        if (user == null) {
-            throw new DataValidationException("User not found.");
+        if (user == null || user.id() == null) {
+            throw new DataValidationException("User not found or has invalid ID.");
         }
     }
 
