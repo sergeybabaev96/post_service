@@ -107,7 +107,7 @@ public class CommentService {
         userService.getUserDtoById(createDto.authorId());
         Post post = postService.getPostById(createDto.postId());
         if (!post.isPublished()) {
-            throw new BusinessException("Комментарии можно оставлять только на опубликованные посты");
+            throw new BusinessException("Нельзя оставлять комментарий на не опубликованный пост");
         }
         if (post.isDeleted()) {
             throw new BusinessException("Нельзя оставлять комментарий на удаленный пост");
