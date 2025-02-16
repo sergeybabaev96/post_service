@@ -5,6 +5,7 @@ import faang.school.postservice.dto.comment.CommentReadDto;
 import faang.school.postservice.dto.comment.CommentUpdateDto;
 import faang.school.postservice.exception.BusinessException;
 import faang.school.postservice.mapper.CommentMapper;
+import faang.school.postservice.mapper.CommentMapperImpl;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
@@ -36,7 +37,7 @@ class CommentServiceTest {
     private CommentRepository commentRepository;
 
     @Spy
-    private CommentMapper commentMapper;
+    private CommentMapperImpl commentMapper;
 
     @Mock
     private PostService postService;

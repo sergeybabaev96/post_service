@@ -32,6 +32,13 @@ logging:
   level:
     root: info
 
+post:
+  ad-remover:
+    scheduler:
+      cron: "0 0 0 * * ?"
+    threads-count: 10
+    max-list-size: 50
+
 user-service:
   host: localhost
   port: 8080
