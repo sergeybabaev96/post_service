@@ -81,6 +81,7 @@ tasks.withType<Test> {
 }
 
 val exclusions = listOf(
+    "**/advice/**",
     "**/config",
     "**/dto/**",
     "**/entity/**",
