@@ -81,6 +81,9 @@ public class PostService {
   @Value("${size.not-verified-posts-for-users}")
   private int sizeNotVerifiedPostsForUsers;
 
+  @Value("${size.batch}")
+  private int batchSize;
+
   public LinkedHashSet<Long> getUserFeed(Long userId, int feedSize) {
     return new LinkedHashSet<>(postRepository.getUserFeedPostsIds(userId, feedSize));
   }
@@ -235,7 +238,6 @@ public class PostService {
   public void checkingPostForErrors() throws IOException, InterruptedException {
     List<Post> posts = postRepository.findByNotPublished();
 
-    int batchSize = 5;
     int totalPosts = posts.size();
     for (int i = 0; i < totalPosts; i += batchSize) {
       int end = Math.min(i + batchSize, totalPosts);
@@ -312,7 +314,7 @@ public class PostService {
       }
     }
   }
-
+  //TODO: move to resource service
   private Resource createdResource(MultipartFile file, String key) {
     return resourceServiceImpl.save(
         Resource.builder()
@@ -354,6 +356,7 @@ public class PostService {
         savePostToCache(post, userDto);
         sendPostToMessageBroker(post);
         */
+        //TODO ответ: видимо не хватает транзакции
       });
       postRepository.saveAll(posts);
       log.info("Published {} posts", posts.size());

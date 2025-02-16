@@ -22,6 +22,7 @@ public class FeedCache implements Serializable {
 
   private LinkedHashSet<Long> postsIds;
 
+  //TODO Doesn't work for Redis, use other way
   @Version
   private int version;
 

@@ -48,6 +48,7 @@ public class PostEventProducer {
         .thenRun(() -> log.info("all messages delivered to Kafka"));
   }
 
+  //TODO надо бы сделать общий метод с дженериком, на разбивку листа и уже его использовать везде
   private List<PostEventDto> splitIntoBatches(PostEventDto postEventDto) {
     Long postId = postEventDto.getPosId();
     List<Long> followers = postEventDto.getFollowers();
