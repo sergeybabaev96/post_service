@@ -3,6 +3,7 @@ package faang.school.postservice.mapper;
 import faang.school.postservice.dto.comment.CommentReadDto;
 import faang.school.postservice.dto.comment.CommentCreateDto;
 import faang.school.postservice.dto.comment.CommentUpdateDto;
+import faang.school.postservice.event.CommentEvent;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import org.mapstruct.BeanMapping;
@@ -27,6 +28,13 @@ public interface CommentMapper {
     @Mapping(target = "likesId", source = "likes")
     @Mapping(target = "postId", source = "post.id")
     CommentReadDto toDto(Comment comment);
+
+    @Mapping(target = "postId", source = "post.id")
+    @Mapping(target = "comment", source = "content")
+    @Mapping(target = "userId", source = "authorId")
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "commentId", source = "id")
+    CommentEvent toEvent(Comment comment);
 
     @IterableMapping(elementTargetType = Long.class)
     default List<Long> mapLikesToIds(List<Like> likes) {

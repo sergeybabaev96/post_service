@@ -6,6 +6,7 @@ import faang.school.postservice.dto.comment.CommentUpdateDto;
 import faang.school.postservice.exception.BusinessException;
 import faang.school.postservice.mapper.CommentMapperImpl;
 import faang.school.postservice.model.Comment;
+import faang.school.postservice.publisher.CommentMessagePublisher;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.service.comment.CommentService;
 import faang.school.postservice.service.post.PostService;
@@ -38,6 +39,9 @@ public class CommentServiceTest {
     private CommentRepository commentRepository;
 
     @Mock
+    private CommentMessagePublisher commentMessagePublisher;
+
+    @Mock
     private UserService userService;
 
     @Mock
@@ -49,18 +53,20 @@ public class CommentServiceTest {
     @Test
     public void testCreateSuccessfully() {
         CommentCreateDto createDto = CommentCreateDto.builder()
-                        .authorId(AUTHOR_ID).postId(POST_ID)
-                        .build();
+                .authorId(AUTHOR_ID).postId(POST_ID)
+                .build();
 
         commentService.create(createDto);
         Mockito.verify(commentRepository, Mockito.times(1)).save(Mockito.any());
+        Mockito.verify(commentMessagePublisher, Mockito.times(1))
+                .publish(Mockito.any());
     }
 
     @Test
     public void testUpdateSuccessfully() {
         CommentUpdateDto updateDto = CommentUpdateDto.builder()
-                        .id(COMMENT_ID).editorId(AUTHOR_ID)
-                        .build();
+                .id(COMMENT_ID).editorId(AUTHOR_ID)
+                .build();
 
         Comment comment = Comment.builder().id(COMMENT_ID).authorId(AUTHOR_ID).build();
         Mockito.when(commentRepository.findById(COMMENT_ID)).thenReturn(Optional.ofNullable(comment));

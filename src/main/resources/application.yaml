@@ -4,7 +4,7 @@ spring:
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://localhost:5432/post-service
     username: user
     password: password
 
@@ -27,6 +27,9 @@ spring:
       channels:
         calculations_channel:
           name: calculations_channel
+
+topics:
+  comment: "comment"
 
 server:
   port: 8081
@@ -82,7 +85,7 @@ spring:
 
 logging:
   level:
-    root: debug
+    root: info
 
 ---
 

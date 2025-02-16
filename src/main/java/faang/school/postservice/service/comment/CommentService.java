@@ -9,6 +9,7 @@ import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.File;
+import faang.school.postservice.publisher.CommentMessagePublisher;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.FileRepository;
 import faang.school.postservice.service.UserService;
@@ -34,12 +35,13 @@ public class CommentService {
     private final PostService postService;
     private final S3Service s3Service;
     private final FileRepository fileRepository;
+    private final CommentMessagePublisher commentMessagePublisher;
 
     public CommentReadDto create(CommentCreateDto createDto) {
         verifyCommentCreation(createDto);
-
         Comment newComment = commentMapper.toEntity(createDto);
         newComment = commentRepository.save(newComment);
+        commentMessagePublisher.publish(commentMapper.toEvent(newComment));
         return commentMapper.toDto(newComment);
     }
 
@@ -108,7 +110,7 @@ public class CommentService {
     }
 
     public void validateImageUpload(MultipartFile file) {
-        if (file.getSize() > maxImageSize * MB_TO_BYTES) {
+        if (file.getSize() > (long) maxImageSize * MB_TO_BYTES) {
             throw new DataValidationException("Размер файла не должен превышать " + maxImageSize + " Мб");
         }
         String fileType = file.getContentType();
