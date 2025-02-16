@@ -9,15 +9,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
-@FeignClient(name = "user-service", url = "${user-service.host}:${user-service.port}")
+@FeignClient(name = "user-service", url = "${user-service.url}")
 public interface UserServiceClient {
 
-    @GetMapping("/api/v1/users/{id}")
+    @GetMapping("/users/{id}")
     UserDto getUser(@PathVariable long id);
 
-    @PostMapping("/api/v1/users")
+    @PostMapping("/users")
     List<UserDto> getUsersByIds(@RequestBody List<Long> ids);
 
-    @GetMapping("/api/v1/followers/{userId}")
+    @GetMapping("/followers/{userId}")
     List<UserDto> getFollowersByUserId(@PathVariable long userId);
 }

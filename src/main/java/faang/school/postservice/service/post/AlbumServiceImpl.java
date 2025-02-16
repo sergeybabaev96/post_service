@@ -45,12 +45,11 @@ public class AlbumServiceImpl implements AlbumService {
 
     @Override
     public List<AlbumResponseDto> getAlbumsByAuthorId(long authorId) {
-        List<AlbumResponseDto> response = albumRepository.findByAuthorId(authorId).stream()
+        List<AlbumResponseDto> albums = albumRepository.findByAuthorId(authorId).stream()
                 .map(album -> visibilities.get(album.getVisibility()).apply(album))
                 .toList();
-        List<Long> ids = response.stream().map(AlbumResponseDto::id).toList();
-        log.info("Founded albums with only access: {}", ids);
-        return response;
+        log.info("Founded albums with only access for author: {}", authorId);
+        return albums;
     }
 
     @Override

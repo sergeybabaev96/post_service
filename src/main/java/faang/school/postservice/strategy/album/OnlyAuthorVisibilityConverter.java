@@ -21,21 +21,17 @@ public class OnlyAuthorVisibilityConverter implements VisibilityConverter {
     @Override
     public AlbumResponseDto apply(Album album) {
         long userId = userContext.getUserId();
-        checkUserIsAuthor(userId, album);
+        if (userId != album.getAuthorId()) {
+            throw new AlbumAccessDeniedException(
+                    String.format("Access denied for user with id = %d for album with id = %d. " +
+                                    "User with id = %d isn't author for album with id = %d",
+                            userId, album.getId(), userId, album.getId()));
+        }
         return albumMapper.toDto(album);
     }
 
     @Override
     public Visibility getVisibility() {
         return ONLY_AUTHOR;
-    }
-
-    private void checkUserIsAuthor(long userId, Album album) {
-        if (userId != album.getAuthorId()) {
-            throw new AlbumAccessDeniedException(
-                    String.format("Access denied for user with id = %d for album with id = %d. " +
-                            "User with id = %d isn't author for album with id = %d",
-                            userId, album.getId(), userId, album.getId()));
-        }
     }
 }
