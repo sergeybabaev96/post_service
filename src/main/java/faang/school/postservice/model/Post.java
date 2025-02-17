@@ -38,11 +38,14 @@ public class Post {
     @Column(name = "content", nullable = false, length = 4096)
     private String content;
 
-    @Column(name = "author_id", nullable = false)
+    @Column(name = "author_id")
     private Long authorId;
 
     @Column(name = "project_id")
     private Long projectId;
+
+    @Column(name = "verified")
+    private boolean verified;
 
     @OneToMany(mappedBy = "post", orphanRemoval = true)
     private List<Like> likes;
