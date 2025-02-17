@@ -7,7 +7,6 @@ import faang.school.postservice.model.Post;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -23,7 +22,7 @@ public class PostCorrector {
             String originalText = post.getContent();
             List<SpellDto> spellList = spellServiceClient.checkText(originalText);
 
-            if (CollectionUtils.isEmpty(spellList)) {
+            if (spellList.isEmpty()) {
                 return;
             }
 
@@ -46,7 +45,7 @@ public class PostCorrector {
         for (SpellDto spell : spells) {
             suggestions = spell.getSuggestions();
 
-            if (CollectionUtils.isEmpty(suggestions)) {
+            if (suggestions.isEmpty()) {
                 return originalText;
             }
 

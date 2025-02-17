@@ -101,12 +101,6 @@ public class PostService {
         }
     }
 
-    public void correctAllUnpublishedPosts() {
-        List<Post> posts = postRepository.findReadyToPublish();
-        posts.forEach(postCorrector::correctContentPost);
-        postRepository.saveAll(posts);
-    }
-
     private List<ReadPostDto> getPosts(Long id, boolean published, boolean byAuthor) {
         List<Post> posts = byAuthor ? postRepository.findByAuthorId(id) : postRepository.findByProjectId(id);
 
@@ -116,5 +110,11 @@ public class PostService {
                 .toList();
 
         return postMapper.toDtoList(posts);
+    }
+
+    public void correctAllUnpublishedPosts() {
+        List<Post> posts = postRepository.findReadyToPublish();
+        posts.forEach(postCorrector::correctContentPost);
+        postRepository.saveAll(posts);
     }
 }
