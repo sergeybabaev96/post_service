@@ -1,6 +1,5 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.broker.LikeEventPublisher;
 import faang.school.postservice.broker.MessageBuilder;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.like.LikeCommentRequest;
@@ -18,13 +17,13 @@ import faang.school.postservice.repository.PostRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.clients.admin.NewTopic;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -37,8 +36,9 @@ public class LikeService {
     private final CommentRepository commentRepository;
     private final PostService postService;
     private final CommentService commentService;
-    private final LikeEventPublisher likeEventPublisher;
     private final MessageBuilder messageBuilder;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final NewTopic likePostEventTopic;
 
 
     @Transactional
@@ -47,23 +47,23 @@ public class LikeService {
                 .orElseThrow(() -> new EntityNotFoundException("Пост с id " + request.postId() + " не был найден"));
         UserDto userDto = getUserDto(request.userId());
 
-        List<Like> likes = new ArrayList<>(post.getLikes() == null ? Collections.emptyList() : post.getLikes());
-        boolean likeAlreadyExists = likes.stream().anyMatch(like -> like.getUserId() == userDto.id());
+        Set<Like> likes = new HashSet<>(post.getLikes() == null ? Collections.emptyList() : post.getLikes());
+        Optional<Like> like = likes.stream().filter(likeItem -> likeItem.getUserId() == userDto.id()).findFirst();
 
-        if (likeAlreadyExists) {
-            post.setLikes(likes.stream().filter(like -> like.getUserId() != userDto.id()).toList());
-            likeRepository.deleteByPostIdAndUserId(post.getId(), userDto.id());
+        if (like.isPresent()) {
+            assert post.getLikes() != null;
+            post.getLikes().remove(like.get());
+            likeRepository.delete(like.get());
         } else {
             Like newLike = Like.builder()
                     .userId(userDto.id())
                     .post(post)
                     .createdAt(LocalDateTime.now())
                     .build();
+            post.getLikes().add(newLike);
             likeRepository.save(newLike);
-            likes.add(newLike);
-            post.setLikes(likes);
 
-            likeEventPublisher.publish(
+            kafkaTemplate.send(likePostEventTopic.name(),
                     messageBuilder.generateLikeEventMessage(post.getAuthorId(), userDto.id(), post.getId()));
         }
     }

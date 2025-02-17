@@ -29,8 +29,9 @@ spring:
         calculations_channel:
           name: calculations_channel
 
-  messages:
-    like_event_topic_name: likeEvent
+  kafka:
+    bootstrap-servers: localhost:9092
+    like_post_event_topic_name: like_post_event
 
 server:
   port: 8081
