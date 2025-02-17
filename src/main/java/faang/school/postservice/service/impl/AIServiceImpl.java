@@ -49,7 +49,7 @@ public class AIServiceImpl implements AIService {
                             log.error("Error during grammar check: {}", error.getMessage());
                             return new RuntimeException("API request failed", error);
                         })
-                        .doOnSuccess(chatResponse -> log.debug("End check grammar post id = {}, text = {}", post.getId(), chatResponse.findAssistanceContent()))
+                        .log()
                         .block())
                         .findAssistanceContent();
     }
