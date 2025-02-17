@@ -78,7 +78,7 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public Post getPost (Long postId) {
+    public Post getPost(Long postId) {
         return postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found"));
     }
