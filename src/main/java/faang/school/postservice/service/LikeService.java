@@ -1,5 +1,7 @@
 package faang.school.postservice.service;
 
+import faang.school.event.NotificationLikeEvent;
+import faang.school.postservice.annotations.PublishLikeEvent;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.CommentNotFoundException;
@@ -52,6 +54,7 @@ public class LikeService {
         return fetchUsersInBatches(userIds);
     }
 
+    @PublishLikeEvent(events = { NotificationLikeEvent.class })
     @Transactional
     public void addLikeToPost(Long postId, Long commentId, Long currentUserId) {
         try {
@@ -81,6 +84,7 @@ public class LikeService {
         likeRepository.deleteByUserIdAndPostId(currentUserId, postId);
     }
 
+    @PublishLikeEvent(events = { NotificationLikeEvent.class })
     @Transactional
     public void addLikeToComment(Long commentId, Long postId, Long currentUserId) {
         try {
