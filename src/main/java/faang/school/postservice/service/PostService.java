@@ -104,6 +104,7 @@ public class PostService {
                 .toList();
     }
 
+
     @Transactional(readOnly = true)
     public void moderatePosts() {
         List<Post> posts = postRepository.findByVerifiedDateIsNull();

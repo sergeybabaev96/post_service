@@ -41,6 +41,13 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     /**
+     * Amazon s3
+     */
+    implementation("software.amazon.awssdk:s3:2.20.86")
+    implementation("software.amazon.awssdk:url-connection-client:2.20.86")
+
+
+    /**
      * Utils & Logging
      */
     implementation("com.fasterxml.jackson.core:jackson-databind:2.14.2")

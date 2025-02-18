@@ -13,6 +13,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
@@ -31,6 +34,20 @@ server:
 logging:
   level:
     root: info
+
+services:
+  s3:
+    endpoint: http://localhost:9000
+    accessKey: user
+    secretKey: password
+    bucketName: corpbucket
+
+comment:
+  image:
+    largeImageMaxSize: 1080
+    smallImageMaxSize: 170
+    max-file-size: 5MB
+
 
 project-protocol: http
 user-service:
