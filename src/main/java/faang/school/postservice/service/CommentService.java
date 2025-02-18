@@ -7,7 +7,9 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
 import faang.school.postservice.repository.CommentRepository;
+
 import faang.school.postservice.service.s3.AwsService;
+import faang.school.postservice.util.ModerationDictionary;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +51,8 @@ public class CommentService {
 
     @Value("${comment.image.smallImageMaxSize}")
     private int SMALL_IMAGE_MAX_SIZE;
+
+    private final ModerationDictionary moderationDictionary;
 
     @Transactional(readOnly = true)
     public List<Comment> getCommentsByPostId(Long postId) {
@@ -195,5 +199,26 @@ public class CommentService {
 
         comment.setSmallImageFileKey(null);
         comment.setLargeImageFileKey(null);
+
+    public int moderateComments() {
+        List<Comment> unverifiedComments = commentRepository.findUnverifiedComments();
+
+        if (unverifiedComments.isEmpty()) {
+            log.info("No unverified comments to moderate");
+            return 0;
+        }
+
+        unverifiedComments.parallelStream()
+                .peek(comment -> log.info("Moderating comment ID: {}", comment.getId()))
+                .forEach(comment -> {
+                    boolean containsBannedWords = moderationDictionary.containsBannedWords(comment.getContent());
+                    comment.setVerified(!containsBannedWords);
+                    comment.setVerifiedDate(LocalDateTime.now());
+                });
+
+        commentRepository.saveAll(unverifiedComments);
+        log.info("Moderated {} comments", unverifiedComments.size());
+
+        return unverifiedComments.size();
     }
 }
