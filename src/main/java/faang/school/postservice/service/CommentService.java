@@ -6,6 +6,7 @@ import faang.school.postservice.dto.comment.CreateCommentRequest;
 import faang.school.postservice.exceptions.FileIsEmptyException;
 import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.model.Comment;
+import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.utils.ImageService;
 import jakarta.persistence.EntityNotFoundException;
@@ -31,13 +32,21 @@ public class CommentService {
     private static final int SMALL_IMAGE_SIZE = 170;
     private static final int LARGE_IMAGE_SIZE = 1080;
     private final ImageService imageService;
+    private final KafkaService kafkaService;
+    private final PostService postService;
 
     @Transactional
     public CommentResponse create(@Valid CreateCommentRequest createCommentRequest) {
         validateService.validateUser(createCommentRequest.userId());
         validateService.validatePost(createCommentRequest.postId());
 
+        Post post = postService.getPostById(createCommentRequest.postId());
         Comment comment = commentMapper.toEntity(createCommentRequest);
+        kafkaService.sendCommentCreateMessage(
+                post.getAuthorId(),
+                createCommentRequest.userId(),
+                createCommentRequest.postId()
+        );
         return commentMapper.toCommentResponse(commentRepository.save(comment));
     }
 

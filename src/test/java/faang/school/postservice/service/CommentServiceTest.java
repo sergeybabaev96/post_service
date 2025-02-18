@@ -54,6 +54,12 @@ class CommentServiceTest {
     @Mock
     private ImageService imageService;
 
+    @Mock
+    private PostService postService;
+
+    @Mock
+    private KafkaService kafkaService;
+
     @InjectMocks
     private CommentService commentService;
 
@@ -72,8 +78,11 @@ class CommentServiceTest {
 
         doNothing().when(validateService).validateUser(request.userId());
         doNothing().when(validateService).validatePost(request.postId());
+        doNothing().when(kafkaService)
+                .sendCommentCreateMessage(post.getAuthorId(), request.userId(), request.postId());
 
         when(commentRepository.save(any(Comment.class))).thenReturn(commentSaved);
+        when(postService.getPostById(request.postId())).thenReturn(post);
 
         CommentResponse actualResponse = commentService.create(request);
 
