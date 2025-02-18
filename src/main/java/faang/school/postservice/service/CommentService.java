@@ -1,5 +1,6 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.builder.CommentCreateMessageBuilder;
 import faang.school.postservice.dto.comment.CommentResponse;
 import faang.school.postservice.dto.comment.CommentUpdateRequest;
 import faang.school.postservice.dto.comment.CreateCommentRequest;
@@ -13,6 +14,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,6 +31,12 @@ public class CommentService {
     private final ValidateService validateService;
     private final CommentMapper commentMapper;
     private final CommentRepository commentRepository;
+    private final CommentCreateMessageBuilder commentCreateMessageBuilder;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+
+    @Value("${spring.kafka.comment_create_event_topic_name}")
+    private String commentCreateEventTopicName;
+
     private static final int SMALL_IMAGE_SIZE = 170;
     private static final int LARGE_IMAGE_SIZE = 1080;
     private final ImageService imageService;
@@ -38,6 +47,9 @@ public class CommentService {
         validateService.validatePost(createCommentRequest.postId());
 
         Comment comment = commentMapper.toEntity(createCommentRequest);
+
+        kafkaTemplate.send(commentCreateEventTopicName, commentCreateMessageBuilder.build(comment));
+
         return commentMapper.toCommentResponse(commentRepository.save(comment));
     }
 

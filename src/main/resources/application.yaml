@@ -29,6 +29,10 @@ spring:
         calculations_channel:
           name: calculations_channel
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    comment_create_event_topic_name: comment_create_event
+
 server:
   port: 8081
 
