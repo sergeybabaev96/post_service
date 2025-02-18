@@ -57,13 +57,13 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public void publishScheduledPosts() {
-        PostFilterDto shouldBePublishedBefore = PostFilterDto.builder()
+        PostFilterDto postFilterDto = PostFilterDto.builder()
                 .isPublished(false)
                 .isDeleted(false)
-                .scheduledAt(LocalDateTime.now())
+                .shouldBePublishedBefore(LocalDateTime.now())
                 .build();
 
-        List<Post> scheduledPosts = findAllPostsByFilter(shouldBePublishedBefore);
+        List<Post> scheduledPosts = findAllPostsByFilter(postFilterDto);
         List<List<Post>> postBatches = ListUtils.partition(scheduledPosts, postBatchSize);
         postBatches.stream()
                 .map(this::preparePostList)

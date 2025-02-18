@@ -10,6 +10,6 @@ public record PostFilterDto(
         Long projectId,
         Long authorId,
         Boolean isDeleted,
-        LocalDateTime scheduledAt
+        LocalDateTime shouldBePublishedBefore
         ) {
 }

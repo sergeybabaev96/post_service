@@ -9,12 +9,12 @@ import org.springframework.stereotype.Component;
 public class PostScheduledAtSpecification implements PostSpecificationFilter{
     @Override
     public boolean isApplicable(PostFilterDto filters) {
-        return filters.scheduledAt() != null;
+        return filters.shouldBePublishedBefore() != null;
     }
 
     @Override
     public Specification<Post> apply(PostFilterDto filters) {
         return (root, criteriaQuery, criteriaBuilder) ->
-                criteriaBuilder.lessThan(root.get("scheduledAt"), filters.scheduledAt());
+                criteriaBuilder.lessThan(root.get("scheduledAt"), filters.shouldBePublishedBefore());
     }
 }
