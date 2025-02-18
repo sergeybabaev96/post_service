@@ -32,7 +32,7 @@ public class LikeService {
         UserDto user = userServiceClient.getUser(postLikeDto.getUserId());
         likeValidator.validateUserExists(user);
 
-        Post post = postService.getPostById(postLikeDto.getPostId());
+        Post post = postService.getPost(postLikeDto.getPostId());
         likeValidator.validatePostExists(post);
 
         if (likeRepository.findByPostIdAndUserId(postLikeDto.getPostId(), postLikeDto.getUserId()).isPresent()) {
@@ -47,7 +47,7 @@ public class LikeService {
         UserDto user = userServiceClient.getUser(postLikeDto.getUserId());
         likeValidator.validateUserExists(user);
 
-        Post post = postService.getPostById(postLikeDto.getPostId());
+        Post post = postService.getPost(postLikeDto.getPostId());
         likeValidator.validatePostExists(post);
 
         likeRepository.deleteByPostIdAndUserId(postLikeDto.getPostId(), postLikeDto.getUserId());
@@ -57,7 +57,7 @@ public class LikeService {
         UserDto user = userServiceClient.getUser(commentLikeDto.getUserId());
         likeValidator.validateUserExists(user);
 
-        Comment comment = commentService.getCommentById(commentLikeDto.getCommentId());
+        Comment comment = commentService.getComment(commentLikeDto.getCommentId());
         likeValidator.validateCommentExists(comment);
 
         if (likeRepository.findByCommentIdAndUserId(commentLikeDto.getCommentId(), commentLikeDto.getUserId()).isPresent()) {
@@ -72,7 +72,7 @@ public class LikeService {
         UserDto user = userServiceClient.getUser(commentLikeDto.getUserId());
         likeValidator.validateUserExists(user);
 
-        Comment comment = commentService.getCommentById(commentLikeDto.getCommentId());
+        Comment comment = commentService.getComment(commentLikeDto.getCommentId());
         likeValidator.validateCommentExists(comment);
 
         likeRepository.deleteByCommentIdAndUserId(commentLikeDto.getCommentId(), commentLikeDto.getUserId());

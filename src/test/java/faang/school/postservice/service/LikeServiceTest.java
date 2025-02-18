@@ -67,7 +67,7 @@ class LikeServiceTest {
     @Test
     void likePost_ShouldCreateLikeSuccessfully() {
         when(userServiceClient.getUser(postLikeDto.getUserId())).thenReturn(userDto);
-        when(postService.getPostById(postLikeDto.getPostId())).thenReturn(post);
+        when(postService.getPost(postLikeDto.getPostId())).thenReturn(post);
         when(likeRepository.findByPostIdAndUserId(anyLong(), anyLong())).thenReturn(Optional.empty());
 
         like = likeMapper.toLike(postLikeDto);
@@ -77,14 +77,14 @@ class LikeServiceTest {
 
         verify(userServiceClient).getUser(postLikeDto.getUserId());
         verify(likeValidator).validateUserExists(userDto);
-        verify(postService).getPostById(postLikeDto.getPostId());
+        verify(postService).getPost(postLikeDto.getPostId());
         verify(likeRepository).save(like);
     }
 
     @Test
     void likePost_ShouldThrowExceptionWhenAlreadyLiked() {
         when(userServiceClient.getUser(postLikeDto.getUserId())).thenReturn(userDto);
-        when(postService.getPostById(postLikeDto.getPostId())).thenReturn(post);
+        when(postService.getPost(postLikeDto.getPostId())).thenReturn(post);
         when(likeRepository.findByPostIdAndUserId(anyLong(), anyLong())).thenReturn(Optional.of(new Like()));
 
         assertThrows(DataValidationException.class, () -> likeService.likePost(postLikeDto));
@@ -93,7 +93,7 @@ class LikeServiceTest {
     @Test
     void unlikePost_ShouldRemoveLikeSuccessfully() {
         when(userServiceClient.getUser(postLikeDto.getUserId())).thenReturn(userDto);
-        when(postService.getPostById(postLikeDto.getPostId())).thenReturn(post);
+        when(postService.getPost(postLikeDto.getPostId())).thenReturn(post);
 
         likeService.unlikePost(postLikeDto);
 
@@ -103,7 +103,7 @@ class LikeServiceTest {
     @Test
     void likeComment_ShouldCreateLikeSuccessfully() {
         when(userServiceClient.getUser(commentLikeDto.getUserId())).thenReturn(userDto);
-        when(commentService.getCommentById(commentLikeDto.getCommentId())).thenReturn(comment);
+        when(commentService.getComment(commentLikeDto.getCommentId())).thenReturn(comment);
         when(likeRepository.findByCommentIdAndUserId(anyLong(), anyLong())).thenReturn(Optional.empty());
 
         like = likeMapper.toLike(commentLikeDto);
@@ -113,14 +113,14 @@ class LikeServiceTest {
 
         verify(userServiceClient).getUser(commentLikeDto.getUserId());
         verify(likeValidator).validateUserExists(userDto);
-        verify(commentService).getCommentById(commentLikeDto.getCommentId());
+        verify(commentService).getComment(commentLikeDto.getCommentId());
         verify(likeRepository).save(like);
     }
 
     @Test
     void likeComment_ShouldThrowExceptionWhenAlreadyLiked() {
         when(userServiceClient.getUser(commentLikeDto.getUserId())).thenReturn(userDto);
-        when(commentService.getCommentById(commentLikeDto.getCommentId())).thenReturn(comment);
+        when(commentService.getComment(commentLikeDto.getCommentId())).thenReturn(comment);
         when(likeRepository.findByCommentIdAndUserId(anyLong(), anyLong())).thenReturn(Optional.of(new Like()));
 
         assertThrows(DataValidationException.class, () -> likeService.likeComment(commentLikeDto));
@@ -129,7 +129,7 @@ class LikeServiceTest {
     @Test
     void unlikeComment_ShouldRemoveLikeSuccessfully() {
         when(userServiceClient.getUser(commentLikeDto.getUserId())).thenReturn(userDto);
-        when(commentService.getCommentById(commentLikeDto.getCommentId())).thenReturn(comment);
+        when(commentService.getComment(commentLikeDto.getCommentId())).thenReturn(comment);
 
         likeService.unlikeComment(commentLikeDto);
 

@@ -93,6 +93,12 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
+    public Post getPost(Long postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("Post not found with id: " + postId));
+    }
+
+    @Transactional(readOnly = true)
     public void postAuthorsToBan() {
         List<Long> authorIdsToBan = findAuthorIdsToBan();
         log.info("Start publishing authors to ban");
@@ -119,10 +125,5 @@ public class PostService {
                 .sorted(Comparator.comparing(fieldToSortBy).reversed())
                 .map(postMapper::toResponseDto)
                 .toList();
-    }
-
-    public Post getPostById(Long postId) {
-        return postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Post not found with id: " + postId));
     }
 }
