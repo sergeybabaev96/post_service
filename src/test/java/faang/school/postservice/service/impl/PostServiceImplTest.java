@@ -4,10 +4,10 @@ import faang.school.postservice.dto.post.PostCreateRequestDto;
 import faang.school.postservice.dto.post.PostFilterDto;
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.post.PostUpdateRequestDto;
-import faang.school.postservice.filter.post.AuthorSpecification;
+import faang.school.postservice.filter.post.PostAuthorSpecification;
 import faang.school.postservice.filter.post.PostSpecificationFilter;
-import faang.school.postservice.filter.post.ProjectSpecification;
-import faang.school.postservice.filter.post.PublishedSpecification;
+import faang.school.postservice.filter.post.PostProjectSpecification;
+import faang.school.postservice.filter.post.PostPublishedSpecification;
 import faang.school.postservice.mapper.PostMapperImpl;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
@@ -26,6 +26,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 @ExtendWith(MockitoExtension.class)
 class PostServiceImplTest {
@@ -35,25 +36,32 @@ class PostServiceImplTest {
     private PostRepository postRepositoryMock;
     @Spy
     private PostMapperImpl postMapper;
+    @Mock
+    ExecutorService executorService;
     @InjectMocks
     private PostServiceImpl postService;
     private PostCreateRequestDto postCreateRequestDto;
     private PostUpdateRequestDto postUpdateRequestDto;
-    private final List<Post> somePosts = TestData.getSomePosts();
     private final List<PostSpecificationFilter> postSpecificationFilters = new ArrayList<>();
 
     @BeforeEach
     void setUp() {
 
-        PostSpecificationFilter authorSpec = new AuthorSpecification();
-        PostSpecificationFilter projectSpec = new ProjectSpecification();
-        PostSpecificationFilter publishedSpec = new PublishedSpecification();
+        PostSpecificationFilter authorSpec = new PostAuthorSpecification();
+        PostSpecificationFilter projectSpec = new PostProjectSpecification();
+        PostSpecificationFilter publishedSpec = new PostPublishedSpecification();
 
         postSpecificationFilters.add(authorSpec);
         postSpecificationFilters.add(projectSpec);
         postSpecificationFilters.add(publishedSpec);
 
-        postService = new PostServiceImpl(postRepositoryMock, postServiceValidatorMock, postMapper, postSpecificationFilters);
+        postService = new PostServiceImpl(
+                postRepositoryMock,
+                postServiceValidatorMock,
+                postMapper,
+                postSpecificationFilters,
+                executorService
+        );
 
         postCreateRequestDto = PostCreateRequestDto.builder()
                 .content("Test content")
