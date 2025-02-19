@@ -31,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -288,25 +289,30 @@ public class PostServiceTest {
         posts.add(post);
 
         when(postRepository.findByVerifiedDateIsNull()).thenReturn(posts);
-        //when(moderationDictionaryValidator.containsBadWord(anyString())).thenReturn(false);
-        //when(aiModerationService.isToxic(anyString())).thenReturn(false);
+        when(moderationDictionaryValidator.containsBadWord(anyString())).thenReturn(false);
+        when(aiModerationService.isToxic(anyString())).thenReturn(false);
         when(asyncModerationService.moderateThreadAsync(anyList())).thenAnswer(invocation -> {
             List<Post> threadPosts = invocation.getArgument(0);
             threadPosts.forEach(p -> {
+                boolean hasBadWord = moderationDictionaryValidator.containsBadWord(p.getContent());
+                boolean isToxic = !hasBadWord && aiModerationService.isToxic(p.getContent());
+
+                p.setVerified(!(hasBadWord || isToxic));
                 p.setVerifiedDate(LocalDateTime.now());
-                p.setVerified(true);
             });
+            postRepository.saveAll(threadPosts);
             return CompletableFuture.completedFuture(null);
         });
 
         ReflectionTestUtils.setField(postService, "threadSize", 4);
 
         postService.moderatePosts();
-        //asyncModerationService.moderateThreadAsync(posts).join();
+
+        verify(asyncModerationService).moderateThreadAsync(anyList());
+        verify(postRepository).saveAll(anyList());
 
         assertNotNull(post.getVerifiedDate());
         assertTrue(post.isVerified());
-        //verify(postRepository).saveAll(anyList());
     }
 
     @Test

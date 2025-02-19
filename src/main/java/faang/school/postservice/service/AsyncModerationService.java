@@ -30,17 +30,6 @@ public class AsyncModerationService {
         return CompletableFuture.completedFuture(null);
     }
 
-//    @Async("commonTaskExecutor")
-//    public CompletableFuture<Void> moderateThreadAsync(List<Post> posts) {
-//        return CompletableFuture.runAsync(() -> {
-//            try {
-//                moderateThread(posts);
-//            } catch (Exception e) {
-//                log.error("Failed while moderation", e);
-//            }
-//        });
-//    }
-
     private void moderateThread(List<Post> posts) {
         posts.forEach((post)->{
             boolean hasBadWord = moderationDictionaryValidator.containsBadWord(post.getContent());

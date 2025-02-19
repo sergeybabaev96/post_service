@@ -88,7 +88,14 @@ file-controller:
     max-width: 1080
     max-height-rectangle: 566
 
-publish-scheduler:
+schedulers:
   config:
-    assignedTreads: 10
-    cronExpression: "0 * * * * *"
+    corePoolSize: 5
+    maximumPoolSize: 20
+    queueCapacity: 1000
+    publish:
+      threadNamePrefix: "publishing-"
+      cronExpression: "0 * * * * *"
+    moderation:
+      threadNamePrefix: "moderation-"
+      cronExpression: "0 * * * * *"

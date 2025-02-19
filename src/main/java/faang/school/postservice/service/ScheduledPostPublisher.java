@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 public class ScheduledPostPublisher {
     private final PostService postService;
 
-    @Scheduled(cron = "${publish-scheduler.config.cronExpression}")
+    @Scheduled(cron = "${schedulers.config.publish.cronExpression}")
     public void postPublisherSchedule() {
         log.info("Publish scheduler started processing");
         postService.publishScheduledPosts();

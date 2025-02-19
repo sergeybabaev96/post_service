@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,14 +17,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
-    private final ExecutorService publishingThreadPool;
+    private final ThreadPoolTaskExecutor publishingThreadPool;
     private final AsyncModerationService asyncModerationService;
     private final InternalServices internalServices;
     @Value("${moderation.threadSize}")
@@ -126,35 +125,23 @@ public class PostService {
         return postRepository.findPostsByResourceKeys(resourceKeys);
     }
 
-    @Async("publishingThreadPool")
     @Transactional
     public void publishScheduledPosts() {
         List<Post> postsToPublish = postRepository.findReadyToPublish();
 
         List<List<Post>> postsToPublishPartitioned = ListUtils.partition(postsToPublish, 1000);
         try {
-            postsToPublishPartitioned.forEach(chunk ->
-                    CompletableFuture.runAsync(() ->
-                            publishChunkOfPosts(chunk), publishingThreadPool));
+            List<CompletableFuture<Void>> futures = postsToPublishPartitioned.stream()
+                    .map(chunk -> CompletableFuture.runAsync(()
+                            -> publishChunkOfPosts(chunk), publishingThreadPool))
+                    .toList();
+
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         } catch (Exception e) {
             log.error("Publishing posts chunk failed!", e);
         }
         CompletableFuture.completedFuture(null);
     }
-
-//    @Async("publishingThreadPool")
-//    @Transactional
-//    public void publishScheduledPosts() {
-//        List<Post> postsToPublish = postRepository.findReadyToPublish();
-//
-//        List<List<Post>> postsToPublishPartitioned = ListUtils.partition(postsToPublish, 1000);
-//        List<CompletableFuture<Void>> futures = postsToPublishPartitioned.stream()
-//                .map(chunk -> CompletableFuture.runAsync(() ->
-//                        publishChunkOfPosts(chunk), publishingThreadPool))
-//                .toList();
-//
-//        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-//    }
 
     private void publishChunkOfPosts(List<Post> postsToPublish) {
         postsToPublish.forEach(post -> {
