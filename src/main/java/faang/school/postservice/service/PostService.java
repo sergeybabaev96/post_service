@@ -31,6 +31,32 @@ public class PostService {
     private final PostValidator postValidator;
     private final PostCorrector postCorrector;
 
+    public Post findById(@NotNull Long id) {
+        return postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(format("Пост с id=%d не найден", id)));
+    }
+
+    public List<ReadPostDto> getFilteredPosts(PostFilterDto postFilterDto) {
+        postValidator.validateFilterDto(postFilterDto);
+
+        if (postFilterDto.authorId() != null) {
+            return getPosts(postFilterDto.authorId(), postFilterDto.isPublished(), true);
+        } else {
+            return getPosts(postFilterDto.projectId(), postFilterDto.isPublished(), false);
+        }
+    }
+
+    private List<ReadPostDto> getPosts(Long id, boolean published, boolean byAuthor) {
+        List<Post> posts = byAuthor ? postRepository.findByAuthorId(id) : postRepository.findByProjectId(id);
+
+        posts = posts.stream()
+                .filter(post -> post.isPublished() == published && !post.isDeleted())
+                .sorted(Comparator.comparing(published ? Post::getPublishedAt : Post::getCreatedAt).reversed())
+                .toList();
+
+        return postMapper.toDtoList(posts);
+    }
+
     @Transactional
     public ReadPostDto create(CreatePostDto createPostDto) {
         postValidator.validateDraftPost(createPostDto);
@@ -84,32 +110,6 @@ public class PostService {
         Post updatedPost = postRepository.save(post);
 
         return postMapper.toDto(updatedPost);
-    }
-
-    public Post findById(@NotNull Long id) {
-        return postRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException(format("Пост с id=%d не найден", id)));
-    }
-
-    public List<ReadPostDto> getFilteredPosts(PostFilterDto postFilterDto) {
-        postValidator.validateFilterDto(postFilterDto);
-
-        if (postFilterDto.authorId() != null) {
-            return getPosts(postFilterDto.authorId(), postFilterDto.isPublished(), true);
-        } else {
-            return getPosts(postFilterDto.projectId(), postFilterDto.isPublished(), false);
-        }
-    }
-
-    private List<ReadPostDto> getPosts(Long id, boolean published, boolean byAuthor) {
-        List<Post> posts = byAuthor ? postRepository.findByAuthorId(id) : postRepository.findByProjectId(id);
-
-        posts = posts.stream()
-                .filter(post -> post.isPublished() == published && !post.isDeleted())
-                .sorted(Comparator.comparing(published ? Post::getPublishedAt : Post::getCreatedAt).reversed())
-                .toList();
-
-        return postMapper.toDtoList(posts);
     }
 
     public void correctAllUnpublishedPosts() {
