@@ -108,6 +108,11 @@ public class PostService {
     @Transactional(readOnly = true)
     public void moderatePosts() {
         List<Post> posts = postRepository.findByVerifiedDateIsNull();
+
+        if (posts == null || posts.isEmpty()) {
+            return;
+        }
+
         List<List<Post>> threads = splitIntoThreads(posts);
 
         List<CompletableFuture<Void>> futures = threads.stream()

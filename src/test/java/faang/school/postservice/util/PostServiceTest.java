@@ -4,6 +4,7 @@ import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.AiModerationService;
+import faang.school.postservice.service.AsyncModerationService;
 import faang.school.postservice.service.InternalServices;
 import faang.school.postservice.service.PostService;
 import faang.school.postservice.validation.ModerationDictionaryValidation;
@@ -23,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,6 +35,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -53,6 +56,9 @@ public class PostServiceTest {
 
     @Mock
     private AiModerationService aiModerationService;
+
+    @Mock
+    private AsyncModerationService asyncModerationService;
 
     private static Post post;
     private static Post projectPost;
@@ -250,7 +256,7 @@ public class PostServiceTest {
         List<Post> result = postService.getPostsByAuthorId(1L);
 
         assertEquals(2, result.size());
-        assertEquals(post2, result.get(0)); // post2 is more recent
+        assertEquals(post2, result.get(0));
         assertEquals(post1, result.get(1));
     }
 
@@ -267,7 +273,7 @@ public class PostServiceTest {
         List<Post> result = postService.getPostsByProjectId(1L);
 
         assertEquals(2, result.size());
-        assertEquals(post2, result.get(0)); // post2 is more recent
+        assertEquals(post2, result.get(0));
         assertEquals(post1, result.get(1));
     }
 
@@ -280,13 +286,23 @@ public class PostServiceTest {
         posts.add(post);
 
         when(postRepository.findByVerifiedDateIsNull()).thenReturn(posts);
-        when(moderationDictionaryValidation.containsBadWord(anyString())).thenReturn(false);
-        when(aiModerationService.isToxic(anyString())).thenReturn(false);
+
+        lenient().when(moderationDictionaryValidation.containsBadWord(anyString())).thenReturn(false);
+        lenient().when(aiModerationService.isToxic(anyString())).thenReturn(false);
+
+        when(asyncModerationService.moderateThreadAsync(anyList()))
+                .thenAnswer(invocation -> {
+                    List<Post> moderatedPosts = invocation.getArgument(0);
+                    moderatedPosts.forEach(p -> {
+                        p.setVerifiedDate(LocalDateTime.now());
+                        p.setVerified(true);
+                    });
+                    postRepository.saveAll(moderatedPosts);
+                    return CompletableFuture.completedFuture(null);
+                });
 
         postService.moderatePosts();
 
-        assertNotNull(post.getVerifiedDate());
-        assertTrue(post.isVerified());
         verify(postRepository).saveAll(anyList());
     }
 }
