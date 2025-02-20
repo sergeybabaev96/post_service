@@ -42,7 +42,11 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
-
+    topic:
+      comment:
+        name: commentTopic
+        partitions: 1
+        replicationFactor: 1
 
 server:
   port: 8081
