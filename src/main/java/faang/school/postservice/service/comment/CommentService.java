@@ -22,4 +22,6 @@ public interface CommentService {
     void uploadImage(Long commentId, MultipartFile file);
 
     void verifyComments();
+
+    void publishUsersToBanEvent();
 }

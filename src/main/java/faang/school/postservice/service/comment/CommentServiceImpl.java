@@ -1,5 +1,6 @@
 package faang.school.postservice.service.comment;
 
+import faang.school.postservice.dto.user.UsersBanEvent;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.comment.CommentFiltersDto;
@@ -11,6 +12,7 @@ import faang.school.postservice.exception.CommentValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.exception.UploadFileException;
 import faang.school.postservice.mapper.comment.CommentMapper;
+import faang.school.postservice.message.event.UsersBanPublisher;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
@@ -24,11 +26,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service
@@ -43,9 +48,13 @@ public class CommentServiceImpl implements CommentService {
     private final ImageService imageService;
     private final ExecutorService moderationExecutor;
     private final ModerationDictionary moderationDictionary;
+    private final UsersBanPublisher usersBanPublisher;
 
     @Value("${comment.batchSize}")
     private int batchSize;
+
+    @Value("${comment.number-bad-comments}")
+    private int numberOfBadComments;
 
     @Override
     public CommentResponseDto createComment(CommentRequestDto commentDto) {
@@ -113,6 +122,23 @@ public class CommentServiceImpl implements CommentService {
                 .toList();
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    }
+
+    @Override
+    public void publishUsersToBanEvent() {
+
+        log.info("Trying to get all available comments");
+        List<Comment> comments = new ArrayList<>(commentRepository.findAllByVerifiedIsFalse());
+
+        Map<Long, Long> numberOfAuthorsComments = comments.stream()
+                .collect(Collectors.groupingBy(Comment::getAuthorId, Collectors.counting()));
+
+        List<Long> userIdsToBan = numberOfAuthorsComments.entrySet().stream()
+                .filter(entry -> entry.getValue() > numberOfBadComments)
+                .map(Map.Entry::getKey)
+                .toList();
+
+        usersBanPublisher.publish(new UsersBanEvent(userIdsToBan));
     }
 
     private CompletableFuture<Void> moderatePartition(List<Comment> partition) {

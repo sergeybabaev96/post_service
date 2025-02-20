@@ -13,4 +13,7 @@ public interface CommentRepository extends CrudRepository<Comment, Long> {
 
     @Query("SELECT c FROM Comment c WHERE c.verifiedDate IS NULL")
     List<Comment> findAllByVerifiedDateIsNull();
+
+    @Query("SELECT c FROM Comment c WHERE c.verified = false AND c.verifiedDate IS NOT NULL")
+    List<Comment> findAllByVerifiedIsFalse();
 }
