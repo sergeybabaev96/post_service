@@ -21,7 +21,7 @@ public class NotificationCommentEventPublisher implements EventPublisher {
     private final CommentMapper commentMapper;
     private final ObjectMapper objectMapper;
 
-    @Value("${spring.kafka.topics.notifications-comment-topic.name}")
+    @Value("${spring.kafka.topics.notification-comment-topic.name}")
     private String commentNotificationTopic;
 
     @Override
