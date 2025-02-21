@@ -22,6 +22,8 @@ public class KafkaTopicConfiguration {
     private int commentTopicNumPartitions;
     @Value(value = "${spring.kafka.topic.comment.replicationFactor}")
     private short commentReplicationFactor;
+    @Value(value = "${spring.kafka.available.brokers}")
+    private int availableBrokers;
 
     @Bean
     public KafkaAdmin kafkaAdmin() {
@@ -32,6 +34,7 @@ public class KafkaTopicConfiguration {
 
     @Bean
     public NewTopic commentsTopic() {
-        return new NewTopic(commentsTopic, commentTopicNumPartitions, (short) commentReplicationFactor);
+        short replicationFactor = (availableBrokers > 1) ? commentReplicationFactor : 1;
+        return new NewTopic(commentsTopic, commentTopicNumPartitions, replicationFactor);
     }
 }

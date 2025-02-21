@@ -26,42 +26,36 @@ public class KafkaConfiguration {
 
     @Value(value = "${spring.kafka.bootstrap-servers}")
     private String bootstrapAddress;
-    @Value(value = "${spring.kafka.bootstrap-consumer.group-id}")
+    @Value(value = "${spring.kafka.consumer.group-id}")
     private String groupId;
 
     @Bean
     public ProducerFactory<String, String> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
-        configProps.put(
-                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 bootstrapAddress);
-        configProps.put(
-                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
                 StringSerializer.class);
-        configProps.put(
-                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
                 StringSerializer.class);
-        configProps.put(
-                ConsumerConfig.GROUP_ID_CONFIG,
+        configProps.put(ConsumerConfig.GROUP_ID_CONFIG,
                 groupId);
+        configProps.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG,
+                2097152000);
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
     @Bean
     public ConsumerFactory<String, String> consumerFactory() {
         Map<String, Object> props = new HashMap<>();
-        props.put(
-                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 bootstrapAddress);
-        props.put(
-                ConsumerConfig.GROUP_ID_CONFIG,
+        props.put(ConsumerConfig.GROUP_ID_CONFIG,
                 groupId);
-        props.put(
-                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
                 StringDeserializer.class);
-        props.put(
-                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
-                JsonSerializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class);
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
