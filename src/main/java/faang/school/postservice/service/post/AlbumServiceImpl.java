@@ -33,7 +33,6 @@ import java.util.function.Function;
 
 import static faang.school.postservice.enums.Visibility.ALL_USERS;
 import static faang.school.postservice.enums.Visibility.SELECTED_USERS;
-import static faang.school.postservice.enums.kafka.AchievementType.LIBRARIAN;
 import static java.util.stream.Collectors.toMap;
 
 @Slf4j
@@ -269,7 +268,7 @@ public class AlbumServiceImpl implements AlbumService {
 
     private void sendEventToKafka(long userId, Album album) {
         try {
-            kafkaProducer.produce(new AlbumCreatedEvent(userId, LIBRARIAN));
+            kafkaProducer.produce(new AlbumCreatedEvent(userId, album.getId(), album.getTitle()));
         } catch (JsonProcessingException e) {
             throw new KafkaProduceException(
                     String.format("Failed kafka produce created album event. Goal id = %d", album.getId()));
