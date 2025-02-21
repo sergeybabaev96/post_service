@@ -7,16 +7,16 @@ import faang.school.postservice.exceptions.FileIsEmptyException;
 import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.model.event.CommentCreateEvent;
 import faang.school.postservice.repository.CommentRepository;
+import faang.school.postservice.service.broker.KafkaProducerCommentService;
 import faang.school.postservice.utils.ImageService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -54,6 +54,12 @@ class CommentServiceTest {
     @Mock
     private ImageService imageService;
 
+    @Mock
+    private KafkaProducerCommentService kafkaProducerCommentService;
+
+    @Captor
+    private ArgumentCaptor<CommentCreateEvent> commentCreateCaptor;
+
     @InjectMocks
     private CommentService commentService;
 
@@ -61,11 +67,17 @@ class CommentServiceTest {
     void create_Success() {
         CreateCommentRequest request = new CreateCommentRequest(1L, "Текст", 2L);
         Post post = new Post();
-        post.setId(2L);
+
+        Long postId = 2L;
+
+        post.setId(postId);
+
+        Long authorId = 1L;
+        Long commentId = 1L;
 
         Comment commentSaved = Comment.builder()
-                .authorId(1L)
-                .id(1L)
+                .authorId(authorId)
+                .id(commentId)
                 .content("Текст")
                 .post(post)
                 .build();
@@ -80,11 +92,16 @@ class CommentServiceTest {
         assertNotNull(actualResponse);
         assertEquals("Текст", actualResponse.content());
 
-        verify(validateService).validateUser(1L);
-        verify(validateService).validatePost(2L);
+        verify(validateService).validateUser(authorId);
+        verify(validateService).validatePost(postId);
         verify(commentMapper).toEntity(request);
         verify(commentRepository).save(any(Comment.class));
         verify(commentMapper).toCommentResponse(commentSaved);
+        verify(kafkaProducerCommentService).sendCommentCreateEvent(commentCreateCaptor.capture());
+
+        assertEquals(commentCreateCaptor.getValue().authorId(), authorId);
+        assertEquals(commentCreateCaptor.getValue().commentId(), commentId);
+        assertEquals(commentCreateCaptor.getValue().postId(), postId);
     }
 
     @Test

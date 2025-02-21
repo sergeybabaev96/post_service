@@ -42,14 +42,15 @@ public class CommentService {
         validateService.validatePost(createCommentRequest.postId());
 
         Comment comment = commentMapper.toEntity(createCommentRequest);
+        Comment savedComment = commentRepository.save(comment);
 
         kafkaProducerCommentService.sendCommentCreateEvent(
-                new CommentCreateEvent(comment.getPost().getId(),
-                        comment.getAuthorId(),
-                        comment.getId(),
-                        comment.getCreatedAt()));
+                new CommentCreateEvent(savedComment.getPost().getId(),
+                        savedComment.getAuthorId(),
+                        savedComment.getId(),
+                        savedComment.getCreatedAt()));
 
-        return commentMapper.toCommentResponse(commentRepository.save(comment));
+        return commentMapper.toCommentResponse(savedComment);
     }
 
     @Transactional
