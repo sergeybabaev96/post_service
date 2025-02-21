@@ -1,12 +1,12 @@
 package faang.school.postservice.model;
 
 import jakarta.persistence.*;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -56,6 +56,8 @@ public class Album {
     @ElementCollection
     @CollectionTable(name = "album_allowed_users",
             joinColumns = @JoinColumn(name = "album_id"))
+    @Cascade(org.hibernate.annotations.CascadeType.ALL)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     @Column(name = "user_id")
     private List<Long> allowedUsers = new ArrayList<>();
 
