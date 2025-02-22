@@ -1,6 +1,7 @@
 package faang.school.postservice.config.props;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -24,24 +25,30 @@ public class PostProperties {
     @Data
     public static class Moderation {
         @Positive
+        @NotNull
         private Integer batchSize;
         @Positive
+        @NotNull
         private Integer pageSize;
     }
 
     @Data
     public static class Grammar {
         @Positive
+        @NotNull
         private Integer batchSize;
         @Positive
+        @NotNull
         private Integer pageSize;
     }
 
     @Data
     public static class Schedule {
         @Positive
+        @NotNull
         private Integer batchSize;
         @Positive
+        @NotNull
         private Integer pageSize;
     }
 }
