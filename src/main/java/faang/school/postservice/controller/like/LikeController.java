@@ -19,7 +19,7 @@ public class LikeController {
 
     private final LikeService likeService;
 
-    @GetMapping("/likes/{postId}/users")
+    @GetMapping("/post/{postId}/users")
     public List<UserDto> getUsersWhoLikedPost(@PathVariable Long postId) {
         log.debug("Received request to get users who liked post with id: {}", postId);
         List<UserDto> users = likeService.getUsersWhoLikedPost(postId);
