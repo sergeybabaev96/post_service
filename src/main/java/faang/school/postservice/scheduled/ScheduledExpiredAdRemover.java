@@ -9,16 +9,12 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class ScheduledExpiredAdRemover {
-
     private final AdService adService;
 
-    //@Value("${scheduling.cron}")
-    //private String cronExpression;
+    @Value("${scheduling.cron}")
+    private String cronExpression;
 
-    @Value("${scheduling.fixedRate}")
-    private long fixedRate;
-
-    @Scheduled(fixedRateString = "${scheduling.fixedRate}")
+    @Scheduled(cron = "${scheduling.cronExpression}")
     public void removingExpiredAdvertisements() {
         adService.removingExpiredAds();
     }
