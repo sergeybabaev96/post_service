@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -33,7 +34,7 @@ public class PostController {
 
     @PostMapping
     @Operation(summary = "Создание черновика поста, может создать либо проект, либо пользователь")
-    public PostReadDto createPostDraft( @RequestBody PostCreateDto dto ){
+    public PostReadDto createPostDraft(@Validated @RequestBody PostCreateDto dto ){
         return postService.createPostDraft(dto);
     }
 
