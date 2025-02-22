@@ -51,6 +51,9 @@ public class CommentService {
     @Value("${comment.image.smallImageMaxSize}")
     private int SMALL_IMAGE_MAX_SIZE;
 
+    @Value("${commenter-banner.comments-count-for-ban}")
+    private int unverifiedCommentsCountForBan;
+
     private final ModerationDictionaryUtil moderationDictionaryUtil;
 
     @Transactional(readOnly = true)
@@ -147,6 +150,11 @@ public class CommentService {
         comment.setSmallImageFileKey(keySmall);
 
         return commentRepository.save(comment);
+    }
+
+    @Transactional
+    public List<Long> findAuthorIdsForBan() {
+        return commentRepository.findAuthorsForBanWithUnverifiedCommentsCount(unverifiedCommentsCountForBan);
     }
 
     public byte[] getCommentImage(@PathVariable Long commentId, Function<Comment, String> keyExtractor) {
