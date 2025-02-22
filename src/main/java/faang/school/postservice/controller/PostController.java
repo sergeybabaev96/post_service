@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -61,6 +62,7 @@ public class PostController {
     @PatchMapping("/{postId}")
     @Operation(summary = "Обновление поста")
     public PostReadDto updatePost(
+            @Validated
             @RequestBody
             PostUpdateDto dto,
             @PathVariable
