@@ -1,6 +1,24 @@
 package faang.school.postservice.service.post;
 
-public interface PostService {
+import faang.school.postservice.dto.post.PostCreateRequestDto;
+import faang.school.postservice.dto.post.PostFilterDto;
+import faang.school.postservice.dto.post.PostResponseDto;
+import faang.school.postservice.dto.post.PostUpdateRequestDto;
 
-    boolean isPostNotExist(long postId);
+import java.util.List;
+
+public interface PostService {
+    PostResponseDto createPostDraft(PostCreateRequestDto postCreateRequestDto);
+
+    PostResponseDto publishPostDraft(Long postId);
+
+    void publishScheduledPosts();
+
+    PostResponseDto updatePost(Long postId, PostUpdateRequestDto postUpdateRequestDto);
+
+    void deletePost(Long postId);
+
+    PostResponseDto getPost(Long Id);
+
+    List<PostResponseDto> findAllByFilter(PostFilterDto filter);
 }

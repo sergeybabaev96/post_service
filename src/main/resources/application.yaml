@@ -25,8 +25,25 @@ spring:
         calculations_channel:
           name: calculations_channel
 
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
 server:
   port: 8081
+  servlet:
+    context-path: /api/v1
+
+  tomcat:
+    max-swallow-size: 5MB
+
+thread_pool:
+  max_threads: 10
+
+post_service:
+  batch_size: 1000
 
 logging:
   level:
@@ -41,3 +58,13 @@ project-service:
 payment-service:
   host: localhost
   port: 9080
+
+aws:
+  url: http://localhost:9000
+  user: user
+  password: password
+  bucketName: commentbucket
+
+image:
+  smallImageSize: 170
+  largeImageSize: 1080

@@ -1,9 +1,5 @@
 package faang.school.postservice.controller;
 
-import faang.school.postservice.dto.like.comment.LikeCommentDto;
-import faang.school.postservice.dto.like.comment.LikeCommentDtoResponse;
-import faang.school.postservice.dto.like.post.LikePostDto;
-import faang.school.postservice.dto.like.post.LikePostDtoResponse;
 import faang.school.postservice.service.like.LikeService;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
@@ -12,7 +8,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,36 +15,30 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@RequestMapping("/api/v1")
+@RequestMapping("/likes")
 public class LikeController {
 
     private final LikeService likeService;
 
-    @PostMapping("/likes/post")
+    @PostMapping("/post/{id}")
     @ResponseStatus(HttpStatus.CREATED)
-    public LikePostDtoResponse likeForPost(
-            @RequestBody @Validated({LikePostDto.Before.class}) LikePostDto likePostDto) {
-
-        return likeService.createLikeForPost(likePostDto);
+    public void likeForPost(@PathVariable("id") Long postId) {
+        likeService.createLikeForPost(postId);
     }
 
-    @PostMapping("/likes/comment")
+    @PostMapping("/comment/{id}")
     @ResponseStatus(HttpStatus.CREATED)
-    public LikeCommentDtoResponse likeForComment(
-            @RequestBody @Validated({LikeCommentDto.Before.class}) LikeCommentDto likeCommentDto) {
-
-        return likeService.createLikeForComment(likeCommentDto);
+    public void likeForComment(@PathVariable("id") Long commentId) {
+        likeService.createLikeForComment(commentId);
     }
 
     @DeleteMapping("/post/{postId}")
     public void deleteLikeFromPost(@PathVariable @Positive Long postId) {
-
         likeService.deleteLikeFromPost(postId);
     }
 
     @DeleteMapping("/comment/{commentId}")
     public void deleteLikeFromComment(@PathVariable @Positive Long commentId) {
-
         likeService.deleteLikeFromComment(commentId);
     }
 }

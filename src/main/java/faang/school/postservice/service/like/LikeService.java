@@ -1,16 +1,10 @@
 package faang.school.postservice.service.like;
 
-import faang.school.postservice.dto.like.comment.LikeCommentDto;
-import faang.school.postservice.dto.like.comment.LikeCommentDtoResponse;
-import faang.school.postservice.dto.like.post.LikePostDto;
-import faang.school.postservice.dto.like.post.LikePostDtoResponse;
-
-
 public interface LikeService {
 
-    LikePostDtoResponse createLikeForPost(LikePostDto likePostDto);
+    void createLikeForPost(Long postId);
 
-    LikeCommentDtoResponse createLikeForComment(LikeCommentDto likeCommentDto);
+    void createLikeForComment(Long commentId);
 
     void deleteLikeFromPost(long postId);
 
