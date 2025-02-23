@@ -21,12 +21,26 @@ public class PostControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
+    public void testCreatePostByUserId() throws Exception {
+        Long userId = 1L;
+        RequestPostDto requestPostDto = new RequestPostDto();
+        requestPostDto.setContent("Content");
+
+        mockMvc.perform(post("/post/create-by-user/{user-id}", userId)
+                        .header("x-user-id", userId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(requestPostDto)))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
     public void testCreatePostByUserId_WithBlankContent() throws Exception {
         Long userId = 1L;
         RequestPostDto requestPostDto = new RequestPostDto();
         requestPostDto.setContent(" ");
 
         mockMvc.perform(post("/post/create-by-user/{user-id}", userId)
+                        .header("x-user-id", userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestPostDto)))
                 .andExpect(status().isBadRequest());
@@ -39,6 +53,7 @@ public class PostControllerTest {
         requestPostDto.setContent(null);
 
         mockMvc.perform(post("/post/create-by-user/{user-id}", userId)
+                        .header("x-user-id", userId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(requestPostDto)))
                 .andExpect(status().isBadRequest());

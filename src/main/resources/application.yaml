@@ -4,12 +4,16 @@ spring:
     url: jdbc:postgresql://localhost:5432/postgres
     username: user
     password: password
+#  servlet:
+#    multipart:
+#      max-file-size: 5MB
+#      max-request-size: 5MB
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -45,12 +49,12 @@ logging:
   level:
     root: info
 
-services:
-  s3:
-    endpoint: http://localhost:9000
-    accessKey: user
-    secretKey: password
-    bucketName: corpbucket
+#services:
+#  s3:
+#    endpoint: http://localhost:9000
+#    accessKey: user
+#    secretKey: password
+#    bucketName: corpbucket
 
 user-service:
   host: localhost
