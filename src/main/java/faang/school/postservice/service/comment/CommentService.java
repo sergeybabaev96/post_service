@@ -1,7 +1,7 @@
 package faang.school.postservice.service.comment;
 
-import faang.school.postservice.dto.comment.CommentReadDto;
 import faang.school.postservice.dto.comment.CommentCreateDto;
+import faang.school.postservice.dto.comment.CommentReadDto;
 import faang.school.postservice.dto.comment.CommentUpdateDto;
 import faang.school.postservice.event.comment.CommentEventType;
 import faang.school.postservice.exception.BusinessException;
@@ -10,12 +10,13 @@ import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.File;
+import faang.school.postservice.model.Post;
 import faang.school.postservice.publisher.CommentMessagePublisher;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.FileRepository;
 import faang.school.postservice.service.UserService;
-import faang.school.postservice.service.s3.S3Service;
 import faang.school.postservice.service.post.PostService;
+import faang.school.postservice.service.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,7 @@ public class CommentService {
     private final CommentMessagePublisher commentMessagePublisher;
 
     public CommentReadDto create(CommentCreateDto createDto) {
-        verifyCommentCreation(createDto);
+        validateCommentCreation(createDto);
         Comment newComment = commentMapper.toEntity(createDto);
         newComment = commentRepository.save(newComment);
         commentMessagePublisher.publish(
@@ -107,9 +108,15 @@ public class CommentService {
         }
     }
 
-    private void verifyCommentCreation(CommentCreateDto createDto) {
+    private void validateCommentCreation(CommentCreateDto createDto) {
         userService.getUserDtoById(createDto.authorId());
-        postService.getPostById(createDto.postId());
+        Post post = postService.getPostById(createDto.postId());
+        if (!post.isPublished()) {
+            throw new BusinessException("Нельзя оставлять комментарий на не опубликованный пост");
+        }
+        if (post.isDeleted()) {
+            throw new BusinessException("Нельзя оставлять комментарий на удаленный пост");
+        }
     }
 
     public void validateImageUpload(MultipartFile file) {

@@ -6,6 +6,7 @@ import faang.school.postservice.dto.comment.CommentUpdateDto;
 import faang.school.postservice.exception.BusinessException;
 import faang.school.postservice.mapper.CommentMapperImpl;
 import faang.school.postservice.model.Comment;
+import faang.school.postservice.model.Post;
 import faang.school.postservice.publisher.CommentMessagePublisher;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.service.comment.CommentService;
@@ -55,11 +56,46 @@ public class CommentServiceTest {
         CommentCreateDto createDto = CommentCreateDto.builder()
                 .authorId(AUTHOR_ID).postId(POST_ID)
                 .build();
+        Post post = Post.builder()
+                .published(true)
+                .deleted(false)
+                .build();
+
+        Mockito.when(postService.getPostById(POST_ID)).thenReturn(post);
 
         commentService.create(createDto);
         Mockito.verify(commentRepository, Mockito.times(1)).save(Mockito.any());
         Mockito.verify(commentMessagePublisher, Mockito.times(1))
                 .publish(Mockito.any());
+    }
+
+    @Test
+    public void testCreateNotPublishedPost() {
+        CommentCreateDto createDto = CommentCreateDto.builder()
+                .authorId(AUTHOR_ID).postId(POST_ID)
+                .build();
+        Post post = Post.builder()
+                .published(false)
+                .build();
+
+        Mockito.when(postService.getPostById(POST_ID)).thenReturn(post);
+
+        assertThrows(BusinessException.class, ()-> commentService.create(createDto));
+    }
+
+    @Test
+    public void testCreateDeletedPost() {
+        CommentCreateDto createDto = CommentCreateDto.builder()
+                .authorId(AUTHOR_ID).postId(POST_ID)
+                .build();
+        Post post = Post.builder()
+                .published(true)
+                .deleted(true)
+                .build();
+
+        Mockito.when(postService.getPostById(POST_ID)).thenReturn(post);
+
+        assertThrows(BusinessException.class, ()-> commentService.create(createDto));
     }
 
     @Test
