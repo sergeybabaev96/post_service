@@ -11,7 +11,7 @@ import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.File;
 import faang.school.postservice.model.Post;
-import faang.school.postservice.publisher.CommentMessagePublisher;
+import faang.school.postservice.publisher.comment.CommentCreateMessagePublisher;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.FileRepository;
 import faang.school.postservice.service.UserService;
@@ -37,13 +37,13 @@ public class CommentService {
     private final PostService postService;
     private final S3Service s3Service;
     private final FileRepository fileRepository;
-    private final CommentMessagePublisher commentMessagePublisher;
+    private final CommentCreateMessagePublisher commentCreateMessagePublisher;
 
     public CommentReadDto create(CommentCreateDto createDto) {
         validateCommentCreation(createDto);
         Comment newComment = commentMapper.toEntity(createDto);
         newComment = commentRepository.save(newComment);
-        commentMessagePublisher.publish(
+        commentCreateMessagePublisher.publish(
                 commentMapper.toEvent(newComment, CommentEventType.CREATE)
         );
 

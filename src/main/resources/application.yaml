@@ -26,7 +26,7 @@ spring:
       host: localhost
       channels:
         calculations: calculations_channel
-        comment: comment_channel
+        comment_create: comment_create_channel
 
   cloud:
     openfeign:
@@ -100,9 +100,6 @@ services:
     secretKey: password
     bucketName: postbucket
     max_image_size: 5
-  grammar:
-    key: ${GRAMMAR_KEY}
-
 
 user-service:
   host: localhost
