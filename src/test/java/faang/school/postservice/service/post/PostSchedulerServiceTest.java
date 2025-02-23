@@ -1,8 +1,7 @@
-package faang.school.postservice.service;
+package faang.school.postservice.service.post;
 
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.service.post.PostSchedulerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +16,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.StreamSupport;
 import static org.mockito.Mockito.*;
 
@@ -64,6 +65,9 @@ class PostSchedulerServiceTest {
         when(postRepository.findReadyToPublish(any(PageRequest.class))).thenReturn(postPage);
 
         postSchedulerService.publishScheduledPosts(2);
+
+        Future<?> future = executorService.submit(() -> postSchedulerService.publishScheduledPosts(2));
+        future.get(10, TimeUnit.SECONDS);
 
         verify(postRepository, times(1)).saveAll(argThat(savedPosts ->
                 StreamSupport.stream(savedPosts.spliterator(), false)
