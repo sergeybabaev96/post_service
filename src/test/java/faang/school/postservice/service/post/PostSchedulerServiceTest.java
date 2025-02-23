@@ -61,13 +61,10 @@ class PostSchedulerServiceTest {
         post2.setPublished(false);
 
         List<Post> posts = List.of(post1, post2);
-        Page<Post> postPage = new PageImpl<>(posts, PageRequest.of(0, 2), 1);
+        Page<Post> postPage = new PageImpl<>(posts, PageRequest.of(0, 2), posts.size());
         when(postRepository.findReadyToPublish(any(PageRequest.class))).thenReturn(postPage);
 
         postSchedulerService.publishScheduledPosts(2);
-
-        Future<?> future = executorService.submit(() -> postSchedulerService.publishScheduledPosts(2));
-        future.get(30, TimeUnit.SECONDS);
 
         verify(postRepository, times(1)).saveAll(argThat(savedPosts ->
                 StreamSupport.stream(savedPosts.spliterator(), false)
