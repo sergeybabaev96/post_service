@@ -3,9 +3,11 @@ package faang.school.postservice.event;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.joda.time.LocalDateTime;
+import java.time.LocalDateTime;
 
+@Getter
 @RequiredArgsConstructor
 @Builder
 public class PostViewEvent {
