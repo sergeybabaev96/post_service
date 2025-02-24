@@ -1,5 +1,6 @@
 package faang.school.postservice.controller;
 
+import faang.school.postservice.dto.resource.ResourceDtoRs;
 import faang.school.postservice.dto.post.PostCreateRequestDto;
 import faang.school.postservice.dto.post.PostFilterDto;
 import faang.school.postservice.dto.post.PostResponseDto;
@@ -8,6 +9,7 @@ import faang.school.postservice.service.PostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -46,8 +48,8 @@ public class PostController {
 
     @GetMapping("/")
     public List<PostResponseDto> getFilteredPosts(@RequestParam Boolean isPublished,
-                                             @RequestParam(required = false) Long projectId,
-                                             @RequestParam(required = false) Long authorId) {
+                                                  @RequestParam(required = false) Long projectId,
+                                                  @RequestParam(required = false) Long authorId) {
 
         PostFilterDto postFilter = PostFilterDto.builder()
                 .authorId(authorId)
@@ -58,4 +60,8 @@ public class PostController {
         return postService.findAllByFilter(postFilter);
     }
 
+    @PutMapping("/{postId}/images")
+    public List<ResourceDtoRs> uploadFile(@PathVariable long postId, @RequestPart("files") MultipartFile[] files) {
+        return postService.uploadFiles(postId, files);
+    }
 }

@@ -7,12 +7,11 @@ import faang.school.postservice.config.AwsProperties;
 import faang.school.postservice.exception.UploadFileException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.coobird.thumbnailator.Thumbnails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.io.InputStream;
 
 @Slf4j
 @Service
@@ -35,4 +34,24 @@ public class S3ServiceImpl implements S3Service {
             throw new RuntimeException("Error uploading file: ", e);
         }
     }
+
+    public void uploadFile(MultipartFile file, String key) {
+        ObjectMetadata objectMetadata = new ObjectMetadata();
+        objectMetadata.setContentLength(file.getSize());
+        objectMetadata.setContentType(file.getContentType());
+        try {
+            PutObjectRequest putObjectRequest = new PutObjectRequest(
+                    awsProperties.getBucketName(), key, file.getInputStream(), objectMetadata);
+            s3Client.putObject(putObjectRequest);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new UploadFileException(String.format("Incorrect file for uploading \n%s", e.getMessage()));
+        }
+    }
+
+    @Override
+    public InputStream downloadFile(String key) {
+        return null;
+    }
+
 }
