@@ -1,9 +1,6 @@
 package faang.school.postservice.dto.comment;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
 @Builder
