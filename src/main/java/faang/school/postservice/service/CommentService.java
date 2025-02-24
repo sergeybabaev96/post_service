@@ -9,7 +9,7 @@ import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
-import faang.school.postservice.service.comment.ModerationDictionary;
+import faang.school.postservice.service.comment.ModerationBlackListDictionary;
 import faang.school.postservice.utils.ImageService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
@@ -42,6 +42,7 @@ public class CommentService {
     private final KafkaService kafkaService;
     private final PostService postService;
     private final ModerationDictionary moderationDictionary;
+    private final ModerationBlackListDictionary moderationBlackListDictionary;
 
     @Transactional
     public CommentResponse create(@Valid CreateCommentRequest createCommentRequest) {
@@ -116,15 +117,14 @@ public class CommentService {
     @Async("moderateTaskExecutor")
     @Transactional
     public CompletableFuture<Void> moderateComments(List<Comment> comments) {
-        for (Comment comment : comments) {
-            boolean hasBadWords = moderationDictionary.containsBadWord(comment.getContent());
-            comment.setVerified(!hasBadWords);
-            comment.setVerifiedDate(LocalDateTime.now());
-        }
-        commentRepository.saveAll(comments);
-        log.info("{} - {} ta comment tekshirildi", Thread.currentThread().getName(), comments.size());
-
-        return CompletableFuture.completedFuture(null);
+        return CompletableFuture.runAsync(() -> {
+            for (Comment comment : comments) {
+                boolean hasBadWords = moderationBlackListDictionary.containsBadWord(comment.getContent());
+                comment.setVerified(!hasBadWords);
+                comment.setVerifiedDate(LocalDateTime.now());
+            }
+            commentRepository.saveAll(comments);
+            log.info("{} - {} comment checked", Thread.currentThread().getName(), comments.size());
+        });
     }
-
 }

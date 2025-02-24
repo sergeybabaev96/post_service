@@ -28,20 +28,17 @@ public class CommentModerator {
 
     @Scheduled(cron = "${moderation.cron}")
     public void runModeration() {
-        List<Comment> comments;
+        List<Comment> comments = commentRepository.findUnverifiedWithLimit(commentLimit);
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
-        do {
-            comments = commentRepository.findUnverifiedWithLimit(commentLimit);
-            if (!comments.isEmpty()) {
-                List<List<Comment>> batches = partitionList(comments, batchSize);
+        while (!comments.isEmpty()) {
+            List<List<Comment>> batches = partitionList(comments, batchSize);
 
-                for (List<Comment> batch : batches) {
-                    CompletableFuture<Void> future = commentService.moderateComments(batch);
-                    futures.add(future);
-                }
+            for (List<Comment> batch : batches) {
+                CompletableFuture<Void> future = commentService.moderateComments(batch);
+                futures.add(future);
             }
-        } while (!comments.isEmpty());
+        }
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
         log.info("All comment is verified !");
@@ -54,5 +51,4 @@ public class CommentModerator {
         }
         return partitions;
     }
-
 }

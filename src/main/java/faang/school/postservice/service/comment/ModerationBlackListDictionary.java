@@ -1,5 +1,6 @@
 package faang.school.postservice.service.comment;
 
+import faang.school.postservice.exceptions.ModerationFileException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,10 +15,10 @@ import java.util.Set;
 
 @Slf4j
 @Component
-public class ModerationDictionary {
+public class ModerationBlackListDictionary {
 
     private final Set<String> blacklist = new HashSet<>();
-    @Value("${moderation.dictionary.path}")
+    @Value("${moderation.dictionary-black.path}")
     private String path;
 
     @PostConstruct
@@ -30,13 +31,16 @@ public class ModerationDictionary {
             }
         } catch (Exception e) {
             log.error("Failed to load blacklist words", e);
-            throw new RuntimeException("Failed to load blacklist words", e);
+            throw new ModerationFileException("Failed to load blacklist words");
         }
     }
 
     public boolean containsBadWord(String text) {
-        String lowerCaseText = text.toLowerCase();
-        return blacklist.stream().anyMatch(lowerCaseText::contains);
+        if (text != null) {
+            String lowerCaseText = text.toLowerCase();
+            return blacklist.stream().anyMatch(lowerCaseText::contains);
+        }
+        return false;
     }
 
 }
