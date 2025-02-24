@@ -19,18 +19,18 @@ import java.util.List;
 public class PostCorrecter {
     private final PostService postService;
     private final PostRepository postRepository;
-    @Value("${jobs.post-corrector.limit}")
-    private int limit;
+    @Value("${post-service.jobs.post-corrector.batch-count}")
+    private int batchCount;
 
-    @Scheduled(cron = "${jobs.post-corrector.cron}")
+    @Scheduled(cron = "${post-service.jobs.post-corrector.cron}")
     @SchedulerLock(name = "postCorrecterJob")
     public void postCorrecterJob() {
         log.info("Start post correcter job");
-        if (limit == 0) {
-            log.info("Limit is 0, skipping job");
+        if (batchCount == 0) {
+            log.info("BatchCount is 0, skipping job");
             return;
         }
-        List<Post> notPublishedPosts = postRepository.findPostsByPublishedIsFalseAndAiCheckedIsFalse(PageRequest.of(0, limit));
+        List<Post> notPublishedPosts = postRepository.findPostsByPublishedIsFalseAndAiCheckedIsFalse(PageRequest.of(0, batchCount));
         log.info("Found {} posts", notPublishedPosts.size());
         notPublishedPosts.forEach(postService::grammarCorrectionPost);
 

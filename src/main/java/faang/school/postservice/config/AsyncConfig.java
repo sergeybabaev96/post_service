@@ -10,6 +10,6 @@ import java.util.concurrent.Executors;
 public class AsyncConfig {
     @Bean
     public Executor aICheckExecutor() {
-        return Executors.newFixedThreadPool(20);
+        return Executors.newCachedThreadPool();
     }
 }

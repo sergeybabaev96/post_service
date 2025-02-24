@@ -30,6 +30,6 @@ public class ChatResponse {
                 .filter(choice -> ROLE_ASSISTANT.equals(choice.getMessage().getRole()))
                 .map(choice -> choice.getMessage().getContent())
                 .findFirst()
-                .orElseThrow();
+                .orElseThrow(() -> new RuntimeException("No assistant response"));
     }
 }
