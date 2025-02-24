@@ -33,6 +33,13 @@ spring:
     bootstrap-servers: localhost:9092
     comment_create_event_topic_name: comment_create_event
 
+expired:
+  ad:
+    remover:
+      cron: "0 0 0 * * *"
+      batch_size: 100
+
+
 server:
   port: 8081
 
