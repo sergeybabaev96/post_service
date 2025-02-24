@@ -31,6 +31,9 @@ public class CommentAspect {
             return;
         }
         Arrays.stream(publishCommentEvent.events()).forEach(eventClass -> {
+            if (!eventPublisherMap.containsKey(eventClass)) {
+                throw new RuntimeException("Publisher is not found");
+            }
             EventPublisher publisher = eventPublisherMap.get(eventClass);
             publisher.publishEvent(result);
         });
