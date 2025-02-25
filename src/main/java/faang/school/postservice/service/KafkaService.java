@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class KafkaService {
 
     @Value("${spring.kafka.topics.comment_create}")
-    private String COMMENT_CREATE_TOPIC;
+    private String commentCreateTopic;
 
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
@@ -22,8 +22,8 @@ public class KafkaService {
     public void sendCommentCreateMessage(CommentCreateEventDto commentCreateEventDto) {
         try {
             String message = objectMapper.writeValueAsString(commentCreateEventDto);
-            kafkaTemplate.send(COMMENT_CREATE_TOPIC, message);
-            log.info("Sent comment create message {} to topic: {}", message, COMMENT_CREATE_TOPIC);
+            kafkaTemplate.send(commentCreateTopic, message);
+            log.info("Sent comment create message {} to topic: {}", message, commentCreateTopic);
         } catch (Exception e) {
             log.error("Error while sending comment create message {}", e.getMessage());
             throw new RuntimeException("Error while sending comment create message");
