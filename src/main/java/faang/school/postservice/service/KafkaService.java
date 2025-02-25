@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import faang.school.postservice.dto.comment.CommentCreateEventDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -12,7 +13,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class KafkaService {
 
-    private static final String COMMENT_CREATE_TOPIC = "comment_create";
+    @Value("${spring.kafka.topics.comment_create}")
+    private String COMMENT_CREATE_TOPIC;
+
     private final KafkaTemplate<String, String> kafkaTemplate;
     private final ObjectMapper objectMapper;
 

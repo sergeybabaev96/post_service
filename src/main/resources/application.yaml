@@ -29,6 +29,8 @@ spring:
         calculations_channel:
           name: calculations_channel
   kafka:
+    topics:
+      comment_create: comment_create
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
