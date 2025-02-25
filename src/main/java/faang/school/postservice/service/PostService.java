@@ -27,7 +27,6 @@ public class PostService {
 
     private final InternalServices internalServices;
 
-
     @Transactional
     public Post createDraft(Post post) {
         if (post.getAuthorId() != null && !internalServices.userExists(post.getAuthorId())) {
@@ -128,5 +127,9 @@ public class PostService {
 
     public List<Post> findPostsByResourceKeys(List<String> resourceKeys) {
         return postRepository.findPostsByResourceKeys(resourceKeys);
+    }
+
+    public List<Long> getUsersForBanWithUnverifiedPosts(int maxUnverifiedPosts) {
+        return postRepository.findUserIdsToBanWithUnverifiedPosts(maxUnverifiedPosts);
     }
 }

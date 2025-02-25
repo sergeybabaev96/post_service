@@ -36,6 +36,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -304,5 +305,17 @@ public class PostServiceTest {
         postService.moderatePosts();
 
         verify(postRepository).saveAll(anyList());
+    }
+
+    @Test
+    @Order(18)
+    public void getUsersForBanWithUnverifiedPosts_Valid() {
+        List<Long> mockUserIds = List.of(1L, 2L, 3L);
+        when(postRepository.findUserIdsToBanWithUnverifiedPosts(5)).thenReturn(mockUserIds);
+
+        List<Long> result = postService.getUsersForBanWithUnverifiedPosts(5);
+
+        verify(postRepository, times(1)).findUserIdsToBanWithUnverifiedPosts(5);
+        assertEquals(mockUserIds, result);
     }
 }
