@@ -33,6 +33,12 @@ spring:
     bootstrap-servers: localhost:9092
     like_post_event_topic_name: like_post_event
 
+expired:
+  ad:
+    remover:
+      cron: "0 0 0 * * *"
+      batch_size: 100
+
 server:
   port: 8081
 
