@@ -146,21 +146,20 @@ public class LikeServiceTest {
 
     @Test
     public void toggleLikeComment_SuccessUnLike() {
-        comment.setLikes(List.of(
-                Like.builder().userId(userDto.id()).build())
-        );
+        Set<Like> likes = new HashSet<>();
+        Like like = Like.builder().userId(userDto.id()).build();
+        likes.add(like);
+        comment.setLikes(likes);
 
         when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
         when(userServiceClient.getUser(1L)).thenReturn(userDto);
 
         likeService.toggleLikeComment(new LikeCommentRequest(1L, 1L));
 
-        ArgumentCaptor<Long> commentIdCaptor = ArgumentCaptor.forClass(Long.class);
-        ArgumentCaptor<Long> userIdCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(likeRepository).deleteByCommentIdAndUserId(commentIdCaptor.capture(), userIdCaptor.capture());
+        ArgumentCaptor<Like> likeCaptor = ArgumentCaptor.forClass(Like.class);
+        verify(likeRepository).delete(likeCaptor.capture());
 
-        Assertions.assertEquals(commentIdCaptor.getValue(), comment.getId());
-        Assertions.assertEquals(userIdCaptor.getValue(), userDto.id());
+        Assertions.assertEquals(likeCaptor.getValue().getId(), like.getId());
     }
 
     @Test

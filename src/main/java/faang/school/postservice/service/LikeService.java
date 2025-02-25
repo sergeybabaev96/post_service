@@ -44,7 +44,7 @@ public class LikeService {
         UserDto userDto = getUserDto(request.userId());
 
         Set<Like> likes = new HashSet<>(post.getLikes() == null ? Collections.emptyList() : post.getLikes());
-        Optional<Like> like = likes.stream().filter(likeItem -> likeItem.getUserId() == userDto.id()).findFirst();
+        Optional<Like> like = likes.stream().filter(likeItem -> likeItem.getUserId().equals(userDto.id())).findFirst();
 
         if (like.isPresent()) {
             assert post.getLikes() != null;
@@ -58,8 +58,7 @@ public class LikeService {
                     .build();
             post.getLikes().add(newLike);
             likeRepository.save(newLike);
-            kafkaProducer.sendLikePostEvent(
-                    new LikePostEvent(post.getAuthorId(), userDto.id(), post.getId()));
+            kafkaProducer.sendLikePostEvent(post, userDto);
         }
     }
 
@@ -70,12 +69,13 @@ public class LikeService {
                         "Комментарий с id " + request.commentId() + " не был найден"));
         UserDto userDto = getUserDto(request.userId());
 
-        List<Like> likes = new ArrayList<>(comment.getLikes() == null ? Collections.emptyList() : comment.getLikes());
-        boolean likeAlreadyExists = likes.stream().anyMatch(like -> like.getUserId() == userDto.id());
+        Set<Like> likes = new HashSet<>(comment.getLikes() == null ? Collections.emptyList() : comment.getLikes());
+        Optional<Like> like = likes.stream().filter(likeItem -> likeItem.getUserId().equals(userDto.id())).findFirst();
 
-        if (likeAlreadyExists) {
-            comment.setLikes(likes.stream().filter(like -> like.getUserId() != userDto.id()).toList());
-            likeRepository.deleteByCommentIdAndUserId(comment.getId(), userDto.id());
+        if (like.isPresent()) {
+            assert comment.getLikes() != null;
+            comment.getLikes().remove(like.get());
+            likeRepository.delete(like.get());
         } else {
             Like newLike = Like.builder()
                     .userId(userDto.id())
