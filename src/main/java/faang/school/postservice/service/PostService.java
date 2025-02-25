@@ -277,20 +277,4 @@ public class PostService {
                 .followerIds(followerIds)
                 .build();
     }
-
-    public PostForNewsFeedDto getPostForNewsFeed(long postId, long userId) {
-        log.info("Trying to get post under id {} for news feed for user under id {}", postId, userId);
-        Post post = postRepository.findByPostIdWithLikes(postId);
-        validator.validatePostIsNotNull(post, postId);
-        return postMapper.toPostForNewsFeedDto(post);
-    }
-
-    public List<PostForNewsFeedDto> getLastNPostsByUserIdStartingFromPost(long userId, int numPosts, long lastPostId) {
-        log.info("Trying to get last {} posts for user under id {}. Last viewed post id: {}", userId, numPosts, lastPostId);
-        Pageable pageable = PageRequest.of(0, numPosts);
-        Optional<UserCache> userOptional = redisUserRepository.findById(userId);
-        List<Long> followeeIds = userOptional.isEmpty() ? userServiceClient.getUserForNewsFeed(userId).followeeIds() : userOptional.get().getFolloweeIds();
-        List<Post> posts = postRepository.findLastNPostsByUserIdStartingFromPostWithLikes(followeeIds, lastPostId, pageable);
-        return postMapper.toPostForNewsFeedDto(posts);
-    }
 }
