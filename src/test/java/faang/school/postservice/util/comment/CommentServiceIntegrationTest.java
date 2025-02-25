@@ -14,6 +14,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 
@@ -50,7 +51,7 @@ public class CommentServiceIntegrationTest {
 
         Runnable task = commentService::checkComments;
         CompletableFuture<Void> executionFuture = CompletableFuture.runAsync(task);
-        await().until(executionFuture::isDone);
+        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> Assertions.assertTrue(executionFuture.isDone()));
 
         nonCheckedComments = commentRepository.findIdsByVerifiedDateIsNull().size();
         Assertions.assertEquals(0, nonCheckedComments);
