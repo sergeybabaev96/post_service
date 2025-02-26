@@ -12,7 +12,7 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
@@ -42,6 +42,17 @@ feign:
 domain:
   base-path: /api/v1
 
+post-service:
+  ai:
+    grammar-prompt: "Проверь текст на орфографию, если есть ошибка или ошибки верни только исправленный текст."
+    api-key: ""
+    base-url: "https://api.openai.com"
+    chat-uri: "/v1/chat/completions"
+    model: "gpt-4o-mini"
+  jobs:
+    post-corrector:
+      cron: 0 0 12 * * *
+      batch-count: 100
 user-service:
   url: localhost:8080/api/v1
 project-service:
