@@ -1,6 +1,5 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.dto.Post.CreatePostDraftDto;
 import faang.school.postservice.dto.Post.PostResponseDto;
 import faang.school.postservice.dto.Post.UpdatePostDto;
@@ -16,10 +15,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.core.KafkaTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,14 +42,16 @@ public class PostServiceTest {
     private PostValidator postValidator;
     private PostService postService;
     private ResourseService resourseService;
+    private KafkaTemplate<String, Long> kafkaTemplate;
 
     @BeforeEach
     public void setUp() {
         postRepository = mock(PostRepository.class);
+        kafkaTemplate = mock(KafkaTemplate.class);
         postMapper = Mappers.getMapper(PostMapper.class);
         postValidator = mock(PostValidator.class);
         resourseService = mock(ResourseService.class);
-        postService = new PostService(postRepository, postMapper, postValidator, resourseService);
+        postService = new PostService(postRepository, kafkaTemplate, postMapper, postValidator, resourseService);
     }
 
     @Test

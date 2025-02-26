@@ -91,7 +91,8 @@ public class S3Service {
         }
     }
 
-    private void scaleAndPutImage(BufferedImage image, int maxWidth, int maxHeight, PutObjectRequest request) throws IOException {
+    private void scaleAndPutImage(BufferedImage image, int maxWidth, int maxHeight, PutObjectRequest request)
+            throws IOException {
         BufferedImage resizedImage = createResizedCopy(image, maxWidth, maxHeight);
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         ImageIO.write(resizedImage, "png", os);
@@ -105,10 +106,10 @@ public class S3Service {
     }
 
     private BufferedImage createResizedCopy(BufferedImage originalImage, int scaledWidth, int scaledHeight) {
-        BufferedImage scaledBI = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g = scaledBI.createGraphics();
+        BufferedImage scaledBi = new BufferedImage(scaledWidth, scaledHeight, BufferedImage.TYPE_INT_RGB);
+        Graphics2D g = scaledBi.createGraphics();
         g.drawImage(originalImage, 0, 0, scaledWidth, scaledHeight, null);
         g.dispose();
-        return scaledBI;
+        return scaledBi;
     }
 }
