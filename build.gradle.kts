@@ -4,6 +4,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.0"
     jacoco
 }
+val springCloudVersion by extra("2022.0.4")
 
 group = "faang.school"
 version = "1.0"
@@ -49,6 +50,7 @@ dependencies {
     annotationProcessor("org.mapstruct:mapstruct-processor:1.5.3.Final")
     implementation("dev.mccue:imgscalr:2023.09.03")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
+    implementation("org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j")
 
     /**
      * Test containers
@@ -64,6 +66,11 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
     testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+}
+dependencyManagement {
+    imports {
+        mavenBom("org.springframework.cloud:spring-cloud-dependencies:$springCloudVersion")
+    }
 }
 
 // JACOCO

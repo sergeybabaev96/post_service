@@ -18,7 +18,6 @@ import faang.school.postservice.model.Resource;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.ResourceRepository;
 import faang.school.postservice.service.HashtagService;
-import faang.school.postservice.service.PaginationService;
 import faang.school.postservice.service.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +33,7 @@ import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -49,8 +46,6 @@ public class PostService {
     private final PostMapper postMapper;
     private final UserContext userContext;
     private final PostSchedulerService postSchedulerService;
-    private final ModerationDictionary moderationDictionary;
-    private final PaginationService paginationService;
     private final PostProperties postProperties;
     private final S3Service s3Service;
     private final ResourceRepository resourceRepository;
@@ -149,15 +144,6 @@ public class PostService {
                 .toList();
     }
 
-    public void moderatePosts() {
-        concurrencyProcessPosts(
-                postRepository::findAllNotVerified,
-                this::moderatePostsBatch,
-                postProperties.getPageSize(),
-                postProperties.getBatchSize()
-        );
-    }
-
     public PostReadDto uploadImages(long postId, List<MultipartFile> images) {
         Post post = getPostById(postId);
         validateImageUpload(images, post.getResources().size());
@@ -222,39 +208,6 @@ public class PostService {
         }
     }
 
-    private Stream<Post> moderatePostsBatch(List<Post> posts) {
-        LocalDateTime verifiedDate = LocalDateTime.now();
-        return posts.parallelStream()
-                .filter(post -> moderationDictionary.isAllowed(post.getContent()))
-                .peek(post -> {
-                    post.setVerified(true);
-                    post.setVerifiedDate(verifiedDate);
-                });
-    }
-
-    private void concurrencyProcessPosts(
-            Function<Pageable, Page<Post>> getPostsFunction,
-            Function<List<Post>, Stream<Post>> processFunction,
-            int pageSize,
-            int batchSize
-    ) {
-        Pageable pageable = PageRequest.of(0, pageSize);
-        Page<Post> page;
-        int pageNumber = 0;
-
-        do {
-            page = getPostsFunction.apply(pageable);
-            List<Post> postsToSave = paginationService.processInParallel(
-                    page.getContent(),
-                    batchSize,
-                    processFunction
-            );
-            postRepository.saveAll(postsToSave);
-            pageNumber++;
-            pageable = PageRequest.of(pageNumber, pageSize);
-        } while (!page.isLast());
-    }
-
     private List<PostReadDto> getAllPostByCondition(
             PostOwnerType ownerType,
             Supplier<List<Post>> authorSupplier,
@@ -306,6 +259,8 @@ public class PostService {
     }
 
     public void publishScheduledPosts() {
-        postSchedulerService.publishScheduledPosts(batchSize);
+        postSchedulerService.publishScheduledPosts(
+                postProperties.getSchedule().getBatchSize()
+        );
     }
 }
