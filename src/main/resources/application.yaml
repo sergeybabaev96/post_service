@@ -1,7 +1,4 @@
 spring:
-  profiles:
-    active: local
-
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/post-service
@@ -78,6 +75,7 @@ post:
     cronPeriod: "0 0 0 * * *"
   schedule:
     batch-size: 1000
+    page-size: 100
     scheduled-cron: "0 * * * * *"
     max-retries: 5
     timeout: 10
