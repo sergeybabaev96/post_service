@@ -14,7 +14,7 @@ public class KafkaProducerImpl implements KafkaProducer {
 
     @Override
     public void produce(String topic, String message) {
-        log.info("Publishing comment event: {} to topic: {}", message, topic);
+        log.info("Publishing event: {} to topic: {}", message, topic);
         kafkaTemplate.send(topic, message);
     }
 }
