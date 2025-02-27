@@ -6,8 +6,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -15,19 +15,27 @@ public class AdServiceImpl implements AdService {
     private final AdRepository adRepository;
 
     @Override
-    public List<Ad> findExpiredAds() {
+    public List<Long> findExpiredAds() {
         LocalDateTime now = LocalDateTime.now();
         Iterable<Ad> allAds = adRepository.findAll();
-        return StreamSupport.stream(allAds.spliterator(), true)
-                .filter(ad -> ad.getEndDate().isBefore(now) || ad.getAppearancesLeft() <= 0)
-                .toList();
+        List<Long> expiredAdsIds = new ArrayList<>();
+        for (Ad ad : allAds) {
+            if (ad.getEndDate().isBefore(now) || ad.getAppearancesLeft() <= 0) {
+                expiredAdsIds.add(ad.getId());
+            }
+        }
+        return expiredAdsIds;
     }
 
     @Override
-    public void deleteAds(List<Ad> ads) {
-        List<Long> ids = ads.stream()
-                .map(Ad::getId)
-                .toList();
-        adRepository.deleteAllById(ids);
+    public List<Long> deleteExpiredAds() {
+        List<Long> expiredAdsIds = findExpiredAds();
+        adRepository.deleteAllById(expiredAdsIds);
+        return expiredAdsIds;
+    }
+
+    @Override
+    public void deleteAds(List<Long> adsIds) {
+        adRepository.deleteAllById(adsIds);
     }
 }

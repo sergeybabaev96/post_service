@@ -1,6 +1,5 @@
 package faang.school.postservice.schedule;
 
-import faang.school.postservice.model.ad.Ad;
 import faang.school.postservice.service.ad.AdService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.ListUtils;
@@ -25,8 +24,8 @@ public class ScheduledExpiredAdRemover {
         if (batchSize <= 0) {
             throw new IllegalArgumentException("batchSize must be greater than 0");
         }
-        List<Ad> expiredAds = adService.findExpiredAds();
-        List<List<Ad>> batches = ListUtils.partition(expiredAds, batchSize);
+        List<Long> expiredAdsIds = adService.findExpiredAds();
+        List<List<Long>> batches = ListUtils.partition(expiredAdsIds, batchSize);
 
         CompletableFuture<?>[] futures = batches.stream()
                 .map(batch -> CompletableFuture.runAsync(() -> adService.deleteAds(batch)))

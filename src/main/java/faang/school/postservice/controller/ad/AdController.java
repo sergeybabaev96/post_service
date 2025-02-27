@@ -1,6 +1,5 @@
 package faang.school.postservice.controller.ad;
 
-import faang.school.postservice.model.ad.Ad;
 import faang.school.postservice.service.ad.AdService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,17 +15,19 @@ public class AdController {
 
     private final AdService adService;
 
-    @GetMapping("/expired/get")
-    public List<Ad> getExpiredAds() {
-        List<Ad> expiredAds = adService.findExpiredAds();
-        log.info("Getting expired ads {}", expiredAds);
+    @GetMapping("/expired")
+    public List<Long> findExpiredAds() {
+        log.debug("Finding expired ads");
+        List<Long> expiredAds = adService.findExpiredAds();
+        log.debug("Found expired ads: {}", expiredAds);
         return expiredAds;
     }
 
-    @DeleteMapping("/expired/delete")
-    public void deleteExpiredAds() {
-        List<Ad> expiredAds = adService.findExpiredAds();
-        log.info("Deleting expired ads {}", expiredAds);
-        adService.deleteAds(expiredAds);
+    @DeleteMapping("/expired")
+    public List<Long> deleteExpiredAds() {
+        log.debug("Deleting expired ads");
+        List<Long> deletedAdsIds = adService.deleteExpiredAds();
+        log.debug("Deleted expired ads: {}", deletedAdsIds);
+        return deletedAdsIds;
     }
 }

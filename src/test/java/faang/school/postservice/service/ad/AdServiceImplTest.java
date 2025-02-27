@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,40 +25,64 @@ public class AdServiceImplTest {
     @InjectMocks
     private AdServiceImpl adService;
 
-    private Ad expiredAd;
+    private Ad expiredAd1;
+    private Ad expiredAd2;
     private Ad activeAd;
 
     @BeforeEach
     void setUp() {
-        expiredAd = Ad.builder()
+        expiredAd1 = Ad.builder()
                 .id(1L)
-                .endDate(LocalDateTime.now().minusDays(1))  // Просрочен
                 .appearancesLeft(0)
+                .endDate(LocalDateTime.now().minusDays(1))
+                .build();
+
+        expiredAd2 = Ad.builder()
+                .id(2L)
+                .appearancesLeft(5)
+                .endDate(LocalDateTime.now().minusHours(1))
                 .build();
 
         activeAd = Ad.builder()
-                .id(2L)
-                .endDate(LocalDateTime.now().plusDays(1))  // Активен
+                .id(3L)
                 .appearancesLeft(10)
+                .endDate(LocalDateTime.now().plusDays(1))
                 .build();
     }
 
     @Test
     void testFindExpiredAds() {
-        when(adRepository.findAll()).thenReturn(List.of(expiredAd, activeAd));
+        List<Ad> ads = Arrays.asList(expiredAd1, expiredAd2, activeAd);
+        when(adRepository.findAll()).thenReturn(ads);
 
-        List<Ad> result = adService.findExpiredAds();
+        List<Long> expiredAdsIds = adService.findExpiredAds();
 
-        assertEquals(1, result.size());
-        assertEquals(expiredAd.getId(), result.get(0).getId());
+        assertEquals(2, expiredAdsIds.size());
+        assertEquals(1L, expiredAdsIds.get(0));
+        assertEquals(2L, expiredAdsIds.get(1));
         verify(adRepository, times(1)).findAll();
     }
 
     @Test
-    void testDeleteAds() {
-        List<Ad> adsToDelete = List.of(expiredAd);
+    void testDeleteExpiredAds() {
+        List<Ad> ads = Arrays.asList(expiredAd1, expiredAd2, activeAd);
+        when(adRepository.findAll()).thenReturn(ads);
 
-        adService.deleteAds(adsToDelete);
-        verify(adRepository, times(1)).deleteAllById(List.of(expiredAd.getId()));
+        List<Long> deletedAdsIds = adService.deleteExpiredAds();
+
+        assertEquals(2, deletedAdsIds.size());
+        assertEquals(1L, deletedAdsIds.get(0));
+        assertEquals(2L, deletedAdsIds.get(1));
+        verify(adRepository, times(1)).findAll();
+        verify(adRepository, times(1)).deleteAllById(deletedAdsIds);
+    }
+
+    @Test
+    void testDeleteAds() {
+        List<Long> adsIds = Arrays.asList(1L, 2L);
+
+        adService.deleteAds(adsIds);
+
+        verify(adRepository, times(1)).deleteAllById(adsIds);
     }
 }

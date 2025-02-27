@@ -1,6 +1,5 @@
 package faang.school.postservice.service.ad;
 
-import faang.school.postservice.model.ad.Ad;
 import faang.school.postservice.schedule.ScheduledExpiredAdRemover;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,13 +9,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
-class ScheduledExpiredAdRemoverTest {
+public class ScheduledExpiredAdRemoverTest {
 
     @Mock
     private AdService adService;
@@ -24,28 +23,39 @@ class ScheduledExpiredAdRemoverTest {
     @InjectMocks
     private ScheduledExpiredAdRemover scheduledExpiredAdRemover;
 
-    private Ad expiredAd;
-
     @BeforeEach
     void setUp() {
-        expiredAd = Ad.builder()
-                .id(1L)
-                .endDate(LocalDateTime.now().minusDays(1))
-                .appearancesLeft(0)
-                .build();
+        ReflectionTestUtils.setField(scheduledExpiredAdRemover, "batchSize", 2);
     }
 
     @Test
-    void testRemoveExpiredAds() {
-        ReflectionTestUtils.setField(scheduledExpiredAdRemover, "batchSize", 10);
-
-        List<Ad> expiredAds = List.of(expiredAd);
-
-        when(adService.findExpiredAds()).thenReturn(expiredAds);
+    void testRemoveExpiredAds_Success() {
+        List<Long> expiredAdsIds = List.of(1L, 2L, 3L, 4L, 5L);
+        when(adService.findExpiredAds()).thenReturn(expiredAdsIds);
 
         scheduledExpiredAdRemover.removeExpiredAds();
 
         verify(adService, times(1)).findExpiredAds();
-        verify(adService, times(1)).deleteAds(expiredAds);
+
+        verify(adService, times(1)).deleteAds(List.of(1L, 2L));
+        verify(adService, times(1)).deleteAds(List.of(3L, 4L));
+        verify(adService, times(1)).deleteAds(List.of(5L));
+    }
+
+    @Test
+    void testRemoveExpiredAds_EmptyList() {
+        when(adService.findExpiredAds()).thenReturn(List.of());
+
+        scheduledExpiredAdRemover.removeExpiredAds();
+
+        verify(adService, times(1)).findExpiredAds();
+        verify(adService, never()).deleteAds(anyList());
+    }
+
+    @Test
+    void testRemoveExpiredAds_InvalidBatchSize() {
+        ReflectionTestUtils.setField(scheduledExpiredAdRemover, "batchSize", 0);
+
+        assertThrows(IllegalArgumentException.class, () -> scheduledExpiredAdRemover.removeExpiredAds());
     }
 }
