@@ -1,6 +1,5 @@
 package faang.school.postservice.dto.event;
 
-
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Data;

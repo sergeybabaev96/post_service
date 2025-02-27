@@ -7,6 +7,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -16,13 +17,14 @@ import org.springframework.stereotype.Service;
 public class KafkaCommentEventPublisher {
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final CommentEventMapper commentMapper;
-    private static final String TOPIC = "user-comment-post";
 
+    @Value("${kafka.topic.comment}")
+    private String topic;
 
-    @AfterReturning(pointcut = "@annotation(faang.school.aspect.CreateComment) && args(comment,..)")
+    @AfterReturning(pointcut = "@annotation(faang.school.aspect.CreateComment)", returning = "comment")
     public void publishCommentEvent(Comment comment) {
-        String uniqueKey = UUID.randomUUID().toString();
+        String uniqueKey = comment.getId().toString();
         CommentEventDto dto = commentMapper.toDto(comment);
-        kafkaTemplate.send(TOPIC, uniqueKey, dto);
+        kafkaTemplate.send(topic, uniqueKey, dto);
     }
 }
