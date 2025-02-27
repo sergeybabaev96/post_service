@@ -65,6 +65,14 @@ springdoc:
   swagger-ui:
     path: /post-service-ui.html
 
+cron:
+  comments:
+    check-delay: 0 * * * * *
+
+comment:
+  check:
+    size: 100
+    
 post:
   publisher:
     scheduler:
