@@ -37,7 +37,7 @@ public class Ad {
     private long buyerId;
 
     @Column(name = "appearances_left", nullable = false)
-    private long appearancesLeft;
+    private Long appearancesLeft;
 
     @Column(name = "start_date", nullable = false)
     @Temporal(TemporalType.TIMESTAMP)

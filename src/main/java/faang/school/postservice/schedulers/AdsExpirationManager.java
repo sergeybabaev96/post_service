@@ -27,9 +27,11 @@ public class AdsExpirationManager {
         Page<Ad> page;
 
         do {
-            page = adRepository.findExpiredAds(LocalDateTime.now(), PageRequest.of(pageNumber, batchSize));
+            page = adRepository.findByEndDateBeforeAndAppearancesLeft(LocalDateTime.now(),
+                    PageRequest.of(pageNumber, batchSize));
             List<Ad> expiredAds = page.getContent();
             asyncAdRemovalService.processBatch(expiredAds, batchSize);
+            pageNumber++;
         } while (page.hasNext());
     }
 }

@@ -18,7 +18,7 @@ public class AsyncAdRemovalService {
 
     @Async
     @Transactional
-    public void processBatch(List<Ad> bath, int batchSize){
+    public void processBatch(List<Ad> bath, int batchSize) {
         List<List<Ad>> chunks = Lists.partition(bath, batchSize);
         chunks.forEach(adRepository::deleteAll);
     }

@@ -72,7 +72,7 @@ payment-service:
 
 ad:
   schedule:
-    removal-cron: "0 * 12 * * ?"
+    removal-cron: "0 0 12 * * ?"
   batch:
     size: 1000
 
