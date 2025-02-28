@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -65,5 +67,10 @@ public class PostController {
     @GetMapping("/project-posts/{project-id}")
     public List<PostResponseDto> getProjectPost(@PathVariable(name = "project-id") long projectId) {
         return postService.getProjectPosts(projectId);
+    }
+
+    @PostMapping("/{postId}/upload")
+    public void uploadImages(@PathVariable Long postId, @RequestParam("files") List<MultipartFile> files) {
+        postService.uploadImages(postId, files);
     }
 }

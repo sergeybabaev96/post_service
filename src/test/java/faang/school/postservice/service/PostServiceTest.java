@@ -11,15 +11,18 @@ import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.validator.PostValidator;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Spy;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,14 +41,24 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class PostServiceTest {
-    @Mock
     private PostRepository postRepository;
-    @Spy
-    private PostMapper postMapper = Mappers.getMapper(PostMapper.class);
-    @Mock
+    private PostMapper postMapper;
     private PostValidator postValidator;
-    @InjectMocks
     private PostService postService;
+    private ResourseService resourseService;
+    private KafkaTemplate<String, Long> kafkaTemplate;
+    @Captor
+    private ArgumentCaptor<List<MultipartFile>> captor;
+
+    @BeforeEach
+    public void setUp() {
+        postRepository = mock(PostRepository.class);
+        kafkaTemplate = mock(KafkaTemplate.class);
+        postMapper = Mappers.getMapper(PostMapper.class);
+        postValidator = mock(PostValidator.class);
+        resourseService = mock(ResourseService.class);
+        postService = new PostService(postRepository, kafkaTemplate, postMapper, postValidator, resourseService);
+    }
 
     @Test
     public void createDraft_ShouldSaveWhenValidationPass() {
@@ -308,5 +322,24 @@ public class PostServiceTest {
 
         assertEquals(2, result.size());
         assertTrue(result.get(0).getPublishedAt().isAfter(result.get(1).getPublishedAt()));
+    }
+
+    @Test
+    public void uploadImages_whenPostNotFound() {
+        Long postId = 1L;
+        when(postRepository.findById(postId)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> postService.uploadImages(postId, captor.capture()));
+    }
+
+    @Test
+    public void uploadImages() {
+        Long postId = 1L;
+        Post post = new Post();
+        List<MultipartFile> files = Arrays.asList(mock(MultipartFile.class), mock(MultipartFile.class));
+
+        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
+
+        postService.uploadImages(postId, files);
     }
 }

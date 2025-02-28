@@ -34,6 +34,11 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     /**
+     * S3
+     */
+    implementation("com.amazonaws:aws-java-sdk-s3:1.12.481")
+
+    /**
      * Kafka
      */
     implementation("org.springframework.kafka:spring-kafka")
@@ -81,6 +86,7 @@ tasks.withType<Test> {
 }
 
 val exclusions = listOf(
+    "**/scheduler/**",
     "**/advice/**",
     "**/config",
     "**/dto/**",

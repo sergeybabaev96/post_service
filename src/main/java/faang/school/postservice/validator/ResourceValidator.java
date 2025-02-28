@@ -1,0 +1,24 @@
+package faang.school.postservice.validator;
+
+import faang.school.postservice.exception.DataValidationException;
+import faang.school.postservice.model.Resource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
+public class ResourceValidator {
+    @Value("${resource.limit}")
+    private int limit;
+
+    public void validateResourceLimit(int count) {
+        if (count >= limit) {
+            throw new DataValidationException("Cannot upload more than " + limit + " images");
+        }
+    }
+
+    public void validateResourceBelongsToPost(Resource resource, long postId) {
+        if (resource.getPost().getId() != postId) {
+            throw new DataValidationException("Resource does not belong to post");
+        }
+    }
+}

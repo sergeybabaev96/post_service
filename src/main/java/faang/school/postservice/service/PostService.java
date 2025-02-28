@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
@@ -29,6 +30,7 @@ public class PostService {
     private final KafkaTemplate<String, Long> kafkaTemplate;
     private final PostMapper postMapper;
     private final PostValidator postValidator;
+    private final ResourseService resourseService;
 
     @Value("${author.banner.rejected_posts_to_ban}")
     private int rejectedPostsToBan;
@@ -124,6 +126,13 @@ public class PostService {
             kafkaTemplate.send(banTopic, authorIdToBan);
         }
         log.info("Finish publishing authors to ban");
+    }
+
+    public void uploadImages(Long postId, List<MultipartFile> files) {
+        Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("Post not found"));
+        for (MultipartFile file : files) {
+            resourseService.addResource(post, file);
+        }
     }
 
     private List<Long> findAuthorIdsToBan() {
