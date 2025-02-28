@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Cascade;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -56,6 +57,7 @@ public class Album {
     @ElementCollection
     @CollectionTable(name = "album_allowed_users",
             joinColumns = @JoinColumn(name = "album_id"))
+    @Cascade(org.hibernate.annotations.CascadeType.ALL)
     @Column(name = "user_id")
     private List<Long> allowedUsers = new ArrayList<>();
 

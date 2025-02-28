@@ -23,15 +23,15 @@ public class AlbumController {
     private final UserContext userContext;
 
     @GetMapping
-    public ResponseEntity<List<AlbumDto>> getAllAlbums(@Valid @RequestBody AlbumFilterDto filter) {
+    public List<AlbumDto> getAllAlbums(@Valid @RequestBody AlbumFilterDto filter) {
         Long userId = userContext.getUserId();
-        return ResponseEntity.ok(albumService.getAllAlbums(filter, userId));
+        return albumService.getAllAlbums(filter, userId);
     }
 
     @GetMapping("/{albumId}")
-    public ResponseEntity<AlbumDto> getAlbum(@PathVariable @NotNull Long albumId) {
+    public AlbumDto getAlbum(@PathVariable @NotNull Long albumId) {
         Long userId = userContext.getUserId();
-        return ResponseEntity.ok(albumService.getAlbumById(albumId, userId));
+        return albumService.getAlbumById(albumId, userId);
     }
 
     @GetMapping("/user")
