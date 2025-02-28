@@ -15,10 +15,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,6 +47,8 @@ public class PostServiceTest {
     private PostService postService;
     private ResourseService resourseService;
     private KafkaTemplate<String, Long> kafkaTemplate;
+    @Captor
+    private ArgumentCaptor<List<MultipartFile>> captor;
 
     @BeforeEach
     public void setUp() {
@@ -316,5 +322,24 @@ public class PostServiceTest {
 
         assertEquals(2, result.size());
         assertTrue(result.get(0).getPublishedAt().isAfter(result.get(1).getPublishedAt()));
+    }
+
+    @Test
+    public void uploadImages_whenPostNotFound() {
+        Long postId = 1L;
+        when(postRepository.findById(postId)).thenReturn(Optional.empty());
+
+        assertThrows(EntityNotFoundException.class, () -> postService.uploadImages(postId, captor.capture()));
+    }
+
+    @Test
+    public void uploadImages() {
+        Long postId = 1L;
+        Post post = new Post();
+        List<MultipartFile> files = Arrays.asList(mock(MultipartFile.class), mock(MultipartFile.class));
+
+        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
+
+        postService.uploadImages(postId, files);
     }
 }

@@ -61,6 +61,7 @@ public class S3Service {
 
     private void processAndPutImage(PutObjectRequest request) throws IOException {
         BufferedImage image = ImageIO.read(request.getInputStream());
+        System.out.print(image);
         int width = image.getWidth();
         int height = image.getHeight();
         int standartWidth = maxWidth;

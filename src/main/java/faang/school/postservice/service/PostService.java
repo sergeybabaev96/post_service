@@ -8,7 +8,6 @@ import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.validator.PostValidator;
 import jakarta.persistence.EntityNotFoundException;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +22,6 @@ import java.util.List;
 import java.util.function.Function;
 
 @Slf4j
-@AllArgsConstructor
 @Service
 @RequiredArgsConstructor
 public class PostService {
