@@ -8,7 +8,6 @@ import faang.school.postservice.service.AsyncModerationService;
 import faang.school.postservice.service.InternalServices;
 import faang.school.postservice.service.PostService;
 import faang.school.postservice.validation.ModerationDictionaryValidation;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -26,8 +25,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -39,6 +38,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -319,16 +319,30 @@ public class PostServiceTest {
     }
 
     @Test
-    public void publishScheduledPostsTest() {
+    public void publishScheduledPostsTest() throws Exception {
         when(postRepository.findReadyToPublish()).thenReturn(postsToPublish);
 
         ThreadPoolExecutor mockThreadPoolExecutor = mock(ThreadPoolExecutor.class);
-        ReflectionTestUtils.setField(postService, "publishingThreadPool", publishingThreadPool);
         when(publishingThreadPool.getThreadPoolExecutor()).thenReturn(mockThreadPoolExecutor);
+
+        postService = new PostService(postRepository, internalServices, publishingThreadPool, asyncModerationService);
+
+        doAnswer(invocation -> {
+            List<Callable<Void>> tasks = invocation.getArgument(0);
+            for (Callable<Void> task : tasks) {
+                task.call();
+            }
+            return null;
+        }).when(mockThreadPoolExecutor).invokeAll(anyList());
 
         postService.publishScheduledPosts();
 
         verify(postRepository).findReadyToPublish();
-        verify(publishingThreadPool, times(1)).getThreadPoolExecutor();
+        verify(publishingThreadPool, times(2)).getThreadPoolExecutor();
+        verify(postRepository).saveAll(postsToPublish);
+        postsToPublish.forEach(post -> {
+            assertTrue(post.isPublished());
+            assertNotNull(post.getPublishedAt());
+        });
     }
 }
