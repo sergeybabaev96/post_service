@@ -75,6 +75,7 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.kafka:spring-kafka-test")
+    testImplementation ("uk.org.lidalia:slf4j-test:1.2.0")
 }
 
 tasks.test {
