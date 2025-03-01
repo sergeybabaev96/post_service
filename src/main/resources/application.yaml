@@ -119,6 +119,10 @@ file-controller:
     max-width: 1080
     max-height-rectangle: 566
 
+user-banner:
+  cron: "0 0 0 * * *"
+  posts-count-for-ban: 5
+
 schedulers:
   config:
     assignedTreads: 10

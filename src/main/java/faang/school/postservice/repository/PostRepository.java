@@ -3,6 +3,7 @@ package faang.school.postservice.repository;
 import faang.school.postservice.model.Post;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -28,4 +29,13 @@ public interface PostRepository extends CrudRepository<Post, Long> {
 
     @Query("SELECT p FROM Post p JOIN p.resources r WHERE r.key IN :resourceKeys")
     List<Post> findPostsByResourceKeys(List<String> resourceKeys);
+
+    @Query(value = "SELECT p.author_id " +
+            "FROM post p " +
+            "JOIN users u ON p.author_id = u.id " +
+            "WHERE p.verified = false and verified_date is not null and u.banned = false " +
+            "GROUP BY p.author_id " +
+            "HAVING COUNT(p.author_id) > :maxPostsToBan",
+            nativeQuery = true)
+    List<Long> findUserIdsToBanWithUnverifiedPosts(int maxPostsToBan);
 }

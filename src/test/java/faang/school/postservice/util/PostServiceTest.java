@@ -319,6 +319,17 @@ public class PostServiceTest {
     }
 
     @Test
+    @Order(18)
+    public void getUsersForBanWithUnverifiedPosts_Valid() {
+        List<Long> mockUserIds = List.of(1L, 2L, 3L);
+        when(postRepository.findUserIdsToBanWithUnverifiedPosts(5)).thenReturn(mockUserIds);
+
+        List<Long> result = postService.getUsersForBanWithUnverifiedPosts(5);
+
+        verify(postRepository, times(1)).findUserIdsToBanWithUnverifiedPosts(5);
+        assertEquals(mockUserIds, result);
+    }
+  
     public void publishScheduledPostsTest() throws Exception {
         when(postRepository.findReadyToPublish()).thenReturn(postsToPublish);
 

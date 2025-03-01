@@ -138,6 +138,10 @@ public class PostService {
         return postRepository.findPostsByResourceKeys(resourceKeys);
     }
 
+    public List<Long> getUsersForBanWithUnverifiedPosts(int maxUnverifiedPosts) {
+        return postRepository.findUserIdsToBanWithUnverifiedPosts(maxUnverifiedPosts);
+    }
+    
     @Transactional
     public void publishScheduledPosts() {
         List<Post> postsToPublish = postRepository.findReadyToPublish();
