@@ -1,5 +1,6 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.config.kafka.KafkaProducer;
 import faang.school.postservice.config.redis.KafkaProducer;
 import faang.school.postservice.dto.comment.CommentCreateEventDto;
 import faang.school.postservice.config.redis.RedisPublisher;
@@ -23,8 +24,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import static faang.school.postservice.config.MinioBuckets.COMMENT_IMAGE_BUCKET_NAME;
 
@@ -116,16 +115,8 @@ public class CommentService {
     }
 
     public void processUnverifiedComments() {
-        List<Comment> unverifiedComments = commentRepository.findByVerifiedFalse();
-
-        Map<Long, List<Comment>> groupedByAuthor = unverifiedComments.stream()
-                .collect(Collectors.groupingBy(Comment::getAuthorId));
-
-        groupedByAuthor.forEach((authorId, comments) -> {
-            if (comments.size() > 5) {
-                kafkaProducer.sendEventToUserServiceForBan(authorId);
-            }
-        });
+        List<Long> authorIds = commentRepository.findAuthorIdsWithMoreThanFiveUnverifiedComments();
+        authorIds.forEach(kafkaProducer::sendEventToUserServiceForBan);
 
         log.info("User ban events sent successfully.");
     }

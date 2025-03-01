@@ -1,4 +1,4 @@
-package faang.school.postservice.config.redis;
+package faang.school.postservice.config.kafka;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
