@@ -7,7 +7,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -20,7 +19,6 @@ public class LikeAspect {
 
     private final LikeEventPublisher likeEventPublisher;
 
-    @Async
     @AfterReturning(pointcut = "@annotation(faang.school.postservice.service.like.annotation.AddLike)",
             returning = "result")
     public void addLike(JoinPoint joinPoint, Like result) {
@@ -33,6 +31,6 @@ public class LikeAspect {
                 .userId(userId)
                 .likeTime(LocalDateTime.now())
                 .build();
-        likeEventPublisher.publish(event);
+        likeEventPublisher.publish(event, result.getId());
     }
 }

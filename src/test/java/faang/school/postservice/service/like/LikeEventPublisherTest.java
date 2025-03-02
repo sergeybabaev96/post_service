@@ -42,7 +42,7 @@ class LikeEventPublisherTest {
         when(producerRecord.topic()).thenReturn("likes");
         when(producerRecord.value()).thenReturn(event);
 
-        SendResult<String, Object> result = likeEventPublisher.publish(event);
+        SendResult<String, Object> result = likeEventPublisher.publish(event, 1L);
 
         assertEquals(event, result.getProducerRecord().value());
         assertEquals("likes", result.getProducerRecord().topic());

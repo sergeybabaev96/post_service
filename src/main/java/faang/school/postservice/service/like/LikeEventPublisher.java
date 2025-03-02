@@ -7,8 +7,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
-
 @Slf4j
 @Service
 public class LikeEventPublisher {
@@ -21,9 +19,8 @@ public class LikeEventPublisher {
         this.addLikeEventTopicName = addLikeEventTopicName;
     }
 
-    public SendResult<String, Object> publish(LikeEvent event) {
+    public SendResult<String, Object> publish(LikeEvent event, long likerId) {
         log.info("User {} add like to post {}", event.getUserId(), event.getPostId());
-        String uniqueKey = UUID.randomUUID().toString();
-        return kafkaTemplate.send(addLikeEventTopicName, uniqueKey, event).join();
+        return kafkaTemplate.send(addLikeEventTopicName, String.valueOf(likerId), event).join();
     }
 }
