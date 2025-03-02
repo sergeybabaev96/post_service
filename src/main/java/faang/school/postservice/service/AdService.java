@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -20,13 +19,9 @@ public class AdService {
 
     @Transactional
     public void removeExpiredAds(int batchSize) {
-        List<Ad> expiredAds = new ArrayList<>();
-
-        for (Ad ad : adRepository.findAll()) {
-            if (ad.getEndDate().isBefore(LocalDateTime.now()) || ad.getAppearancesLeft() == 0) {
-                expiredAds.add(ad);
-            }
-        }
+        List<Ad> expiredAds = adRepository.findAll().stream()
+                .filter(ad -> ad.getEndDate().isBefore(LocalDateTime.now()) || ad.getAppearancesLeft() == 0)
+                .toList();
 
         ListUtils.partition(expiredAds, batchSize)
                 .forEach(asyncDeleteService::deleteExpiredBatch);

@@ -14,7 +14,7 @@ public class AsyncDeleteService {
 
     private final AdRepository adRepository;
 
-    @Async("adRemoverThreadPool")
+    @Async("threadPool")
     public void deleteExpiredBatch(List<Ad> ads) {
         adRepository.deleteAll(ads);
     }

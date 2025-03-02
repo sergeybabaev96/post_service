@@ -36,7 +36,6 @@ post:
   ad-remover:
     scheduler:
       cron: "0 0 0 * * ?"
-    threads-count: 10
     max-list-size: 50
 
 user-service:

@@ -1,4 +1,4 @@
-package faang.school.postservice.schedule;
+package faang.school.postservice.scheduler;
 
 import faang.school.postservice.service.AdService;
 import lombok.RequiredArgsConstructor;
