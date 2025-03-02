@@ -11,4 +11,5 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "spring.data.redis.channels")
 public class Channels {
     private String commentChannel;
+    private String likeEventChannel;
 }

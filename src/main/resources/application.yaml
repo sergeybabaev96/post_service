@@ -23,6 +23,7 @@ spring:
       host: localhost
       channels:
         comment-channel: comment_channel
+        like-event-channel: like_event
 
   mvc:
     servlet:

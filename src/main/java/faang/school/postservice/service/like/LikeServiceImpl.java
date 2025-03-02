@@ -1,9 +1,12 @@
 package faang.school.postservice.service.like;
 
 import faang.school.postservice.config.context.UserContext;
+import faang.school.postservice.dto.like.LikeEventDto;
+import faang.school.postservice.mapper.like.LikeMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.publisher.like.LikeEventPublisher;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.LikeRepository;
 import faang.school.postservice.repository.PostRepository;
@@ -23,6 +26,9 @@ public class LikeServiceImpl implements LikeService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final LikeServiceValidator likeServiceValidator;
+    private final LikeEventPublisher likeEventPublisher;
+    private final LikeMapper likeMapper;
+
 
     @Override
     @Transactional
@@ -37,6 +43,10 @@ public class LikeServiceImpl implements LikeService {
         like.setPost(post);
 
         final Like savedLike = likeRepository.save(like);
+
+        LikeEventDto likeEventDto = likeMapper.toLikeLikeEventDto(savedLike);
+        likeEventPublisher.publish(likeEventDto);
+
         log.info("UserId = {} successfully liked postId = {} with {} ", userId, postId, savedLike);
     }
 
