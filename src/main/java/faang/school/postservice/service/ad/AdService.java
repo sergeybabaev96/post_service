@@ -26,7 +26,7 @@ public class AdService {
     public int batchSize;
 
     public void removingExpiredAds() {
-        List<Ad> ads = StreamSupport.stream(adRepository.findAll().spliterator(), false).toList();
+        List<Ad> ads = adRepository.findAll();
         List<List<Ad>> partitions = Lists.partition(ads, batchSize);
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
