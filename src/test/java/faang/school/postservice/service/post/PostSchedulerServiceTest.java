@@ -1,8 +1,7 @@
-package faang.school.postservice.service;
+package faang.school.postservice.service.post;
 
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.service.post.PostSchedulerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +23,7 @@ import java.util.concurrent.Future;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class PostSchedulerServiceTest {
 
@@ -55,8 +55,7 @@ class PostSchedulerServiceTest {
     }
 
     @Test
-    void shouldPublishScheduledPosts_whenPostsAreAvailable() throws Exception {
-        // Arrange
+    void shouldPublishScheduledPosts_whenPostsAreAvailable() {
         Post post1 = new Post();
         post1.setAuthorId(1L);
         post1.setPublished(false);
@@ -90,4 +89,5 @@ class PostSchedulerServiceTest {
         List<Post> savedPosts = postsCaptor.getValue();
         assertThat(savedPosts).hasSize(2);
         assertThat(savedPosts).allMatch(post -> post.isPublished() && post.getPublishedAt() != null);
-    }}
+    }
+}
