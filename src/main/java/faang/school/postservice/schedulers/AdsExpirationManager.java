@@ -27,7 +27,7 @@ public class AdsExpirationManager {
         Page<Ad> page;
 
         do {
-            page = adRepository.findByEndDateBeforeAndAppearancesLeft(LocalDateTime.now(),
+            page = adRepository.findExpiredOrDepletedAds(LocalDateTime.now(),
                     PageRequest.of(pageNumber, batchSize));
             List<Ad> expiredAds = page.getContent();
             asyncAdRemovalService.processBatch(expiredAds, batchSize);

@@ -48,10 +48,6 @@ post:
     delay-multiplier: 2
     batchCount: 3
 
-thread:
-  pool:
-    size: 10
-
 services:
   s3:
     endpoint: http://localhost:9000

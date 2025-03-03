@@ -37,11 +37,11 @@ public class AdsExpirationManagerTest {
         Page<Ad> page = mock(Page.class);
         when(page.getContent()).thenReturn(Collections.emptyList());
         when(page.hasNext()).thenReturn(false);
-        when(adRepository.findByEndDateBeforeAndAppearancesLeft(any(), any())).thenReturn(page);
+        when(adRepository.findExpiredOrDepletedAds(any(), any())).thenReturn(page);
 
         adsExpirationManager.deleteExpiredAds();
 
-        verify(adRepository).findByEndDateBeforeAndAppearancesLeft(any(), any());
+        verify(adRepository).findExpiredOrDepletedAds(any(), any());
         verify(asyncAdRemovalService).processBatch(anyList(), anyInt());
     }
 }

@@ -20,5 +20,5 @@ public interface AdRepository extends JpaRepository<Ad, Long> {
 
 
     @Query("SELECT a FROM Ad a WHERE a.endDate < :currentDate OR a.appearancesLeft = 0")
-    Page<Ad> findByEndDateBeforeAndAppearancesLeft(@Param("currentDate") LocalDateTime currentDate, Pageable pageable);
+    Page<Ad> findExpiredOrDepletedAds(@Param("currentDate") LocalDateTime currentDate, Pageable pageable);
 }
