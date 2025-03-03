@@ -1,6 +1,5 @@
 package faang.school.postservice.service.post;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.kafka.AlbumCreatedEvent;
@@ -9,20 +8,20 @@ import faang.school.postservice.dto.post.AlbumResponseDto;
 import faang.school.postservice.dto.post.AlbumUsersDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.enums.Visibility;
-import faang.school.postservice.exception.KafkaProduceException;
 import faang.school.postservice.exception.album.AlbumAccessDeniedException;
 import faang.school.postservice.filter.Filter;
 import faang.school.postservice.filter.album.AlbumFilterDto;
-import faang.school.postservice.kafka.album.AlbumCreatedEventKafkaProducer;
 import faang.school.postservice.mapper.post.AlbumMapper;
 import faang.school.postservice.model.Album;
 import faang.school.postservice.model.post.Post;
 import faang.school.postservice.repository.post.AlbumRepository;
 import faang.school.postservice.repository.post.PostRepository;
+import faang.school.postservice.service.kafka.KafkaMessageService;
 import faang.school.postservice.strategy.album.VisibilityConverter;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -46,12 +45,15 @@ public class AlbumServiceImpl implements AlbumService {
     private final Map<Visibility, VisibilityConverter> visibilities;
     private final UserServiceClient userServiceClient;
     private final List<Filter<Album, AlbumFilterDto>> albumFilters;
-    private final AlbumCreatedEventKafkaProducer kafkaProducer;
+    private final KafkaMessageService kafkaMessageService;
+
+    @Value("${kafka.album.created.topic}")
+    private String topic;
 
     public AlbumServiceImpl(AlbumRepository albumRepository, PostRepository postRepository,
                             AlbumMapper albumMapper, UserContext userContext,
                             List<VisibilityConverter> converters, UserServiceClient userServiceClient,
-                            List<Filter<Album, AlbumFilterDto>> filters, AlbumCreatedEventKafkaProducer kafkaProducer) {
+                            List<Filter<Album, AlbumFilterDto>> filters, KafkaMessageService kafkaMessageService) {
         this.albumRepository = albumRepository;
         this.postRepository = postRepository;
         this.albumMapper = albumMapper;
@@ -60,7 +62,7 @@ public class AlbumServiceImpl implements AlbumService {
                 .collect(toMap(VisibilityConverter::getVisibility, Function.identity()));
         this.userServiceClient = userServiceClient;
         this.albumFilters = filters;
-        this.kafkaProducer = kafkaProducer;
+        this.kafkaMessageService = kafkaMessageService;
     }
 
     @Transactional
@@ -72,7 +74,7 @@ public class AlbumServiceImpl implements AlbumService {
         album.setAuthorId(userId);
         album.setVisibility(ALL_USERS);
         Album savedAlbum = albumRepository.save(album);
-        sendEventToKafka(userId, album);
+        kafkaMessageService.sendMessage(topic, new AlbumCreatedEvent(userId, album.getId(), album.getTitle()));
         return albumMapper.toDto(savedAlbum);
     }
 
@@ -263,15 +265,6 @@ public class AlbumServiceImpl implements AlbumService {
             log.error("Visibility isn't {} in album with id = {}", visibility, album.getId());
             throw new IllegalArgumentException(
                     String.format("Needed selected_users visibility for add users for access. Album: %d", album.getId()));
-        }
-    }
-
-    private void sendEventToKafka(long userId, Album album) {
-        try {
-            kafkaProducer.produce(new AlbumCreatedEvent(userId, album.getId(), album.getTitle()));
-        } catch (JsonProcessingException e) {
-            throw new KafkaProduceException(
-                    String.format("Failed kafka produce created album event. Goal id = %d", album.getId()));
         }
     }
 }

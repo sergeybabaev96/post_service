@@ -70,13 +70,20 @@ post:
 service:
   name: post-service
 
-kafka:
-  album:
-    created:
-      topic: created-album
-
 ad:
   delete:
     count: 1000
   expired:
     cron: "0 0 0 * * *" # every day at midnight
+
+kafka:
+  message:
+    send:
+      max-attempts: 3
+      interval: 30000 # 30 sec
+  album:
+    created:
+      topic: created-album
+
+  comment:
+    topic: comment_event

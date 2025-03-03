@@ -1,6 +1,7 @@
 package faang.school.postservice.service.post;
 
 import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.dto.event.CommentEvent;
 import faang.school.postservice.dto.post.CommentDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.comment.AccessDeniedCommentException;
@@ -9,9 +10,11 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.post.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.post.PostRepository;
+import faang.school.postservice.service.kafka.KafkaMessageService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,6 +30,10 @@ public class CommentServiceImpl implements CommentService {
     private final PostRepository postRepository;
     private final CommentMapper commentMapper;
     private final UserServiceClient userServiceClient;
+    private final KafkaMessageService kafkaMessageService;
+
+    @Value("${kafka.comment.topic}")
+    private String topic;
 
     @Override
     public CommentDto createComment(CommentDto dto) {
@@ -36,7 +43,12 @@ public class CommentServiceImpl implements CommentService {
             throw new EntityNotFoundException(String.format("Author with id = %d not found", dto.authorId()));
         }
         log.info("Get user with id = {} from user_service", author.id());
-        return commentMapper.toDto(commentRepository.save(buildComment(dto)));
+        Post post = postRepository.findById(dto.postId()).orElseThrow(() ->
+                new EntityNotFoundException(String.format("Post with id = %d not found", dto.postId())));
+        Comment createdComment = commentRepository.save(buildComment(dto, post));
+        kafkaMessageService.sendMessage(topic,
+                new CommentEvent(dto.postId(), post.getAuthorId(), createdComment.getId(), LocalDateTime.now()));
+        return commentMapper.toDto(createdComment);
     }
 
     @Override
@@ -68,9 +80,7 @@ public class CommentServiceImpl implements CommentService {
         log.info("Deleted comment with id = {}", id);
     }
 
-    private Comment buildComment(CommentDto dto) {
-        Post post = postRepository.findById(dto.authorId()).orElseThrow(() ->
-                new EntityNotFoundException(String.format("Post with id = %d not found", dto.postId())));
+    private Comment buildComment(CommentDto dto, Post post) {
         log.info("Found post with id = {}", post.getId());
         return Comment.builder()
                 .authorId(dto.authorId())
