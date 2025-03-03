@@ -1,5 +1,7 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.config.app.PostServiceConfiguration;
+import faang.school.postservice.config.async.AsyncConfig;
 import faang.school.postservice.dto.filter.PostFilterDto;
 import faang.school.postservice.dto.post.CreatePostDto;
 import faang.school.postservice.dto.post.ReadPostDto;
@@ -8,24 +10,21 @@ import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.corrector.PostCorrector;
-import faang.school.postservice.service.moderate.ModerationDictionary;
+import faang.school.postservice.service.moderate.ModerationService;
 import faang.school.postservice.validator.post.PostValidator;
-import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static java.lang.String.format;
 
@@ -37,17 +36,8 @@ public class PostService {
     private final PostMapper postMapper;
     private final PostValidator postValidator;
     private final PostCorrector postCorrector;
-    private ExecutorService executor;
-    private ModerationDictionary moderationDictionary;
-    @Value("${moderation.batch-size}")
-    private int batchSize;
-    @Value("${post-service.thread-pool-size}")
-    private int threadPoolSize;
-
-    @PostConstruct
-    private void init() {
-        executor = Executors.newFixedThreadPool(threadPoolSize);
-    }
+    private final ModerationService moderationService;
+    private final AsyncConfig asyncConfig;
 
     public Post findById(@NotNull Long id) {
         return postRepository.findById(id)
@@ -138,31 +128,17 @@ public class PostService {
 
     public void moderateUnverifiedPosts() {
         int page = 0;
+        int batchSize = moderationService.getBatchSize();
+        Executor executor = asyncConfig.taskExecutor();
         List<Post> posts;
 
         do {
-            posts = getUnverifiedPostsBatch(page);
+            posts = moderationService.getUnverifiedPostsBatch(page);
             if (!posts.isEmpty()) {
                 List<Post> finalPosts = posts;
-                executor.submit(() -> processPosts(finalPosts));
+                executor.execute(() -> CompletableFuture.runAsync(() -> moderationService.processPosts(finalPosts)));
             }
             page++;
         } while (posts.size() == batchSize);
-    }
-
-    private List<Post> getUnverifiedPostsBatch(int page) {
-        Pageable pageable = PageRequest.of(page, batchSize);
-
-        return postRepository.findUnverifiedPosts(pageable).getContent();
-    }
-
-    private void processPosts(List<Post> posts) {
-        for (Post post : posts) {
-            boolean containsBadWords = moderationDictionary.containsBadWords(post.getContent());
-            post.setVerified(!containsBadWords);
-            post.setVerifiedDate(LocalDateTime.now());
-        }
-
-        postRepository.saveAll(posts);
     }
 }

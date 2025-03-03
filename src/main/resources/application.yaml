@@ -58,4 +58,4 @@ spell-service:
 moderation:
   cron: "0 0 0 * * ?"
   batch-size: 100
-  bad-words-file-path: classpath:bad-words.regex
+  bad-words-file-path: DirtyWords.json

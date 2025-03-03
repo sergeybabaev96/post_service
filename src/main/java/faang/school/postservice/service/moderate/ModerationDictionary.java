@@ -1,34 +1,54 @@
 package faang.school.postservice.service.moderate;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import faang.school.postservice.config.app.PostServiceConfiguration;
+import faang.school.postservice.service.moderate.model.WrongWordResourceItem;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Objects;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class ModerationDictionary {
+    private final PostServiceConfiguration postServiceConfiguration;
 
-    private Pattern profanityPattern;
-
-    @Value("${moderation.bad-words-file}")
+    @Value("${moderation.bad-words-file-path}")
     private String badWordsFilePath;
 
+    private List<WrongWordResourceItem> wrongWordResourceItems;
+
     @PostConstruct
-    private void init() throws IOException, URISyntaxException {
-        String regex = Files.readString(Paths.get(Objects.requireNonNull(getClass().getClassLoader().getResource(badWordsFilePath)).toURI()));
-        profanityPattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+    private void init() {
+        Resource resource = new ClassPathResource(badWordsFilePath);
+        ObjectMapper objectMapper = postServiceConfiguration.objectMapper();
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        try {
+            wrongWordResourceItems = objectMapper.readValue(resource.getInputStream(), new TypeReference<>(){});
+        } catch (IOException e) {
+            log.error("Ошибка при загрузке словаря!", e);
+        }
     }
 
-    public boolean containsBadWords(String text) {
-        Matcher matcher = profanityPattern.matcher(text);
-        return matcher.find();
+    public boolean containsBadWords(String postContent) {
+        postContent = postContent.replaceAll("@\"[^\\p{L}\\s]\"", "");
+        List<String> splittedContent = Arrays.stream(postContent.split(" ")).toList();
+
+        return wrongWordResourceItems.stream()
+                .map(WrongWordResourceItem::getWord)
+                .map(String::toLowerCase)
+                .anyMatch(splittedContent::contains);
     }
 }
-
