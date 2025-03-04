@@ -1,7 +1,4 @@
 spring:
-  profiles:
-    active: local
-
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/post-service
@@ -27,6 +24,7 @@ spring:
       channels:
         calculations: calculations_channel
         comment_create: comment_create_channel
+        likes: likes_channel
 
   cloud:
     openfeign:
@@ -78,7 +76,7 @@ post:
     cronPeriod: "0 0 0 * * *"
   schedule:
     batch-size: 1000
-    page-size: 100
+    page-size: 20
     scheduled-cron: "0 * * * * *"
     max-retries: 5
     timeout: 10
@@ -92,10 +90,6 @@ post:
     cronPeriod: "0 0 0 * * *"
     batch-size: 20
     page-size: 20
-
-thread:
-  pool:
-    size: 10
 
 cover:
   max-image-size: 5242880
@@ -119,6 +113,19 @@ project-service:
 payment-service:
   host: localhost
   port: 9080
+
+ad:
+  schedule:
+    removal-cron: "0 0 12 * * ?"
+  batch:
+    size: 1000
+
+task:
+  execution:
+    pool:
+      core-size: 4
+      max-size: 8
+      keep-alive: 60
 
 ---
 
