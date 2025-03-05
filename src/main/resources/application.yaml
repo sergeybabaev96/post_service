@@ -83,10 +83,18 @@ post:
     initial-delay: 500
     delay-multiplier: 2
     batchCount: 3
+  upload:
+    max-files: 10
+    max-file-size-mb: 5
   grammar:
     cronPeriod: "0 0 0 * * *"
     batch-size: 20
     page-size: 20
+
+cover:
+  max-image-size: 5242880
+  max-image-width: 1080
+  max-image-height-horizontal: 566
 
 services:
   s3:

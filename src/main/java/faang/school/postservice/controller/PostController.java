@@ -9,8 +9,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
@@ -60,7 +61,6 @@ public class PostController {
     @PatchMapping("/{postId}")
     @Operation(summary = "Обновление поста")
     public PostReadDto updatePost(
-            @Validated
             @RequestBody
             PostUpdateDto dto,
             @PathVariable
@@ -101,5 +101,31 @@ public class PostController {
     @GetMapping
     public List<PostReadDto> getPostsByHashtagId(@RequestParam long hashtagId) {
         return postService.getPostsByHashtagId(hashtagId);
+    }
+
+    @PostMapping("/{postId}/images")
+    @Operation(summary = "Добавление изображений")
+    public PostReadDto uploadImages(
+            @PathVariable long postId,
+            @RequestParam List<MultipartFile> images) {
+        return postService.uploadImages(postId, images);
+    }
+
+    @DeleteMapping("/{postId}/images")
+    @Operation(summary = "Удаление изображений")
+    public PostReadDto deleteImages(
+            @PathVariable long postId,
+            @RequestParam List<String> fileKeys) {
+        return postService.deleteImages(postId, fileKeys);
+    }
+
+    @GetMapping("/{postId}/images")
+    @Operation(summary = "Получение изображения")
+    public ResponseEntity<byte[]> downloadImage(
+            @RequestParam String fileKey) {
+        byte[] imageData = postService.downloadImage(fileKey);
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(imageData);
     }
 }
