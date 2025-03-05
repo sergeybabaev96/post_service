@@ -1,5 +1,6 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.annotations.PublishLikeEvent;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.CommentNotFoundException;
@@ -8,6 +9,8 @@ import faang.school.postservice.exception.UserNotFoundException;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.model.event.AnalyticsLikeEvent;
+import faang.school.postservice.model.event.NotificationLikeEvent;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.LikeRepository;
 import faang.school.postservice.repository.PostRepository;
@@ -52,8 +55,9 @@ public class LikeService {
         return fetchUsersInBatches(userIds);
     }
 
+    @PublishLikeEvent(events = {AnalyticsLikeEvent.class, NotificationLikeEvent.class})
     @Transactional
-    public void addLikeToPost(Long postId, Long commentId, Long currentUserId) {
+    public Like addLikeToPost(Long postId, Long commentId, Long currentUserId) {
         try {
             userServiceClient.getUser(currentUserId);
         } catch (FeignException.NotFound ex) {
@@ -71,8 +75,8 @@ public class LikeService {
                 .build();
 
         post.getLikes().add(like);
-        likeRepository.save(like);
         postRepository.save(post);
+        return likeRepository.save(like);
     }
 
     @Transactional

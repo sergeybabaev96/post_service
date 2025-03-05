@@ -3,8 +3,12 @@ package faang.school.postservice.util;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.service.AiModerationService;
+import faang.school.postservice.service.AsyncModerationService;
 import faang.school.postservice.service.InternalServices;
 import faang.school.postservice.service.PostService;
+import faang.school.postservice.validation.ModerationDictionaryValidation;
+import org.junit.jupiter.api.BeforeEach;
 import faang.school.postservice.service.SpellCheckerService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,11 +20,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -28,7 +38,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -45,11 +62,29 @@ public class PostServiceTest {
     private InternalServices internalServices;
 
     @Mock
+    private ModerationDictionaryValidation moderationDictionaryValidation;
+
+    @Mock
+    private AiModerationService aiModerationService;
+
+    @Mock
+    private AsyncModerationService asyncModerationService;
+
+    @Mock
+    private ThreadPoolTaskExecutor publishingThreadPool;
+
+    @Mock
     private SpellCheckerService spellCheckerService;
 
     @InjectMocks
     private PostService postService;
 
+    private Post post;
+    private Post projectPost;
+    private Post originalPost;
+    private Post post1;
+    private Post post2;
+    private List<Post> postsToPublish;
     private static Post post;
     private static Post projectPost;
     private static Post originalPost;
@@ -59,8 +94,8 @@ public class PostServiceTest {
     private static Post post4;
     private static Post post5;
 
-    @BeforeAll
-    public static void SetUp() {
+    @BeforeEach
+    public void SetUp() {
         post = new Post();
         post.setId(1L);
         post.setAuthorId(1L);
@@ -88,6 +123,8 @@ public class PostServiceTest {
         post2.setDeleted(false);
         post2.setPublished(false);
         post2.setCreatedAt(LocalDateTime.now());
+
+        postsToPublish = List.of(post1, post2);
     }
 
     @BeforeEach
@@ -267,7 +304,7 @@ public class PostServiceTest {
         List<Post> result = postService.getPostsByAuthorId(1L);
 
         assertEquals(2, result.size());
-        assertEquals(post2, result.get(0)); // post2 is more recent
+        assertEquals(post2, result.get(0));
         assertEquals(post1, result.get(1));
     }
 
@@ -284,9 +321,53 @@ public class PostServiceTest {
         List<Post> result = postService.getPostsByProjectId(1L);
 
         assertEquals(2, result.size());
-        assertEquals(post2, result.get(0)); // post2 is more recent
+        assertEquals(post2, result.get(0));
         assertEquals(post1, result.get(1));
     }
+
+    @Test
+    public void testModeratePosts_marksPostsAsVerified_whenContentIsClean() {
+        List<Post> posts = new ArrayList<>();
+        Post post = new Post();
+        ReflectionTestUtils.setField(postService, "threadSize", 4);
+        post.setContent("Clean content");
+        posts.add(post);
+
+        when(postRepository.findByVerifiedDateIsNull()).thenReturn(posts);
+
+        lenient().when(moderationDictionaryValidation.containsBadWord(anyString())).thenReturn(false);
+        lenient().when(aiModerationService.isToxic(anyString())).thenReturn(false);
+
+        when(asyncModerationService.moderateThreadAsync(anyList()))
+                .thenAnswer(invocation -> {
+                    List<Post> moderatedPosts = invocation.getArgument(0);
+                    moderatedPosts.forEach(p -> {
+                        p.setVerifiedDate(LocalDateTime.now());
+                        p.setVerified(true);
+                    });
+                    postRepository.saveAll(moderatedPosts);
+                    return CompletableFuture.completedFuture(null);
+                });
+
+        postService.moderatePosts();
+
+        verify(postRepository).saveAll(anyList());
+    }
+
+    @Test
+    @Order(18)
+    public void getUsersForBanWithUnverifiedPosts_Valid() {
+        List<Long> mockUserIds = List.of(1L, 2L, 3L);
+        when(postRepository.findUserIdsToBanWithUnverifiedPosts(5)).thenReturn(mockUserIds);
+
+        List<Long> result = postService.getUsersForBanWithUnverifiedPosts(5);
+
+        verify(postRepository, times(1)).findUserIdsToBanWithUnverifiedPosts(5);
+        assertEquals(mockUserIds, result);
+    }
+
+    public void publishScheduledPostsTest() throws Exception {
+        when(postRepository.findReadyToPublish()).thenReturn(postsToPublish);
 
     @Test
     void testCorrectPosts_WithCorrections() {
@@ -330,5 +411,30 @@ public class PostServiceTest {
         verify(postRepository, times(1)).findByPublishedFalse();
         verify(spellCheckerService, never()).correctTextWithYandexSpeller(anyString());
         verify(postRepository, never()).save(any(Post.class));
+    }
+}
+
+        ThreadPoolExecutor mockThreadPoolExecutor = mock(ThreadPoolExecutor.class);
+        when(publishingThreadPool.getThreadPoolExecutor()).thenReturn(mockThreadPoolExecutor);
+
+        postService = new PostService(postRepository, internalServices, publishingThreadPool, asyncModerationService);
+
+        doAnswer(invocation -> {
+            List<Callable<Void>> tasks = invocation.getArgument(0);
+            for (Callable<Void> task : tasks) {
+                task.call();
+            }
+            return null;
+        }).when(mockThreadPoolExecutor).invokeAll(anyList());
+
+        postService.publishScheduledPosts();
+
+        verify(postRepository).findReadyToPublish();
+        verify(publishingThreadPool, times(2)).getThreadPoolExecutor();
+        verify(postRepository).saveAll(postsToPublish);
+        postsToPublish.forEach(post -> {
+            assertTrue(post.isPublished());
+            assertNotNull(post.getPublishedAt());
+        });
     }
 }

@@ -3,22 +3,40 @@ package faang.school.postservice.service;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.ListUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.security.InvalidParameterException;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 
 @Service
-@RequiredArgsConstructor
+@Slf4j
 public class PostService {
     private final PostRepository postRepository;
     private final InternalServices internalServices;
     private final SpellCheckerService spellCheckerService;
+    private final ExecutorService executorService;
+    private final AsyncModerationService asyncModerationService;
+    @Value("${moderation.threadSize}")
+    private int threadSize;
+
+    public PostService(PostRepository postRepository, InternalServices internalServices,
+                       ThreadPoolTaskExecutor publishingThreadPool, AsyncModerationService asyncModerationService) {
+        this.postRepository = postRepository;
+        this.internalServices = internalServices;
+        this.asyncModerationService = asyncModerationService;
+        this.executorService = publishingThreadPool.getThreadPoolExecutor();
+    }
 
     @Transactional
     public Post createDraft(Post post) {
@@ -96,8 +114,62 @@ public class PostService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public void moderatePosts() {
+        List<Post> posts = postRepository.findByVerifiedDateIsNull();
+
+        if (posts == null || posts.isEmpty()) {
+            return;
+        }
+
+        List<List<Post>> threads = splitIntoThreads(posts);
+
+        List<CompletableFuture<Void>> futures = threads.stream()
+                .map(asyncModerationService::moderateThreadAsync)
+                .toList();
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    }
+
+    private List<List<Post>> splitIntoThreads(List<Post> posts) {
+        return ListUtils.partition(posts, threadSize);
+    }
+
     public List<Post> findPostsByResourceKeys(List<String> resourceKeys) {
         return postRepository.findPostsByResourceKeys(resourceKeys);
+    }
+
+    public List<Long> getUsersForBanWithUnverifiedPosts(int maxUnverifiedPosts) {
+        return postRepository.findUserIdsToBanWithUnverifiedPosts(maxUnverifiedPosts);
+    }
+
+    @Transactional
+    public void publishScheduledPosts() {
+        List<Post> postsToPublish = postRepository.findReadyToPublish();
+
+        List<List<Post>> postsToPublishPartitioned = ListUtils.partition(postsToPublish, 1000);
+        try {
+            List<Callable<Void>> tasks = postsToPublishPartitioned.stream()
+                    .map(this::publishChunkOfPosts)
+                    .toList();
+
+            executorService.invokeAll(tasks);
+        } catch (Exception e) {
+            log.error("Publishing posts chunk failed!", e);
+        }
+        CompletableFuture.completedFuture(null);
+    }
+
+    private Callable<Void> publishChunkOfPosts(List<Post> postsToPublish) {
+        return () -> {
+            postsToPublish.forEach(post -> {
+                post.setPublished(true);
+                post.setPublishedAt(LocalDateTime.now());
+            });
+
+        postRepository.saveAll(postsToPublish);
+        return null;
+        };
     }
 
     @Transactional
