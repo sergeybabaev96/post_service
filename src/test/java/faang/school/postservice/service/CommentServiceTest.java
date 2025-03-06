@@ -1,5 +1,6 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.dto.comment.CommentCreateEventDto;
 import faang.school.postservice.dto.comment.CommentResponse;
 import faang.school.postservice.dto.comment.CommentUpdateRequest;
 import faang.school.postservice.dto.comment.CreateCommentRequest;
@@ -7,9 +8,7 @@ import faang.school.postservice.exceptions.FileIsEmptyException;
 import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
-import faang.school.postservice.model.event.CommentCreateEvent;
 import faang.school.postservice.repository.CommentRepository;
-import faang.school.postservice.service.broker.KafkaProducerCommentService;
 import faang.school.postservice.utils.ImageService;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.DisplayName;
@@ -55,19 +54,16 @@ class CommentServiceTest {
     private ImageService imageService;
 
     @Mock
-    private KafkaProducerCommentService kafkaProducerCommentService;
+    private KafkaService kafkaService;
     
     @Mock
     private PostService postService;
-
-    @Mock
-    private KafkaService kafkaService;
 
     @InjectMocks
     private CommentService commentService;
 
     @Captor
-    private ArgumentCaptor<CommentCreateEvent> commentCreateCaptor;
+    private ArgumentCaptor<CommentCreateEventDto> commentCreateCaptor;
     
     @Test
     void create_Success() {
@@ -106,11 +102,10 @@ class CommentServiceTest {
         verify(commentMapper).toEntity(request);
         verify(commentRepository).save(any(Comment.class));
         verify(commentMapper).toCommentResponse(commentSaved);
-        verify(kafkaProducerCommentService).sendCommentCreateEvent(commentCreateCaptor.capture());
+        verify(kafkaService).sendCommentCreateMessage(commentCreateCaptor.capture());
 
-        assertEquals(commentCreateCaptor.getValue().authorId(), authorId);
-        assertEquals(commentCreateCaptor.getValue().commentId(), commentId);
-        assertEquals(commentCreateCaptor.getValue().postId(), postId);
+        assertEquals(commentCreateCaptor.getValue().getAuthorId(), authorId);
+        assertEquals(commentCreateCaptor.getValue().getPostId(), postId);
     }
 
     @Test
