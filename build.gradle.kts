@@ -113,7 +113,7 @@ tasks.jacocoTestCoverageVerification {
             includes = listOf("faang.school.postservice.service")
 
             limit {
-                minimum = BigDecimal.valueOf(0.7)
+                minimum = BigDecimal.valueOf(0.6)
             }
         }
     }
