@@ -32,6 +32,7 @@ public class KafkaService {
             throw new RuntimeException("Error while sending comment create message");
         }
     }
+
     public void sendPostLikeMessage(LikePostEvent likePostEvent) {
         try {
             String message = objectMapper.writeValueAsString(likePostEvent);
