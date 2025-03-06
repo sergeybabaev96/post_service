@@ -26,6 +26,7 @@ spring:
           name: calculations_channel
         user-ban-channel:
           name: user_ban
+        comment-channel: comment_channel
 
   mvc:
     servlet:
@@ -38,9 +39,6 @@ spring:
 
 server:
   port: 8081
-  servlet:
-    context-path: /api/v1
-
   tomcat:
     max-swallow-size: 5MB
 
@@ -63,6 +61,11 @@ project-service:
 payment-service:
   host: localhost
   port: 9080
+ad-service:
+  ad-removal:
+    batch-size: 10
+    cron: "0 0 0 * * ?"
+    #Каждый день в 00:00
 
 aws:
   url: http://localhost:9000
