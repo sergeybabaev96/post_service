@@ -136,7 +136,24 @@ schedulers:
     moderation:
       threadNamePrefix: "moderation-"
       cronExpression: "0 * * * * *"
+  correct-posts: "0 0 12 * * ?"
 
 commenter-banner:
   cron: "0 0 12 * * ?"
   comments-count-for-ban: 5
+
+app:
+  speller:
+    url: "https://speller.yandex.net/services/spellservice.json"
+    max-request-uri-length: 10000
+    max-content-length: 4096
+    base-url-length: 70
+    separator-length: 6
+    async:
+      core-pool-size: 10
+      max-pool-size: 50
+      queue-capacity: 100
+      thread-name-prefix: "Async-"
+    retry:
+      maxAttempts: 5
+      backoffDelay: 1000

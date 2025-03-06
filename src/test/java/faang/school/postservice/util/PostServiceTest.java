@@ -7,6 +7,7 @@ import faang.school.postservice.service.AiModerationService;
 import faang.school.postservice.service.AsyncModerationService;
 import faang.school.postservice.service.InternalServices;
 import faang.school.postservice.service.PostService;
+import faang.school.postservice.service.SpellCheckerService;
 import faang.school.postservice.validation.ModerationDictionaryValidation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
@@ -17,6 +18,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -27,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -41,6 +46,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,6 +72,9 @@ public class PostServiceTest {
     @Mock
     private ThreadPoolTaskExecutor publishingThreadPool;
 
+    @Mock
+    private SpellCheckerService spellCheckerService;
+
     @InjectMocks
     private PostService postService;
 
@@ -75,6 +84,9 @@ public class PostServiceTest {
     private Post post1;
     private Post post2;
     private List<Post> postsToPublish;
+    private List<Post> unpublishedPosts;
+    private List<String> contents;
+    private List<String> correctedContents;
 
     @BeforeEach
     public void SetUp() {
@@ -97,6 +109,7 @@ public class PostServiceTest {
         post1.setDeleted(false);
         post1.setPublished(false);
         post1.setCreatedAt(LocalDateTime.now().minusDays(1));
+        post1.setContent("This is a test post with sme errors.");
 
         post2 = new Post();
         post2.setId(2L);
@@ -105,8 +118,21 @@ public class PostServiceTest {
         post2.setDeleted(false);
         post2.setPublished(false);
         post2.setCreatedAt(LocalDateTime.now());
+        post2.setContent("Anothr post with some mistakes.");
 
         postsToPublish = List.of(post1, post2);
+
+        unpublishedPosts = List.of(post1, post2);
+
+        contents = postsToPublish.stream()
+                .map(Post::getContent)
+                .toList();
+
+        correctedContents = List.of(
+                "This is a test post with some errors.",
+                "Another post with some mistakes."
+        );
+
     }
 
     @Test
@@ -329,14 +355,18 @@ public class PostServiceTest {
         verify(postRepository, times(1)).findUserIdsToBanWithUnverifiedPosts(5);
         assertEquals(mockUserIds, result);
     }
-  
+
     public void publishScheduledPostsTest() throws Exception {
         when(postRepository.findReadyToPublish()).thenReturn(postsToPublish);
 
         ThreadPoolExecutor mockThreadPoolExecutor = mock(ThreadPoolExecutor.class);
         when(publishingThreadPool.getThreadPoolExecutor()).thenReturn(mockThreadPoolExecutor);
 
-        postService = new PostService(postRepository, internalServices, publishingThreadPool, asyncModerationService);
+        postService = new PostService(postRepository,
+                internalServices,
+                publishingThreadPool,
+                asyncModerationService,
+                spellCheckerService);
 
         doAnswer(invocation -> {
             List<Callable<Void>> tasks = invocation.getArgument(0);
@@ -355,5 +385,78 @@ public class PostServiceTest {
             assertTrue(post.isPublished());
             assertNotNull(post.getPublishedAt());
         });
+    }
+
+    @Test
+    void testCorrectPosts() {
+        Page<Post> page = new PageImpl<>(unpublishedPosts);
+        when(postRepository.findByPublishedFalse(any(Pageable.class))).thenReturn(page);
+
+        when(spellCheckerService.calculateBatchSize()).thenReturn(2);
+        when(spellCheckerService.sendBatchRequestToYandexSpeller(contents))
+                .thenReturn(correctedContents);
+
+        postService.correctPosts();
+
+        verify(spellCheckerService, times(1)).sendBatchRequestToYandexSpeller(contents);
+
+        for (int i = 0; i < unpublishedPosts.size(); i++) {
+            Post post = unpublishedPosts.get(i);
+            String correctedContent = correctedContents.get(i);
+            post.setContent(correctedContent);
+            verify(postRepository, times(1)).saveAll(unpublishedPosts);
+            assert post.getContent().equals(correctedContent);
+        }
+    }
+
+    @Test
+    void testCorrectPosts_EmptyPage() {
+        Page<Post> emptyPage = new PageImpl<>(List.of());
+        when(spellCheckerService.calculateBatchSize()).thenReturn(2);
+        when(postRepository.findByPublishedFalse(any(Pageable.class))).thenReturn(emptyPage);
+
+        postService.correctPosts();
+
+        verify(spellCheckerService, never()).sendBatchRequestToYandexSpeller(any());
+
+        verify(postRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void testCorrectPosts_ExceptionHandling() {
+        Page<Post> page = new PageImpl<>(unpublishedPosts);
+        when(postRepository.findByPublishedFalse(any(Pageable.class))).thenReturn(page);
+
+        when(spellCheckerService.calculateBatchSize()).thenReturn(10);
+        when(spellCheckerService.sendBatchRequestToYandexSpeller(contents))
+                .thenThrow(new RuntimeException("Spell check failed"));
+
+        postService.correctPosts();
+
+        verify(spellCheckerService, times(1)).sendBatchRequestToYandexSpeller(contents);
+
+        verify(postRepository, never()).saveAll(any());
+    }
+
+    @Test
+    void testMethod(){
+        Page<Post> page = new PageImpl<>(unpublishedPosts);
+        when(postRepository.findByPublishedFalse(any(Pageable.class))).thenReturn(page);
+
+        when(spellCheckerService.calculateBatchSize()).thenReturn(2);
+        when(spellCheckerService.sendBatchRequestToYandexSpeller(contents))
+                .thenReturn(correctedContents);
+
+        postService.correctPosts();
+
+        verify(spellCheckerService, times(1)).sendBatchRequestToYandexSpeller(contents);
+
+        for (int i = 0; i < unpublishedPosts.size(); i++) {
+            Post post = unpublishedPosts.get(i);
+            String correctedContent = correctedContents.get(i);
+            post.setContent(correctedContent);
+            verify(postRepository, times(1)).saveAll(unpublishedPosts);
+            assert post.getContent().equals(correctedContent);
+        }
     }
 }
