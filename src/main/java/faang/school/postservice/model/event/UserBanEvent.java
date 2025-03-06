@@ -1,4 +1,4 @@
-package faang.school.postservice.events;
+package faang.school.postservice.model.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Data
 @Builder
-public class UserBanEvent implements Event {
+public class UserBanEvent {
     private long userId;
     private boolean banned;
 }

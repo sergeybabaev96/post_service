@@ -2,7 +2,7 @@ package faang.school.postservice.scheduler;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import faang.school.postservice.events.UserBanEvent;
+import faang.school.postservice.model.event.UserBanEvent;
 import faang.school.postservice.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

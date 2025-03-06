@@ -1,5 +1,6 @@
 package faang.school.postservice.config.kafka;
 
+import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,5 +35,12 @@ public class KafkaTestConfig {
         ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory);
         return factory;
+    }
+
+    @Bean
+    public Consumer<String, String> consumer() {
+        return new DefaultKafkaConsumerFactory<String, String>(consumerFactory()
+                .getConfigurationProperties())
+                .createConsumer();
     }
 }
