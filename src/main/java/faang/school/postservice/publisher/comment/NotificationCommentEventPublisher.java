@@ -33,6 +33,7 @@ public class NotificationCommentEventPublisher implements EventPublisher {
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize NotificationCommentEvent to JSON. Event data: {}. Error message: {}",
                     event, e.getMessage(), e);
+            throw new RuntimeException(e);
         }
     }
 }

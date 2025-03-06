@@ -1,6 +1,6 @@
 package faang.school.postservice.scheduler;
 
-import faang.school.postservice.events.UserBanEvent;
+import faang.school.postservice.model.event.UserBanEvent;
 import faang.school.postservice.service.BanProducer;
 import faang.school.postservice.service.PostService;
 import lombok.RequiredArgsConstructor;

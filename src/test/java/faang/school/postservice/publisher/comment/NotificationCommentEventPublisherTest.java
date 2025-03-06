@@ -3,9 +3,9 @@ package faang.school.postservice.publisher.comment;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import faang.school.postservice.events.NotificationCommentEvent;
 import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.model.Comment;
+import faang.school.postservice.model.event.NotificationCommentEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,10 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
@@ -38,7 +41,7 @@ class NotificationCommentEventPublisherTest {
     void setUp() {
         ReflectionTestUtils.setField(
                 notificationCommentEventPublisher,
-                "commentNotificationTopic",
+                "notificationCommentTopicName",
                 "test-comment-notification-topic"
         );
     }
