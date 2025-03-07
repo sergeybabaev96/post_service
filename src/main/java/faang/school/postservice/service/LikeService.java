@@ -35,11 +35,11 @@ public class LikeService {
     private static final String WARN_USER_SETS_CURRENT_LIKE_STATUS = "User like action repeats current like status: userId={}, commentId={}, postId={}";
     private static final String ERROR_USER_IS_NOT_PRESENTED_IN_DB = "User is not presented in DB: userId={}";
 
-    public Like likePost(Like like) {
-        Post post = validatePostAndUser(like);
+    public Like setLikeToPost(Like like) {
+        Post post = getPost(like.getPost().getId());
+        userIsPresentedInDataBase(like.getUserId());
 
-        List<Like> userLikesOfPost = getUserLikesOfPost(post, like.getUserId());
-        if (userLikesOfPost.isEmpty()) {
+        if (!likeOfPostIsAlreadyPresented(post, like.getUserId())) {
             like.setComment(null);
             Like likeFromDataBase = likeRepository.save(like);
             log.info(USER_LIKES_POST, like.getUserId(), like.getPost().getId());
@@ -50,13 +50,14 @@ public class LikeService {
         return new Like();
     }
 
-    public Like dislikePost(Like like) {
-        Post post = validatePostAndUser(like);
+    public Like unsetLikeToPost(Like like) {
+        Post post = getPost(like.getPost().getId());
+        userIsPresentedInDataBase(like.getUserId());
 
-        List<Like> userLikesOfPost = getUserLikesOfPost(post, like.getUserId());
-        if (!userLikesOfPost.isEmpty()) {
-            likeRepository.deleteById(userLikesOfPost.get(0).getId());
-            like.setId(userLikesOfPost.get(0).getId());
+        if (likeOfPostIsAlreadyPresented(post, like.getUserId())) {
+            Like likeToDelete = getPostLikeToDelete(post, like.getUserId());
+            likeRepository.deleteById(likeToDelete.getId());
+            like.setId(like.getId());
             log.info(USER_TAKES_LIKE_AWAY_FROM_POST, like.getUserId(), like.getPost().getId());
         } else {
             logWarningSameLikeStatus(like);
@@ -64,11 +65,11 @@ public class LikeService {
         return like;
     }
 
-    public Like likeComment(Like like) {
-        Comment comment = validateCommentAndUser(like);
+    public Like setLikeToComment(Like like) {
+        Comment comment = getComment(like.getComment().getId(), like.getPost().getId());
+        userIsPresentedInDataBase(like.getUserId());
 
-        List<Like> userLikesOfComment = getUserLikesOfComment(comment, like.getUserId());
-        if (userLikesOfComment.isEmpty()) {
+        if (!likeOfCommentIsAlreadyPresented(comment, like.getUserId())) {
             Like likeFromDataBase = likeRepository.save(like);
             log.info(USER_LIKES_COMMENT, like.getUserId(), like.getComment().getId(), like.getPost().getId());
             return likeFromDataBase;
@@ -78,13 +79,14 @@ public class LikeService {
         return new Like();
     }
 
-    public Like dislikeComment(Like like) {
-        Comment comment = validateCommentAndUser(like);
+    public Like unsetLikeToComment(Like like) {
+        Comment comment = getComment(like.getComment().getId(), like.getPost().getId());
+        userIsPresentedInDataBase(like.getUserId());
 
-        List<Like> userLikesOfComment = getUserLikesOfComment(comment, like.getUserId());
-        if (!userLikesOfComment.isEmpty()) {
-            likeRepository.deleteById(userLikesOfComment.get(0).getId());
-            like.setId(userLikesOfComment.get(0).getId());
+        if (likeOfCommentIsAlreadyPresented(comment, like.getUserId())) {
+            Like likeToDelete = getCommentLikeToDelete(comment, like.getUserId());
+            likeRepository.deleteById(likeToDelete.getId());
+            like.setId(likeToDelete.getId());
             log.info(USER_TAKES_LIKE_AWAY_FROM_COMMENT, like.getUserId(), like.getComment().getId(), like.getPost().getId());
         } else {
             logWarningSameLikeStatus(like);
@@ -96,16 +98,26 @@ public class LikeService {
         return getPost(postId);
     }
 
-    private Post validatePostAndUser(Like like) {
-        Post post = getPost(like.getPost().getId());
-        UserDto userDto = getUserFromUserService(like.getUserId());
-        return post;
+    private Like getPostLikeToDelete(Post post, Long userId) {
+        Optional<Like> optionalLike = post.getLikes().stream()
+                .filter(l -> l.getUserId().equals(userId))
+                .findFirst();
+        Like likeToDelete = new Like();
+        if (optionalLike.isPresent()) {
+            likeToDelete = optionalLike.get();
+        }
+        return likeToDelete;
     }
 
-    private Comment validateCommentAndUser(Like like) {
-        Comment comment = getComment(like.getComment().getId(), like.getPost().getId());
-        UserDto userDto = getUserFromUserService(like.getUserId());
-        return comment;
+    private Like getCommentLikeToDelete(Comment comment, Long userId) {
+        Optional<Like> optionalLike = comment.getLikes().stream()
+                .filter(l -> l.getUserId().equals(userId))
+                .findFirst();
+        Like likeToDelete = new Like();
+        if (optionalLike.isPresent()) {
+            likeToDelete = optionalLike.get();
+        }
+        return likeToDelete;
     }
 
     private Post getPost(Long postId) {
@@ -118,10 +130,18 @@ public class LikeService {
         }
     }
 
-    private List<Like> getUserLikesOfPost(Post post, Long userId) {
-        return post.getLikes().stream()
+    private boolean likeOfPostIsAlreadyPresented(Post post, Long userId) {
+        List<Like> likes = post.getLikes().stream()
                 .filter(l -> l.getUserId().equals(userId))
                 .toList();
+        return !likes.isEmpty();
+    }
+
+    private boolean likeOfCommentIsAlreadyPresented(Comment comment, Long userId) {
+        List<Like> likes = comment.getLikes().stream()
+                .filter(l -> l.getUserId().equals(userId))
+                .toList();
+        return !likes.isEmpty();
     }
 
     private Comment getComment(Long commentId, Long postId) {
@@ -140,17 +160,9 @@ public class LikeService {
         }
     }
 
-    private List<Like> getUserLikesOfComment(Comment comment, Long userId) {
-        return comment.getLikes().stream()
-                .filter(l -> l.getUserId().equals(userId))
-                .toList();
-    }
-
-    private UserDto getUserFromUserService(Long userId) {
+    private void userIsPresentedInDataBase(Long userId) {
         UserDto userDto = userServiceClient.getUser(userId);
-        if (userDto.id().equals(userId)) {
-            return userDto;
-        } else {
+        if (!userDto.id().equals(userId)) {
             log.error(ERROR_USER_IS_NOT_PRESENTED_IN_DB, userId);
             throw new DataValidationException(ERROR_USER_IS_NOT_PRESENTED_IN_DB);
         }

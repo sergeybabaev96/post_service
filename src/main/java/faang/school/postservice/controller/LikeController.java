@@ -23,67 +23,66 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/like")
 @Slf4j
 public class LikeController {
-    private LikeService likeServiceV2;
+    private LikeService likeService;
     private LikeMapper likeMapper;
     private PostMapper postMapper;
     private UserContext userContext;
 
-    private static final String POST_NEGATIVE_ID = "postId is negative";
+    private static final String POST_NEGATIVE_ID = "postId is negative or 0";
 
-    @PostMapping("/post/{postId}/like")
+    @PostMapping("/post/{postId}/set")
     @ResponseBody
-    public LikeDto likePost(@RequestBody LikeDto likeDto) {
+    public LikeDto setLikeToPost(@RequestBody LikeDto likeDto) {
         if (likeDtoIsValidForPost(likeDto)) {
             likeDto.setUserId(userContext.getUserId());
-            Like like = likeServiceV2.likePost(likeMapper.toEntity(likeDto));
+            Like like = likeService.setLikeToPost(likeMapper.toEntity(likeDto));
             return likeMapper.toDto(like);
         } else {
             throw new DataValidationException(POST_NEGATIVE_ID);
         }
     }
 
-    @PostMapping("/post/{postId}/dislike")
+    @PostMapping("/post/{postId}/unset")
     @ResponseBody
-    public LikeDto dislikePost(@RequestBody LikeDto likeDto) {
+    public LikeDto unsetLikeToPost(@RequestBody LikeDto likeDto) {
         if (likeDtoIsValidForPost(likeDto)) {
             likeDto.setUserId(userContext.getUserId());
-            Like like = likeServiceV2.dislikePost(likeMapper.toEntity(likeDto));
+            Like like = likeService.unsetLikeToPost(likeMapper.toEntity(likeDto));
             return likeMapper.toDto(like);
         } else {
             throw new DataValidationException(POST_NEGATIVE_ID);
         }
     }
 
-    @PostMapping("/post/{postId}/comment/{commentId}/like")
+    @PostMapping("/post/{postId}/comment/{commentId}/set")
     @ResponseBody
-    public LikeDto likeComment(@RequestBody LikeDto likeDto) {
+    public LikeDto setLikeToComment(@RequestBody LikeDto likeDto) {
         if (likeDtoIsValidForComment(likeDto)) {
             likeDto.setUserId(userContext.getUserId());
-            Like like = likeServiceV2.likeComment(likeMapper.toEntity(likeDto));
+            Like like = likeService.setLikeToComment(likeMapper.toEntity(likeDto));
             return likeMapper.toDto(like);
         } else {
             throw new DataValidationException(POST_NEGATIVE_ID);
         }
     }
 
-    @PostMapping("/post/{postId}/comment/{commentId}/dislike")
+    @PostMapping("/post/{postId}/comment/{commentId}/unset")
     @ResponseBody
-    public LikeDto dislikeComment(@RequestBody LikeDto likeDto) {
-        if (likeDtoIsValidForComment(likeDto)) {
+    public LikeDto unsetLikeToComment(@RequestBody LikeDto likeDto) {
+        if (likeDtoIsValidForPost(likeDto)) {
             likeDto.setUserId(userContext.getUserId());
-            Like like = likeServiceV2.dislikeComment(likeMapper.toEntity(likeDto));
+            Like like = likeService.unsetLikeToComment(likeMapper.toEntity(likeDto));
             return likeMapper.toDto(like);
         } else {
             throw new DataValidationException(POST_NEGATIVE_ID);
         }
     }
 
-    @GetMapping("/post/{postId}/likes")
+    @GetMapping("/post/{postId}")
     @ResponseBody
     public PostDto getNumberOfPostLikes(@PathVariable Long postId) {
         if (idIsValid(postId)) {
-            return postMapper.toDto(likeServiceV2.getNumberOfPostLikes(postId));
-
+        return postMapper.toDto(likeService.getNumberOfPostLikes(postId));
         } else {
             throw new DataValidationException(POST_NEGATIVE_ID);
         }

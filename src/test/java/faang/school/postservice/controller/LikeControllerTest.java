@@ -44,28 +44,28 @@ public class LikeControllerTest {
     private LikeController likeController;
 
     @Test
-    public void testLikePostWithInvalidLikeDto() {
+    public void testLikePostWithInvalidSetLikeToDto() {
         Assert.assertThrows(DataValidationException.class,
-                () -> likeController.likePost(likeDtoInvalidPostId));
+                () -> likeController.setLikeToPost(likeDtoInvalidPostId));
     }
 
     @Test
-    public void testLikePostWithValidLikeDto() {
+    public void testLikePostWithValidSetLikeToDto() {
         Mockito.when(userContext.getUserId()).thenReturn(positiveUserId);
-        likeController.likePost(likeDtoValid);
-        Mockito.verify(likeService, Mockito.times(1)).likePost(Mockito.any());
+        likeController.setLikeToPost(likeDtoValid);
+        Mockito.verify(likeService, Mockito.times(1)).setLikeToPost(Mockito.any());
     }
 
     @Test
-    public void testLikeCommentWithInvalidLikeDto() {
+    public void testLikeCommentWithInvalidSetLikeToDto() {
         Assert.assertThrows(DataValidationException.class,
-                () -> likeController.likeComment(likeDtoInvalidCommentId));
+                () -> likeController.setLikeToComment(likeDtoInvalidCommentId));
     }
 
     @Test
-    public void testLikeCommentWithValidLikeDto() {
+    public void testLikeCommentWithValidSetLikeToDto() {
         Mockito.when(userContext.getUserId()).thenReturn(positiveUserId);
-        likeController.likeComment(likeDtoValid);
-        Mockito.verify(likeService, Mockito.times(1)).likeComment(Mockito.any());
+        likeController.setLikeToComment(likeDtoValid);
+        Mockito.verify(likeService, Mockito.times(1)).setLikeToComment(Mockito.any());
     }
 }
