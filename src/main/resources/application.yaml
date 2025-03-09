@@ -78,6 +78,8 @@ image:
   largeImageSize: 1080
 
 comment:
+  path-to-dictionary: /bad_words_list.txt
+
   schedule:
     verify: "*/10 * * * * *"
     user-ban: "*/30 * * * * *"

@@ -1,6 +1,5 @@
 package faang.school.postservice.service.comment;
 
-import faang.school.postservice.dto.user.UsersBanEvent;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.comment.CommentEvent;
@@ -9,6 +8,7 @@ import faang.school.postservice.dto.comment.CommentRequestDto;
 import faang.school.postservice.dto.comment.CommentResponseDto;
 import faang.school.postservice.dto.comment.CommentUpdateDto;
 import faang.school.postservice.dto.user.UserDto;
+import faang.school.postservice.dto.user.UsersBanEvent;
 import faang.school.postservice.exception.CommentValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.exception.UploadFileException;
@@ -21,6 +21,7 @@ import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.image.ImageService;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -38,8 +38,9 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
+
+@Setter
 @Service
 @Slf4j
 @RequiredArgsConstructor
@@ -125,7 +126,7 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public void verifyComments() {
         List<Comment> commentsToVerify = commentRepository.findAllByVerifiedIsFalse();
-        List<List<Comment>> partitions = partitionList(commentsToVerify, batchSize);
+        List<List<Comment>> partitions = ListUtils.partition(commentsToVerify, batchSize);
 
         List<CompletableFuture<Void>> futures = partitions.stream()
                 .map(this::moderatePartition)
@@ -160,13 +161,6 @@ public class CommentServiceImpl implements CommentService {
 
             commentRepository.saveAll(partition);
         }, moderationExecutor);
-    }
-
-    private List<List<Comment>> partitionList(List<Comment> list, @Value("${comment.batchSize}") int partitionSize) {
-        if (partitionSize <= 0) {
-            throw new IllegalArgumentException("Partition size must be greater than zero");
-        }
-        return ListUtils.partition(list, partitionSize);
     }
 
     private Comment getById(Long id) {
