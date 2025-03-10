@@ -17,5 +17,5 @@ public interface LikeMapper {
     @Mapping(target = "postAuthorId", source = "like.post.authorId")
     @Mapping(target = "userId", source = "like.userId")
     @Mapping(target = "createdAt", source = "createdAt")
-    LikeEventDto toLikeLikeEventDto(Like like);
+    LikeEventDto toLikeEventDto(Like like);
 }
