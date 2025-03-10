@@ -11,9 +11,9 @@ import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.CommentValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.exception.UploadFileException;
-import faang.school.postservice.mapper.comment.CommentMapperImpl;
-import faang.school.postservice.mapper.comment.LikeMapperImpl;
 import faang.school.postservice.mapper.PostMapperImpl;
+import faang.school.postservice.mapper.comment.CommentMapperImpl;
+import faang.school.postservice.mapper.like.LikeMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
@@ -32,7 +32,16 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static faang.school.postservice.service.comment.TestData.createComment;
+import static faang.school.postservice.service.comment.TestData.createCommentRequestDto;
 import static faang.school.postservice.service.comment.TestData.createLike;
+import static faang.school.postservice.service.comment.TestData.createPost;
+import static faang.school.postservice.service.comment.TestData.createUserDto;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -45,13 +54,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import static faang.school.postservice.service.comment.TestData.createComment;
-import static faang.school.postservice.service.comment.TestData.createCommentRequestDto;
-import static faang.school.postservice.service.comment.TestData.createPost;
-import static faang.school.postservice.service.comment.TestData.createUserDto;
 
 @ExtendWith(MockitoExtension.class)
 public class CommentServiceTest {
@@ -71,7 +73,7 @@ public class CommentServiceTest {
     private CommentMapperImpl commentMapper;
 
     @Spy
-    private LikeMapperImpl likeMapper;
+    private LikeMapper likeMapper;
 
     @Spy
     private PostMapperImpl postMapper;

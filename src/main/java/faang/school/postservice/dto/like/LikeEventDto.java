@@ -3,15 +3,14 @@ package faang.school.postservice.dto.like;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Builder;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Builder
-public record LikeEventDto (
-        @NotBlank
-        long postId,
+public record LikeEventDto(
         @NotBlank
         long postAuthorId,
         @NotBlank
         long userId,
         @NotBlank
-        Timestamp timestamp) {}
+        LocalDateTime createdAt) {
+}
