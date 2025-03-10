@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static faang.school.postservice.config.MinioBuckets.COMMENT_IMAGE_BUCKET_NAME;
@@ -47,14 +48,14 @@ public class CommentService {
 
         Post post = postService.getPostById(createCommentRequest.postId());
         Comment comment = commentMapper.toEntity(createCommentRequest);
-        comment = commentRepository.save(comment);
         CommentCreateEventDto eventDto = CommentCreateEventDto.builder()
                 .authorId(comment.getAuthorId())
                 .postId(post.getId())
                 .content(comment.getContent())
+                .date(LocalDateTime.now())
                 .build();
         kafkaService.sendCommentCreateMessage(eventDto);
-        return commentMapper.toCommentResponse(comment);
+        return commentMapper.toCommentResponse(commentRepository.save(comment));
     }
 
     @Transactional
