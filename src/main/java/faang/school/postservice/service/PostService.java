@@ -1,5 +1,7 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.config.app.PostServiceConfiguration;
+import faang.school.postservice.config.async.AsyncConfig;
 import faang.school.postservice.dto.filter.PostFilterDto;
 import faang.school.postservice.dto.post.CreatePostDto;
 import faang.school.postservice.dto.post.ReadPostDto;
@@ -8,6 +10,7 @@ import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.corrector.PostCorrector;
+import faang.school.postservice.service.moderate.ModerationService;
 import faang.school.postservice.validator.post.PostValidator;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.constraints.NotNull;
@@ -19,6 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 import static java.lang.String.format;
 
@@ -30,6 +36,8 @@ public class PostService {
     private final PostMapper postMapper;
     private final PostValidator postValidator;
     private final PostCorrector postCorrector;
+    private final ModerationService moderationService;
+    private final AsyncConfig asyncConfig;
 
     public Post findById(@NotNull Long id) {
         return postRepository.findById(id)
@@ -116,5 +124,21 @@ public class PostService {
         List<Post> posts = postRepository.findReadyToPublish();
         posts.forEach(postCorrector::correctContentPost);
         postRepository.saveAll(posts);
+    }
+
+    public void moderateUnverifiedPosts() {
+        int page = 0;
+        int batchSize = moderationService.getBatchSize();
+        Executor executor = asyncConfig.taskExecutor();
+        List<Post> posts;
+
+        do {
+            posts = moderationService.getUnverifiedPostsBatch(page);
+            if (!posts.isEmpty()) {
+                List<Post> finalPosts = posts;
+                executor.execute(() -> CompletableFuture.runAsync(() -> moderationService.processPosts(finalPosts)));
+            }
+            page++;
+        } while (posts.size() == batchSize);
     }
 }
