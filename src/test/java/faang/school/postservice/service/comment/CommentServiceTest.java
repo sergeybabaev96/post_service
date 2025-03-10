@@ -13,7 +13,7 @@ import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.exception.UploadFileException;
 import faang.school.postservice.mapper.PostMapperImpl;
 import faang.school.postservice.mapper.comment.CommentMapperImpl;
-import faang.school.postservice.mapper.like.LikeMapper;
+import faang.school.postservice.mapper.like.LikeMapperImpl;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
@@ -73,7 +73,7 @@ public class CommentServiceTest {
     private CommentMapperImpl commentMapper;
 
     @Spy
-    private LikeMapper likeMapper;
+    private LikeMapperImpl likeMapper;
 
     @Spy
     private PostMapperImpl postMapper;
@@ -139,6 +139,16 @@ public class CommentServiceTest {
                 .postId(comment.getPost().getId())
                 .commentId(comment.getId())
                 .build();
+
+        commentService = new CommentServiceImpl(
+                commentRepository,
+                postRepository,
+                userServiceClient,
+                commentMapper,
+                userContext,
+                imageService,
+                publisher);
+
     }
 
     @Test

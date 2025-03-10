@@ -10,6 +10,8 @@ import org.mapstruct.ReportingPolicy;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface LikeMapper {
 
+    @Mapping(target = "id", source = "like.id")
+    @Mapping(target = "userId", source = "like.userId")
     LikeDto toLikeDto(Like like);
 
     @Mapping(target = "postAuthorId", source = "like.post.authorId")
