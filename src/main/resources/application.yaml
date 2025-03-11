@@ -91,4 +91,4 @@ author:
 
 user:
   comment:
-    kafka_topic: "comment-event"
+    kafka_topic: "comment-create"
