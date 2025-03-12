@@ -4,8 +4,8 @@ import faang.school.postservice.client.SpellingCheckClient;
 import faang.school.postservice.dto.Post.CreatePostDraftDto;
 import faang.school.postservice.dto.Post.PostResponseDto;
 import faang.school.postservice.dto.Post.UpdatePostDto;
-import faang.school.postservice.dto.spellcheck.AITextRequestDto;
-import faang.school.postservice.dto.spellcheck.AITextResponseDto;
+import faang.school.postservice.dto.spellcheck.AiTextRequestDto;
+import faang.school.postservice.dto.spellcheck.AiTextResponseDto;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
@@ -211,8 +211,8 @@ public class PostService {
             backoff = @Backoff(delay = 2000)
     )
     public String getCorrectedContentWithRetry(String content) {
-        AITextRequestDto request = new AITextRequestDto(content);
-        AITextResponseDto response = spellingCheckClient.checkText(request);
+        AiTextRequestDto request = new AiTextRequestDto(content);
+        AiTextResponseDto response = spellingCheckClient.checkText(request);
         return response.getCorrected();
     }
 
