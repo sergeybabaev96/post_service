@@ -3,7 +3,7 @@ package faang.school.postservice.dto.spellcheck;
 import lombok.Data;
 
 @Data
-public class AITextResponseDto {
+public class AiTextResponseDto {
     private InnerResponse response;
 
     @Data

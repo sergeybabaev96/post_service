@@ -4,7 +4,7 @@ import faang.school.postservice.client.SpellingCheckClient;
 import faang.school.postservice.dto.Post.CreatePostDraftDto;
 import faang.school.postservice.dto.Post.PostResponseDto;
 import faang.school.postservice.dto.Post.UpdatePostDto;
-import faang.school.postservice.dto.spellcheck.AITextResponseDto;
+import faang.school.postservice.dto.spellcheck.AiTextResponseDto;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Like;
@@ -370,8 +370,8 @@ public class PostServiceTest {
         when(postRepository.findAllByPublishedFalse()).thenReturn(List.of(post));
         when(postCorrectionValidator.isTextValid(post.getContent())).thenReturn(true);
 
-        AITextResponseDto response = new AITextResponseDto();
-        AITextResponseDto.InnerResponse inner = new AITextResponseDto.InnerResponse();
+        AiTextResponseDto response = new AiTextResponseDto();
+        AiTextResponseDto.InnerResponse inner = new AiTextResponseDto.InnerResponse();
         inner.setCorrected("This is correct");
         response.setResponse(inner);
 
@@ -419,8 +419,8 @@ public class PostServiceTest {
         when(postRepository.findAllByPublishedFalse()).thenReturn(List.of(post));
         when(postCorrectionValidator.isTextValid(post.getContent())).thenReturn(true);
 
-        AITextResponseDto response = new AITextResponseDto();
-        AITextResponseDto.InnerResponse inner = new AITextResponseDto.InnerResponse();
+        AiTextResponseDto response = new AiTextResponseDto();
+        AiTextResponseDto.InnerResponse inner = new AiTextResponseDto.InnerResponse();
         inner.setCorrected("Correct text");
         response.setResponse(inner);
 

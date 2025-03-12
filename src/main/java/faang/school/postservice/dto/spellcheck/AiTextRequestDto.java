@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AITextRequestDto {
+public class AiTextRequestDto {
     private String text;
 }

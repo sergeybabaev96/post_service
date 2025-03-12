@@ -16,42 +16,42 @@ class PostCorrectionValidatorTest {
     }
 
     @Test
-    void isTextValid_ShouldReturnFalse_WhenTextIsNull() {
+    void isTextValidShouldReturnFalseWhenTextIsNull() {
         assertFalse(validator.isTextValid(null));
     }
 
     @Test
-    void isTextValid_ShouldReturnFalse_WhenTextIsBlank() {
+    void isTextValidShouldReturnFalseWhenTextIsBlank() {
         assertFalse(validator.isTextValid("   "));
     }
 
     @Test
-    void isTextValid_ShouldReturnTrue_WhenTextIsNotBlank() {
+    void isTextValidShouldReturnTrueWhenTextIsNotBlank() {
         assertTrue(validator.isTextValid("Hello world"));
     }
 
     @Test
-    void isCorrectionValid_ShouldReturnFalse_WhenTextIsNull() {
+    void isCorrectionValidShouldReturnFalseWhenTextIsNull() {
         assertFalse(validator.isCorrectionValid(null));
     }
 
     @Test
-    void isCorrectionValid_ShouldReturnFalse_WhenTextIsBlank() {
+    void isCorrectionValidShouldReturnFalseWhenTextIsBlank() {
         assertFalse(validator.isCorrectionValid("   "));
     }
 
     @Test
-    void isCorrectionValid_ShouldReturnTrue_WhenTextIsNotBlank() {
+    void isCorrectionValidShouldReturnTrueWhenTextIsNotBlank() {
         assertTrue(validator.isCorrectionValid("Corrected text"));
     }
 
     @Test
-    void isCorrectionDifferent_ShouldReturnFalse_WhenTextIsSame() {
+    void isCorrectionDifferentShouldReturnFalseWhenTextIsSame() {
         assertFalse(validator.isCorrectionDifferent("Text", "Text"));
     }
 
     @Test
-    void isCorrectionDifferent_ShouldReturnTrue_WhenTextIsDifferent() {
+    void isCorrectionDifferentShouldReturnTrueWhenTextIsDifferent() {
         assertTrue(validator.isCorrectionDifferent("Wrong text", "Corrected text"));
     }
 }

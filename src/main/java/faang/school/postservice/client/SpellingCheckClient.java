@@ -1,7 +1,7 @@
 package faang.school.postservice.client;
 
-import faang.school.postservice.dto.spellcheck.AITextRequestDto;
-import faang.school.postservice.dto.spellcheck.AITextResponseDto;
+import faang.school.postservice.dto.spellcheck.AiTextRequestDto;
+import faang.school.postservice.dto.spellcheck.AiTextResponseDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,5 +10,5 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface SpellingCheckClient {
 
     @PostMapping("/spellcheck")
-    AITextResponseDto checkText(@RequestBody AITextRequestDto request);
+    AiTextResponseDto checkText(@RequestBody AiTextRequestDto request);
 }
