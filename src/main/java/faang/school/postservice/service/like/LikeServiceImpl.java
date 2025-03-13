@@ -64,7 +64,7 @@ public class LikeServiceImpl implements LikeService {
 
         final Like savedLike = likeRepository.save(like);
 
-        LikeEventDto likeEventDto = likeMapper.toLikeLikeEventDto(savedLike);
+        LikeEventDto likeEventDto = likeMapper.toLikeEventDto(savedLike);
         likeEventPublisher.publish(likeEventDto);
 
         log.info("UserId = {} successfully liked postId = {} with {} ", userId, postId, savedLike);
