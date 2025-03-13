@@ -1,9 +1,11 @@
 package faang.school.postservice.service.like;
 
 import faang.school.postservice.config.context.UserContext;
+import faang.school.postservice.mapper.like.LikeMapperImpl;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.publisher.like.LikeEventPublisher;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.LikeRepository;
 import faang.school.postservice.repository.PostRepository;
@@ -13,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
@@ -41,9 +44,14 @@ class LikeServiceImplTest {
 
     @Mock
     private LikeServiceValidator likeServiceValidator;
+    @Mock
+    private LikeEventPublisher likeEventPublisher;
 
     @InjectMocks
     private LikeServiceImpl likeService;
+
+    @Spy
+    private LikeMapperImpl likeMapper;
 
     private final Long userId = 1L;
     private final Long postId = 2L;
@@ -52,6 +60,16 @@ class LikeServiceImplTest {
     @BeforeEach
     void setUp() {
         when(userContext.getUserId()).thenReturn(userId);
+
+        likeService = new LikeServiceImpl(
+                userContext,
+                likeRepository,
+                postRepository,
+                commentRepository,
+                likeServiceValidator,
+                null,
+                likeEventPublisher,
+                likeMapper);
     }
 
     @Test
