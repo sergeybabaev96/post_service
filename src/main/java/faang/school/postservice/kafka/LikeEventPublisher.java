@@ -22,7 +22,6 @@ public class LikeEventPublisher implements EventPublisher<LikeEvent> {
     @Override
     public void publish(LikeEvent message) {
         kafkaTemplate.send(likeTopic.name(), message);
-        log.info("\n\n\n\n\t\t\t\t\tSent to {} {}\n\n\n\n\n\n\n\n",
-                likeTopic.name(), message);
+        log.info("Sent to {} {}", likeTopic.name(), message);
     }
 }

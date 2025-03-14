@@ -72,9 +72,9 @@ public class LikeControllerIntegrationTest extends TestContainerConfig {
             containerFactory = "likeEventTestFactory"
     )
     void listenLikeEvents(LikeEvent event) {
-        log.info("\n\n\n\n\n\n\n\n\n\n\n\n\t\t\t\t\t\t\t\tRead event {} \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", event);
+        log.info("Read event {}", event);
         readEvents.add(event);
-        log.info("\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\t\t\t\t\tAdded to queue {}\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n", event);
+        log.info("Added to queue {}", event);
     }
 
     @Test
