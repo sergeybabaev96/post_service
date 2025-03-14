@@ -2,15 +2,19 @@ package faang.school.postservice.service.like;
 
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.user.UserDto;
+import faang.school.postservice.event.LikeEvent;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.publisher.LikeEventPublisher;
 import faang.school.postservice.repository.LikeRepository;
 import faang.school.postservice.service.comment.CommentService;
 import faang.school.postservice.service.like.annotation.AddLike;
 import faang.school.postservice.service.post.PostService;
 import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -27,6 +31,7 @@ public class LikeService {
     private final UserServiceClient userServiceClient;
     private final PostService postService;
     private final CommentService commentService;
+    private final LikeEventPublisher likeEventPublisher;
 
     @AddLike
     @Transactional
@@ -35,8 +40,10 @@ public class LikeService {
         Post post = postService.getPostById(postId);
         checkExistLikeForPost(postId, userId);
         Like like = buildLikePost(post, userId);
-
-        return likeRepository.save(like);
+        Like savedLike = likeRepository.save(like);
+        likeEventPublisher.publish(new LikeEvent(postId, post.getAuthorId(),
+                LocalDateTime.now(), userId));
+        return savedLike;
     }
 
     @Transactional
