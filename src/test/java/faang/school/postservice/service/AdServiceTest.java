@@ -55,7 +55,6 @@ public class AdServiceTest {
         Ad ad2 = createAd(future, 3);
         when(adRepository.findExpiredAds(any(LocalDateTime.class))).thenReturn(Collections.emptyList());
 
-
         adService.removeExpiredAds(2);
 
         verify(asyncDeleteService, never()).deleteExpiredBatch(anyList());
@@ -66,7 +65,6 @@ public class AdServiceTest {
         Ad ad1 = createAd(past, 5);
         Ad ad2 = createAd(past, 3);
         when(adRepository.findExpiredAds(any(LocalDateTime.class))).thenReturn(List.of(ad1, ad2));
-
 
         adService.removeExpiredAds(2);
 
