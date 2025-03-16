@@ -53,5 +53,4 @@ public class KafkaProducerConfig {
     public String addLikeEventTopicName() {
         return addLikeEventTopicName;
     }
-
 }

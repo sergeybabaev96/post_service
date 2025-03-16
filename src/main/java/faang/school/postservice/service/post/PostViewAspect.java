@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 @Slf4j
@@ -25,6 +25,7 @@ public class PostViewAspect {
     private final EventProducerService publisher;
     private final UserContext userContext;
 
+    @SuppressWarnings("unchecked")
     @AfterReturning(pointcut = "@annotation(faang.school.postservice.service.annotation.ViewPost)", returning = "result")
     public void publishPostView(JoinPoint joinPoint, Object result) {
         Long viewerId = userContext.getUserId();
@@ -35,17 +36,12 @@ public class PostViewAspect {
         ViewPost myAnnotation = method.getAnnotation(ViewPost.class);
 
         Class<?> resultClass = myAnnotation.targetValue();
-        Collection<?> results = (result instanceof Collection)
-                ? (Collection<?>) result
-                : Collections.singletonList(result);
 
-        results.forEach(obj -> {
-            if (resultClass.isInstance(obj)) {
-                Post post = (Post) obj;
-                sendMessageToKafka(post, viewerId);
-            }
-        });
+        Collection<Post> results = (resultClass == Post.class)
+                ? List.of((Post) result)
+                : (Collection<Post>) result;
 
+        results.forEach(post -> sendMessageToKafka(post, viewerId));
     }
 
     private void sendMessageToKafka(Post post, Long viewerId) {
