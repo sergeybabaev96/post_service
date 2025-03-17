@@ -3,7 +3,7 @@ name: Post Service CI Pipeline
 on:
   pull_request:
     branches:
-      - medusa-master-stream8
+      - medusa-master-stream9
 
 jobs:
   test:
