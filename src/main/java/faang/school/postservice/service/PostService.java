@@ -45,6 +45,7 @@ public class PostService {
         return postMapper.toResponseDto(savedPost);
     }
 
+    @Transactional
     public PostResponseDto publishPost(long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("Post not found with id: " + postId));

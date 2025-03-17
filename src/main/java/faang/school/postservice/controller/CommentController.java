@@ -5,7 +5,6 @@ import faang.school.postservice.dto.comment.CreateCommentRequest;
 import faang.school.postservice.dto.comment.CreateCommentResponse;
 import faang.school.postservice.dto.comment.UpdateCommentRequest;
 import faang.school.postservice.dto.comment.UpdatedCommentResponse;
-import faang.school.postservice.model.Comment;
 import faang.school.postservice.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
