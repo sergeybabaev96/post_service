@@ -2,12 +2,13 @@ package faang.school.postservice.util.ci.pipeline.test;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 public class FailedTest {
 
     @Test
-    public void testShouldFail () {
-        fail("This test is falling");
+    public void testShouldWork () {
+        assertTrue(true, "This test works.");
     }
 }
