@@ -74,13 +74,26 @@ tasks.bootJar {
 }
 
 jacoco {
-    toolVersion = "0.8.11"
+    toolVersion = "0.8.12"
 }
+
+val jacocoInclude = listOf(
+    "**/client/**",
+    "**/repository/**"
+)
 
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
     reports {
         xml.required.set(true);
-        html.required.set(true);
+        html.outputLocation.set(file("$buildDir/reports/jacoco"))
     }
+
+    classDirectories.setFrom(
+        files(classDirectories.files.map {
+            fileTree(it) {
+                setIncludes(jacocoInclude)
+            }
+        })
+    )
 }
