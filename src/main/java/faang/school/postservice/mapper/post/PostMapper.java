@@ -1,4 +1,4 @@
-package faang.school.postservice.mapper;
+package faang.school.postservice.mapper.post;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.ReportingPolicy;
