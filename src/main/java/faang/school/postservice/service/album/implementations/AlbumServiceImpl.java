@@ -1,4 +1,4 @@
-package faang.school.postservice.implementation;
+package faang.school.postservice.service.album.implementations;
 
 import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.album.AlbumCreateUpdateDto;
@@ -6,10 +6,12 @@ import faang.school.postservice.dto.album.AlbumDto;
 import faang.school.postservice.dto.album.AlbumFilterDto;
 import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.filter.album.AlbumFilter;
-import faang.school.postservice.mapper.AlbumMapper;
+import faang.school.postservice.mapper.album.AlbumMapper;
 import faang.school.postservice.model.Album;
+import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.AlbumRepository;
-import faang.school.postservice.service.album.AlbumService;
+import faang.school.postservice.service.album.interfaces.AlbumService;
+import faang.school.postservice.service.post.interfaces.PostService;
 import faang.school.postservice.validator.album.AlbumValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,13 +28,13 @@ public class AlbumServiceImpl implements AlbumService {
     private final AlbumValidator albumValidator;
     private final AlbumRepository albumRepository;
     private final AlbumMapper albumMapper;
-    //TODO private final PostService postService;
+    private final PostService postService;
     private final List<AlbumFilter> albumFilters;
 
     @Override
     @Transactional
-    public AlbumDto createAlbum(AlbumCreateUpdateDto createUpdateDto) {
-        long userId = userContext.getUserId();
+    public AlbumDto createAlbum(long userId, AlbumCreateUpdateDto createUpdateDto) {
+        userId = userContext.getUserId();
         albumValidator.validateUserExists(userId);
         albumValidator.validateTitle(createUpdateDto.getTitle(), userId);
         Album albumToSave = albumMapper.toEntity(createUpdateDto);
@@ -47,8 +49,8 @@ public class AlbumServiceImpl implements AlbumService {
         long userId = userContext.getUserId();
         Album album = getAlbum(albumId);
         albumValidator.validateAuthor(album, userId);
-        //TODO Post post = postService.getPost(postId);
-        // album.addPost(post);
+        Post post = postService.getPost(postId);
+        album.addPost(post);
         Album savedAlbum = albumRepository.save(album);
         return albumMapper.toDtoList(savedAlbum);
     }

@@ -18,6 +18,6 @@ public class AlbumTitleFilter implements AlbumFilter {
     @Override
     public Stream<Album> apply(Stream<Album> albums, AlbumFilterDto albumFilterDto) {
         String titlePattern = albumFilterDto.getTitlePattern().trim().toLowerCase();
-        return albums.filter(album -> album.getTitle().trim().toLowerCase().equals(titlePattern));
+        return albums.filter(album -> album.getTitle().trim().toLowerCase().contains(titlePattern));
     }
 }

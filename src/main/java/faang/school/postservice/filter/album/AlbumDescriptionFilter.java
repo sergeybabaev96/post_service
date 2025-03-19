@@ -18,6 +18,6 @@ public class AlbumDescriptionFilter implements AlbumFilter {
     @Override
     public Stream<Album> apply(Stream<Album> albums, AlbumFilterDto albumFilterDto) {
         String descriptionPattern = albumFilterDto.getDescriptionPattern().trim().toLowerCase();
-        return albums.filter(album -> album.getDescription().trim().toLowerCase().equals(descriptionPattern));
+        return albums.filter(album -> album.getDescription().trim().toLowerCase().contains(descriptionPattern));
     }
 }
