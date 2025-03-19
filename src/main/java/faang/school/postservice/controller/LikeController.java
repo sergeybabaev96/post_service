@@ -26,4 +26,9 @@ public class LikeController {
     public List<UserDto> getLikesByPostId(@PathVariable Long postId) {
         return likeService.getUserLikedPost(postId);
     }
+
+    @GetMapping("/comment/{commentId}")
+    public List<UserDto> getLikesByCommentId(@PathVariable Long commentId) {
+        return likeService.getUserLikedComment(commentId);
+    }
 }

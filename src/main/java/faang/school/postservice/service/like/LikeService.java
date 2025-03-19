@@ -24,11 +24,23 @@ public class LikeService {
         List<Long> userIds = likes.stream()
                 .map(Like::getUserId)
                 .toList();
+        return getUserDtosInBatches(userIds);
+    }
 
+    @Transactional
+    public List<UserDto> getUserLikedComment(long commentId) {
+        List<Like> likes = likeRepository.findByCommentId(commentId);
+        List<Long> userIds = likes.stream()
+                .map(Like::getUserId)
+                .toList();
+        return getUserDtosInBatches(userIds);
+    }
+
+    private List<UserDto> getUserDtosInBatches(List<Long> userIds) {
         List<UserDto> result = new ArrayList<>();
         for (int i = 0; i < userIds.size(); i += BATCH_SIZE) {
-            int end = Math.min(i + BATCH_SIZE, userIds.size());
-            List<Long> batch = userIds.subList(i, end);
+            int endIndex = Math.min(i + BATCH_SIZE, userIds.size());
+            List<Long> batch = userIds.subList(i, endIndex);
             result.addAll(userServiceClient.getUsersByIds(batch));
         }
         return result;
