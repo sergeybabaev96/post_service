@@ -1,4 +1,4 @@
-package faang.school.postservice.mapper;
+package faang.school.postservice.mapper.album;
 
 import faang.school.postservice.dto.album.AlbumCreateUpdateDto;
 import faang.school.postservice.dto.album.AlbumDto;

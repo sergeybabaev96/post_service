@@ -1,14 +1,14 @@
 package faang.school.postservice.repository;
 
 import faang.school.postservice.model.Album;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 
 import java.util.Optional;
 import java.util.stream.Stream;
 
-public interface AlbumRepository extends JpaRepository<Album, Long> {
+public interface AlbumRepository extends CrudRepository<Album, Long> {
 
     Stream<Album> findByAuthorId(long authorId);
 

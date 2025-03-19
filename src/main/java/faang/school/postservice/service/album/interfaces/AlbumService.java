@@ -1,4 +1,4 @@
-package faang.school.postservice.service.album;
+package faang.school.postservice.service.album.interfaces;
 
 import faang.school.postservice.dto.album.AlbumCreateUpdateDto;
 import faang.school.postservice.dto.album.AlbumDto;
@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface AlbumService {
 
-    AlbumDto createAlbum(AlbumCreateUpdateDto createDto);
+    AlbumDto createAlbum(long userId, AlbumCreateUpdateDto createDto);
 
     AlbumDto addPostToAlbum(long albumId, long postId);
 
