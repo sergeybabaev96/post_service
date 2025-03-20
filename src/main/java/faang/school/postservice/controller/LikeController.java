@@ -27,7 +27,7 @@ public class LikeController {
     }
 
     @PostMapping("/comment-{commentId}")
-    public void getLikeOnComment(@PathVariable Long commentId, @RequestParam Long userId) {
+    public void putLikeOnComment(@PathVariable Long commentId, @RequestParam Long userId) {
         likeService.putLikeOnComment(commentId, userId);
     }
 
