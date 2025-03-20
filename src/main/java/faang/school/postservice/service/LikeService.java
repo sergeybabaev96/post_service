@@ -1,11 +1,9 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.client.UserServiceClient;
-import faang.school.postservice.dto.like.LikeDto;
 import faang.school.postservice.exception.ConcurrentLikeException;
 import faang.school.postservice.exception.DuplicateEntityException;
 import faang.school.postservice.exception.EntityNotFoundException;
-import faang.school.postservice.mapper.like.LikeMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
@@ -15,15 +13,15 @@ import faang.school.postservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Transactional
 public class LikeService {
 
     private static final String LIKE_ENTITY_NAME = "like";
@@ -33,73 +31,95 @@ public class LikeService {
     private static final String NOT_FOUND_ENTITY_MESSAGE = "%s with id: %d not found";
     private static final String NOT_FOUND_SUB_ENTITY_MESSAGE = "%s on %s with id: %d not found";
 
+    private final Map<Long, ReentrantLock> locksUsers = new ConcurrentHashMap<>();
     private final LikeRepository likeRepository;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserServiceClient userServiceClient;
-    private final LikeMapper likeMapper;
 
-    public void putLikeOnPost(Long postId, LikeDto likeDto) {
-        validateEntityId(postId);
-        Long userId = extractIdOnLikeDto(likeDto);
-        Post post = postRepository.findById(postId).orElseThrow(() ->
-                new EntityNotFoundException(NOT_FOUND_ENTITY_MESSAGE, POST_ENTITY_NAME, postId));
-        checkUserExists(userId);
+    public void putLikeOnPost(Long postId, Long userId) {
+        ReentrantLock userLock = getUserLock(userId);
+        userLock.lock();
+        try {
+            validateEntityId(postId);
+            Post post = postRepository.findById(postId).orElseThrow(() ->
+                    new EntityNotFoundException(NOT_FOUND_ENTITY_MESSAGE, POST_ENTITY_NAME, postId));
+            checkUserExists(userId);
 
-        Optional<Like> foundLikeOnPost = likeRepository.findByPostIdAndUserId(postId, userId);
-        checkLikeExists(foundLikeOnPost, POST_ENTITY_NAME, postId);
+            if (likeRepository.findByPostIdAndUserId(postId, userId).isPresent()) {
+                throw new DuplicateEntityException("%s already exists on %s with id %d",
+                        LIKE_ENTITY_NAME, POST_ENTITY_NAME, postId);
+            }
+            boolean isUserNotPutLike = post.getComments().stream()
+                    .allMatch(comment -> comment.getLikes().stream()
+                            .noneMatch(like -> like.getUserId().equals(userId)));
+            checkUserPuttingLike(isUserNotPutLike, COMMENT_ENTITY_NAME, POST_ENTITY_NAME, postId);
 
-        boolean isUserNotPutLike = post.getComments().stream()
-                .allMatch(comment -> comment.getLikes().stream()
-                        .noneMatch(like -> like.getUserId().equals(userId)));
-        checkUserPuttingLike(isUserNotPutLike, COMMENT_ENTITY_NAME, POST_ENTITY_NAME, postId);
-
-        addLikeOnDatabase(likeDto, post, null);
-        printMessageAddLike(postId);
-    }
-
-    public void removeLikeAtPost(Long postId, LikeDto likeDto) {
-        validateEntityId(postId);
-        Long userId = extractIdOnLikeDto(likeDto);
-        checkUserExists(userId);
-
-        if (likeRepository.findByPostIdAndUserId(postId, userId).isEmpty()) {
-            throw new EntityNotFoundException(NOT_FOUND_SUB_ENTITY_MESSAGE,
-                    LIKE_ENTITY_NAME, POST_ENTITY_NAME, postId);
+            addLikeOnDatabase(userId, post, null);
+            printMessageAddLike(postId);
+        } finally {
+            userLock.unlock();
         }
-        likeRepository.deleteByPostIdAndUserId(postId, userId);
-        printMessageRemoveLike(postId);
     }
 
-    public void putLikeOnComment(Long commentId, LikeDto likeDto) {
-        validateEntityId(commentId);
-        Long userId = extractIdOnLikeDto(likeDto);
-        Comment comment = commentRepository.findById(commentId).orElseThrow(() ->
-                new EntityNotFoundException(NOT_FOUND_ENTITY_MESSAGE, COMMENT_ENTITY_NAME, commentId));
-        checkUserExists(userId);
+    public void removeLikeAtPost(Long postId, Long userId) {
+        ReentrantLock userLock = getUserLock(userId);
+        userLock.lock();
+        try {
+            validateEntityId(postId);
+            checkUserExists(userId);
 
-        Optional<Like> foundLikeOnComment = likeRepository.findByCommentIdAndUserId(commentId, userId);
-        checkLikeExists(foundLikeOnComment, COMMENT_ENTITY_NAME, commentId);
-
-        boolean isUserNotPutLike = comment.getPost().getLikes().stream()
-                .noneMatch(like -> like.getUserId().equals(userId));
-        checkUserPuttingLike(isUserNotPutLike, POST_ENTITY_NAME, COMMENT_ENTITY_NAME, commentId);
-
-        addLikeOnDatabase(likeDto, null, comment);
-        printMessageAddLike(commentId);
-    }
-
-    public void removeLikeAtComment(Long commentId, LikeDto likeDto) {
-        validateEntityId(commentId);
-        Long userId = extractIdOnLikeDto(likeDto);
-        checkUserExists(userId);
-
-        if (likeRepository.findByCommentIdAndUserId(commentId, userId).isEmpty()) {
-            throw new EntityNotFoundException(NOT_FOUND_SUB_ENTITY_MESSAGE,
-                    LIKE_ENTITY_NAME, COMMENT_ENTITY_NAME, commentId);
+            if (likeRepository.findByPostIdAndUserId(postId, userId).isEmpty()) {
+                throw new EntityNotFoundException(NOT_FOUND_SUB_ENTITY_MESSAGE,
+                        LIKE_ENTITY_NAME, POST_ENTITY_NAME, postId);
+            }
+            likeRepository.deleteByPostIdAndUserId(postId, userId);
+            printMessageRemoveLike(postId);
+        } finally {
+            userLock.unlock();
         }
-        likeRepository.deleteByCommentIdAndUserId(commentId, likeDto.userId());
-        printMessageRemoveLike(commentId);
+    }
+
+    public void putLikeOnComment(Long commentId, Long userId) {
+        ReentrantLock userLock = getUserLock(userId);
+        userLock.lock();
+        try {
+            validateEntityId(commentId);
+            Comment comment = commentRepository.findById(commentId).orElseThrow(() ->
+                    new EntityNotFoundException(NOT_FOUND_ENTITY_MESSAGE, COMMENT_ENTITY_NAME, commentId));
+            checkUserExists(userId);
+
+            if (likeRepository.findByCommentIdAndUserId(commentId, userId).isPresent()) {
+                throw new DuplicateEntityException("%s already exists on %s with id %d",
+                        LIKE_ENTITY_NAME, COMMENT_ENTITY_NAME, commentId);
+            }
+            boolean isUserNotPutLike = comment.getPost().getLikes().stream()
+                    .noneMatch(like -> like.getUserId().equals(userId));
+            checkUserPuttingLike(isUserNotPutLike, POST_ENTITY_NAME, COMMENT_ENTITY_NAME, commentId);
+
+            addLikeOnDatabase(userId, null, comment);
+            printMessageAddLike(commentId);
+        } finally {
+            userLock.unlock();
+        }
+    }
+
+    public void removeLikeAtComment(Long commentId, Long userId) {
+        ReentrantLock userLock = getUserLock(userId);
+        userLock.lock();
+        try {
+            validateEntityId(commentId);
+            checkUserExists(userId);
+
+            if (likeRepository.findByCommentIdAndUserId(commentId, userId).isEmpty()) {
+                throw new EntityNotFoundException(NOT_FOUND_SUB_ENTITY_MESSAGE,
+                        LIKE_ENTITY_NAME, COMMENT_ENTITY_NAME, commentId);
+            }
+            likeRepository.deleteByCommentIdAndUserId(commentId, userId);
+            printMessageRemoveLike(commentId);
+        } finally {
+            userLock.unlock();
+        }
     }
 
     private void validateEntityId(Long entityId) {
@@ -120,13 +140,6 @@ public class LikeService {
         }
     }
 
-    private void checkLikeExists(Optional<Like> like, String entityName, Long entityId) {
-        if (like.isPresent()) {
-            throw new DuplicateEntityException("%s already exists on %s with id %d",
-                    LIKE_ENTITY_NAME, entityName, entityId);
-        }
-    }
-
     private void checkUserPuttingLike(boolean isUserNotPutLike, String subEntityName,
                                       String entityName, Long entityId) {
         if (!isUserNotPutLike) {
@@ -135,14 +148,15 @@ public class LikeService {
         }
     }
 
-    private void addLikeOnDatabase(LikeDto likeDto, Post post, Comment comment) {
-        Like like = likeMapper.dtoToEntity(likeDto);
-        like.setPost(post);
-        like.setComment(comment);
-        likeRepository.save(like);
+    private void addLikeOnDatabase(Long userId, Post post, Comment comment) {
+        likeRepository.save(Like.builder()
+                .userId(userId)
+                .post(post)
+                .comment(comment)
+                .build());
     }
 
-    private Long extractIdOnLikeDto(LikeDto likeDto) {
-        return likeDto.userId();
+    private ReentrantLock getUserLock(Long userId) {
+        return locksUsers.computeIfAbsent(userId, key -> new ReentrantLock());
     }
 }
