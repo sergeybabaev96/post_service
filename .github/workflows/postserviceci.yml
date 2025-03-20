@@ -40,9 +40,3 @@ jobs:
 
     - name: Step 7 - Verify code coverage
       run: ./gradlew jacocoTestCoverageVerification
-
-    - name: Step 8 - Upload Jacoco report as artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: jacoco-report
-        path: build/reports/jacoco/test/html/
