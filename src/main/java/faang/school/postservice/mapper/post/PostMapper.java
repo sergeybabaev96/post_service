@@ -10,7 +10,10 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface PostMapper {
     Post toEntity(PostDto postDto);
+
     PostDto toDto(Post post);
+
     List<Post> toEntities(List<PostDto> postDtos);
+
     List<PostDto> toDtos(List<Post> posts);
 }

@@ -2,6 +2,8 @@ package faang.school.postservice.dto.post;
 
 import lombok.Data;
 
+import java.time.LocalDateTime;
+
 @Data
 public class PostDto {
     private long id;
@@ -10,12 +12,7 @@ public class PostDto {
     private String content;
     private boolean published;
     private boolean deleted;
-
-    //private LocalDateTime createdAt;
-    //private LocalDateTime publishedAt;
-    /*private boolean published;
-    private boolean deleted;
-    private LocalDateTime publishedAt;
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;*/
+    private LocalDateTime publishedAt;
+    private LocalDateTime updatedAt;
 }

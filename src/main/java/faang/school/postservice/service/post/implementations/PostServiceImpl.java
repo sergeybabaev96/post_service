@@ -3,6 +3,8 @@ package faang.school.postservice.service.post.implementations;
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.post.PostDto;
+import faang.school.postservice.dto.project.ProjectDto;
+import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.PostDtoValidationException;
 import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.Post;
@@ -58,6 +60,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Transactional
     public PostDto deletePost(PostDto postDto) {
         Post post = getPostIfExists(postDto.getId());
 
@@ -67,6 +70,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    @Transactional
     public PostDto getPost(PostDto postDto) {
         Post post = getPostIfExists(postDto.getId());
 
@@ -109,7 +113,6 @@ public class PostServiceImpl implements PostService {
                 .toList();
     }
 
-    /******************************************************************************************************************/
     private Post getPostIfExists(Long id) {
         Post post = postRepository.findById(id).orElseThrow(() ->
                 new PostDtoValidationException(String.format("Post with ID %d does not exist", id))
@@ -118,16 +121,7 @@ public class PostServiceImpl implements PostService {
         return post;
     }
 
-    private void validatePostExistence(long id) {
-        if (postRepository.existsById(id)) {
-            throw new PostDtoValidationException(String.format(
-                    "Post with ID %d already exists", id));
-        }
-    }
-
     private void validateDataForCreation(PostDto postDto) {
-        validatePostExistence(postDto.getId());
-
         if (postDto.getAuthorId() < 0 || postDto.getProjectId() < 0) {
             throw new PostDtoValidationException("ID should not be less than zero!");
         }
@@ -138,20 +132,19 @@ public class PostServiceImpl implements PostService {
             throw new PostDtoValidationException("The author can be either a user or a project!");
         }
 
-        /*if (postDto.getAuthorId() != 0) {
+        if (postDto.getAuthorId() != 0) {
             UserDto userDto = userServiceClient.getUser(postDto.getAuthorId());
-            if(userDto.id() == 0) {
+            if (userDto.id() == 0) {
                 throw new PostDtoValidationException(String.format(
                         "User with ID %d not found!", postDto.getAuthorId()));
             }
-        }
-        else {
+        } else {
             ProjectDto projectDto = projectServiceClient.getProject(postDto.getProjectId());
-            if(projectDto.id() == 0) {
+            if (projectDto.id() == 0) {
                 throw new PostDtoValidationException(String.format(
                         "Project with ID %d not found!", postDto.getProjectId()));
             }
-        }*/
+        }
     }
 
     private Post validateDataForPublication(PostDto postDto) {

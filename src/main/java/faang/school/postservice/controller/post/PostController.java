@@ -27,7 +27,6 @@ public class PostController {
             throw new PostDtoValidationException(
                     "The content of the post must not be empty");
         }
-        validateId(postDto.getId());
 
         return postService.createPostDraft(postDto);
     }
@@ -81,14 +80,14 @@ public class PostController {
         return postService.getAuthorPublishedPosts(postDto);
     }
 
-    @GetMapping(("/posts/get/author_posts"))
+    @GetMapping(("/posts/get/project_posts"))
     public List<PostDto> getProjectPosts(@RequestBody PostDto postDto) {
         validateId(postDto.getProjectId());
 
         return postService.getProjectPublishedPosts(postDto);
     }
 
-    private void validateId(Long id) {
+    private void validateId(long id) {
         if (id < 1) {
             throw new PostDtoValidationException("ID must be greater than zero");
         }
