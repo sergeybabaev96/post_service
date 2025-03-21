@@ -90,10 +90,6 @@ class PostServiceTest {
                 postMapper.toDto(draftPost3));
     }
 
-    /**
-     * createDraftPost
-     */
-
     @Test
     void createDraftPost_ShouldAuthorCreate() {
         postDto.setAuthorId(authorId);
