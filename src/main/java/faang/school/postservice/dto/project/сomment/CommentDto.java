@@ -7,5 +7,6 @@ public record CommentDto(
         long postId,
         String content,
         long authorId
+
 ) {
 }
