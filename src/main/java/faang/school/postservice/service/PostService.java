@@ -3,8 +3,7 @@ package faang.school.postservice.service;
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.PostDto;
-import faang.school.postservice.dto.project.ProjectDto;
-import faang.school.postservice.dto.user.UserDto;
+import faang.school.postservice.exceptions.PostAlreadyPublishedException;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Album;
 import faang.school.postservice.model.Comment;
@@ -19,11 +18,12 @@ import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.ResourceRepository;
 import faang.school.postservice.repository.ad.AdRepository;
 import feign.FeignException;
-import liquibase.hub.model.Project;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
@@ -60,9 +60,76 @@ public class PostService {
         return postMapper.toDto(post);
     }
 
+    public PostDto publish(Long postId) {
+        Post post = takePost(postId);
+        if (post.isPublished()) {
+            throw new PostAlreadyPublishedException("post is published");
+        }
+        post.setPublished(true);
+        post.setPublishedAt(LocalDateTime.now());
+        postRepository.save(post);
+        return postMapper.toDto(post);
+    }
+
+    public PostDto update(PostDto postDto, Long postId) {
+        validateContent(postDto);
+        Post post = takePost(postId);
+        post.setContent(postDto.content());
+        postRepository.save(post);
+        return postMapper.toDto(post);
+    }
+
+    public void deleteById(Long postId) {
+        Post post = takePost(postId);
+        post.setDeleted(true);
+        post.setPublished(false);
+        postRepository.save(post);
+    }
+
+    public PostDto getPost(Long postId) {
+        Post post = takePost(postId);
+        return postMapper.toDto(post);
+    }
+
+    public List<PostDto> findDraftsByAuthorIdAndIsDeletedFalse(Long authorId) {
+        List<Post> posts = postRepository.findByAuthorId(authorId);
+        return posts.stream()
+                .filter(post -> !post.isDeleted() && !post.isPublished())
+                .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
+                .map(postMapper::toDto)
+                .toList();
+    }
+
+    public List<PostDto> findDraftsByProjectIdAndIsDeletedFalse(Long projectId) {
+        List<Post> posts = postRepository.findByProjectId(projectId);
+        return posts.stream()
+                .filter(post -> !post.isDeleted() && !post.isPublished())
+                .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
+                .map(postMapper::toDto)
+                .toList();
+    }
+
+    public List<PostDto> findPublishedByAuthorIdAndIsDeletedFalse(Long authorId) {
+        List<Post> posts = postRepository.findByAuthorId(authorId);
+        return posts.stream()
+                .filter(post -> !post.isDeleted() && post.isPublished())
+                .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
+                .map(postMapper::toDto)
+                .toList();
+    }
+
+    public List<PostDto> findPublishedByProjectIdAndIsDeletedFalse(Long projectId) {
+        List<Post> posts = postRepository.findByProjectId(projectId);
+        return posts.stream()
+                .filter(post -> !post.isDeleted() && post.isPublished())
+                .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
+                .map(postMapper::toDto)
+                .toList();
+    }
+
     private void validateContent(PostDto postDto) {
         if (postDto == null) {
-            throw new IllegalArgumentException("postDto is null");
+            throw new NullPointerException("postDto is null");
         }
         if (postDto.content() == null || postDto.content().isBlank()) {
             throw new NullPointerException("Content is null or empty");
@@ -73,43 +140,44 @@ public class PostService {
         boolean isProject = projectId != null;
         boolean isUser = authorId != null;
 
-        // Проверка, что указан ровно один автор
         if (isProject && isUser) {
-            throw new IllegalArgumentException("Должен быть указан только один автор: либо пользователь, либо проект.");
+            throw new IllegalArgumentException("Only one author must be specified: either the user or the project.");
         }
 
-        // Проверка существования проекта, если указан projectId
         if (isProject) {
             if (!existsProject(projectId)) {
-                throw new RuntimeException("Проект с ID " + projectId + " не существует.");
+                throw new RuntimeException("Project with ID " + projectId + " does not exist.");
             }
         }
 
-        // Проверка существования пользователя, если указан authorId
         if (isUser) {
             if (!existsUser(authorId)) {
-                throw new RuntimeException("Пользователь с ID " + authorId + " не существует.");
+                throw new RuntimeException("Author with ID " + authorId + " does not exist.");
             }
         }
     }
 
-    // Обновленные методы проверки существования пользователя и проекта
     private boolean existsUser(Long authorId) {
         try {
             userServiceClient.getUser(authorId);
-            return true; // Если пользователь найден, возвращаем true
+            return true;
         } catch (FeignException e) {
-            return false; // Если исключение, значит, пользователь не существует
+            return false;
         }
     }
 
     private boolean existsProject(Long projectId) {
         try {
             projectServiceClient.getProject(projectId);
-            return true; // Если проект найден, возвращаем true
+            return true;
         } catch (FeignException e) {
-            return false; // Если исключение, значит, проект не существует
+            return false;
         }
+    }
+
+    private Post takePost(Long postId) {
+        return postRepository.findById(postId).orElseThrow(
+                () -> new EntityNotFoundException("Post not found"));
     }
 }
 
