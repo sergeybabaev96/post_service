@@ -30,6 +30,6 @@ public class PostController {
                                  @PathVariable Long postId) {
 
         return postMapper.toDto(
-                postService.getPost(postId));//.orElse(new Post()));
+                postService.getPost(postId));
     }
 }
