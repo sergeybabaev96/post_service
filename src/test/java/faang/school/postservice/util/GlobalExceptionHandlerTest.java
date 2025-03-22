@@ -79,5 +79,3 @@ class TestController {
         throw new RuntimeException("Method argument not valid");
     }
 }
-
-
