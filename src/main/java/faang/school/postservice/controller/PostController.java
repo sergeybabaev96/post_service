@@ -45,25 +45,23 @@ public class PostController {
         postService.deleteById(postId);
     }
 
-    @GetMapping("/findDraftsByAuthorIdAndIsDeletedFalse/{authorId}")
-    public List<PostDto> findDraftsByAuthorIdAndIsDeletedFalse(@PathVariable Long authorId) {
+    @GetMapping("/drafts/author/{authorId}")
+    public List<PostDto> getDraftsByAuthor(@PathVariable Long authorId) {
         return postService.findDraftsByAuthorIdAndIsDeletedFalse(authorId);
     }
 
-    @GetMapping("/findDraftsByProjectIdAndIsDeletedFalse/{projectId}")
-    public List<PostDto> findDraftsByProjectIdAndIsDeletedFalse(@PathVariable Long projectId) {
+    @GetMapping("/drafts/project/{projectId}")
+    public List<PostDto> getDraftsByProject(@PathVariable Long projectId) {
         return postService.findDraftsByProjectIdAndIsDeletedFalse(projectId);
     }
 
-    @GetMapping("/findPublishedByAuthorIdAndIsDeletedFalse/{authorId}")
-    public List<PostDto> findPublishedByAuthorIdAndIsDeletedFalse(@PathVariable Long authorId) {
+    @GetMapping("/published/author/{authorId}")
+    public List<PostDto> getPublishedByAuthor(@PathVariable Long authorId) {
         return postService.findPublishedByAuthorIdAndIsDeletedFalse(authorId);
     }
 
-    @GetMapping("/findPublishedByProjectIdAndIsDeletedFalse/{projectId}")
-    public List<PostDto> findPublishedByProjectIdAndIsDeletedFalse(@PathVariable Long projectId) {
+    @GetMapping("/published/project/{projectId}")
+    public List<PostDto> getPublishedByProject(@PathVariable Long projectId) {
         return postService.findPublishedByProjectIdAndIsDeletedFalse(projectId);
     }
-
-
 }
