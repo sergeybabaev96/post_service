@@ -25,9 +25,9 @@ spring:
         format_sql: true
 
   kafka:
+    bootstrap-servers: localhost:9092
     producer:
       acks: all
-      bootstrap-servers: localhost:9092
       security:
         protocol: PLAINTEXT
       retries: 3
@@ -36,6 +36,11 @@ spring:
       batch-size: 1000
       properties:
         linger-ms: 30000
+    topics:
+      like:
+        name: "like_topic"
+        partitions: 10
+        replicas: 1
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
