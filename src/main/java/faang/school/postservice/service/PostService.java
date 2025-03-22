@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -61,6 +62,7 @@ public class PostService {
     }
 
     public PostDto publish(Long postId) {
+        Objects.requireNonNull(postId,"postId is null");
         Post post = takePost(postId);
         if (post.isPublished()) {
             throw new PostAlreadyPublishedException("post is published");
@@ -72,6 +74,7 @@ public class PostService {
     }
 
     public PostDto update(PostDto postDto, Long postId) {
+        Objects.requireNonNull(postId,"postId is null");
         validateContent(postDto);
         Post post = takePost(postId);
         post.setContent(postDto.content());
@@ -80,6 +83,7 @@ public class PostService {
     }
 
     public void deleteById(Long postId) {
+        Objects.requireNonNull(postId);
         Post post = takePost(postId);
         post.setDeleted(true);
         post.setPublished(false);
@@ -87,6 +91,7 @@ public class PostService {
     }
 
     public PostDto getPost(Long postId) {
+        Objects.requireNonNull(postId,"postId not null");
         Post post = takePost(postId);
         return postMapper.toDto(post);
     }
