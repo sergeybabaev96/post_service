@@ -1,9 +1,9 @@
 package faang.school.postservice.service.comment;
 
 import faang.school.postservice.client.UserServiceClient;
-import faang.school.postservice.controller.exception.AuthorNotFoundException;
-import faang.school.postservice.controller.exception.CommentNotFoundException;
-import faang.school.postservice.controller.exception.PostIdMismatchException;
+import faang.school.postservice.exception.AuthorNotFoundException;
+import faang.school.postservice.exception.CommentNotFoundException;
+import faang.school.postservice.exception.PostIdMismatchException;
 import faang.school.postservice.dto.comment.CommentDto;
 import faang.school.postservice.mapper.comment.CommentMapper;
 import faang.school.postservice.model.Comment;

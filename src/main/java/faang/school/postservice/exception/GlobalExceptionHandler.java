@@ -1,4 +1,4 @@
-package faang.school.postservice.controller.exception;
+package faang.school.postservice.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
