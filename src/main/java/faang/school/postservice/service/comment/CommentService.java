@@ -9,6 +9,7 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.PostRepository;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +29,7 @@ public class CommentService {
 
 
     @Transactional
-    public CommentDto createComment(CommentDto commentDto) {
+    public CommentDto createComment(@Valid CommentDto commentDto) {
         log.info("Creating a comment for post ID: {} by user ID: {}", commentDto.getPostId(), commentDto.getAuthorId());
         Post post = postRepository.findById(commentDto.getPostId())
                 .orElseThrow(() -> new DataValidationException("Post not found with ID: " + commentDto.getPostId()));
@@ -42,7 +43,6 @@ public class CommentService {
         Comment comment = commentMapper.toEntity(commentDto);
         comment.setPost(post);
         comment.setCreatedAt(LocalDateTime.now());
-
         Comment savedComment = commentRepository.save(comment);
         log.info("Saved comment : {}", savedComment);
         return commentMapper.toDto(savedComment);
