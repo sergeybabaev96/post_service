@@ -1,4 +1,4 @@
-package faang.school.postservice.controller.exception;
+package faang.school.postservice.exception;
 
 public class PostIdMismatchException extends RuntimeException {
     public PostIdMismatchException(String message) {
