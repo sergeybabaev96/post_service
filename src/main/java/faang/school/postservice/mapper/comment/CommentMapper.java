@@ -7,7 +7,11 @@ import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
 public interface CommentMapper {
-    
+
+        @Mapping(target = "likes", ignore = true)
+        @Mapping(target = "updatedAt", ignore = true)
+        @Mapping(target = "largeImageFileKey", ignore = true)
+        @Mapping(target = "smallImageFileKey", ignore = true)
         @Mapping(target = "post.id", source = "postId")
         @Mapping(target = "createdAt", ignore = true)
         Comment toEntity(CommentDto commentDto);
