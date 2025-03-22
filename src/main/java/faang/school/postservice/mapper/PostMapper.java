@@ -8,7 +8,6 @@ import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.MappingTarget;
 
 import java.util.Collections;
 import java.util.List;

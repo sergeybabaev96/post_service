@@ -92,8 +92,7 @@ public class PostService {
     }
 
     public List<PostDto> findDraftsByAuthorIdAndIsDeletedFalse(Long authorId) {
-        List<Post> posts = postRepository.findByAuthorId(authorId);
-        return posts.stream()
+        return postRepository.findByAuthorId(authorId)
                 .filter(post -> !post.isDeleted() && !post.isPublished())
                 .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
                 .map(postMapper::toDto)
@@ -101,8 +100,7 @@ public class PostService {
     }
 
     public List<PostDto> findDraftsByProjectIdAndIsDeletedFalse(Long projectId) {
-        List<Post> posts = postRepository.findByProjectId(projectId);
-        return posts.stream()
+        return postRepository.findByProjectId(projectId)
                 .filter(post -> !post.isDeleted() && !post.isPublished())
                 .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
                 .map(postMapper::toDto)
@@ -110,8 +108,7 @@ public class PostService {
     }
 
     public List<PostDto> findPublishedByAuthorIdAndIsDeletedFalse(Long authorId) {
-        List<Post> posts = postRepository.findByAuthorId(authorId);
-        return posts.stream()
+        return postRepository.findByAuthorId(authorId)
                 .filter(post -> !post.isDeleted() && post.isPublished())
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
                 .map(postMapper::toDto)
@@ -119,8 +116,7 @@ public class PostService {
     }
 
     public List<PostDto> findPublishedByProjectIdAndIsDeletedFalse(Long projectId) {
-        List<Post> posts = postRepository.findByProjectId(projectId);
-        return posts.stream()
+        return postRepository.findByProjectId(projectId)
                 .filter(post -> !post.isDeleted() && post.isPublished())
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
                 .map(postMapper::toDto)
@@ -144,16 +140,12 @@ public class PostService {
             throw new IllegalArgumentException("Only one author must be specified: either the user or the project.");
         }
 
-        if (isProject) {
-            if (!existsProject(projectId)) {
-                throw new RuntimeException("Project with ID " + projectId + " does not exist.");
-            }
+        if (isProject && !existsProject(projectId)) {
+            throw new RuntimeException("Project with ID " + projectId + " does not exist.");
         }
 
-        if (isUser) {
-            if (!existsUser(authorId)) {
-                throw new RuntimeException("Author with ID " + authorId + " does not exist.");
-            }
+        if (isUser && !existsUser(authorId)) {
+            throw new RuntimeException("Author with ID " + authorId + " does not exist.");
         }
     }
 
