@@ -1,10 +1,13 @@
-package faang.school.postservice.dto.project.сomment;
+package faang.school.postservice.dto.сomment;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -21,4 +24,7 @@ public class CommentDto {
 
     @NotNull(message = "Post ID cannot be null.")
     private Long postId;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime createdAt;
 }
