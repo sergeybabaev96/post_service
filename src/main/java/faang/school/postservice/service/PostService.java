@@ -20,6 +20,7 @@ import faang.school.postservice.repository.ad.AdRepository;
 import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,6 +28,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -58,6 +60,7 @@ public class PostService {
         post.setAlbums(albums);
 
         postRepository.save(post);
+        log.info("Post created: {}", post);
         return postMapper.toDto(post);
     }
 
@@ -70,6 +73,7 @@ public class PostService {
         post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
         postRepository.save(post);
+        log.info("Post published: {}", post);
         return postMapper.toDto(post);
     }
 
@@ -79,6 +83,7 @@ public class PostService {
         Post post = takePost(postId);
         post.setContent(postDto.content());
         postRepository.save(post);
+        log.info("Post updated: {}", post);
         return postMapper.toDto(post);
     }
 
@@ -87,16 +92,18 @@ public class PostService {
         Post post = takePost(postId);
         post.setDeleted(true);
         post.setPublished(false);
+        log.info("Post deleted: {}", post);
         postRepository.save(post);
     }
 
     public PostDto getPost(Long postId) {
         Objects.requireNonNull(postId,"postId not null");
         Post post = takePost(postId);
+        log.info("Post retrieved: {}", post);
         return postMapper.toDto(post);
     }
 
-    public List<PostDto> findDraftsByAuthorIdAndIsDeletedFalse(Long authorId) {
+    public List<PostDto> findDraftsByAuthorId(Long authorId) {
         return postRepository.findByAuthorId(authorId)
                 .filter(post -> !post.isDeleted() && !post.isPublished())
                 .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
@@ -104,7 +111,7 @@ public class PostService {
                 .toList();
     }
 
-    public List<PostDto> findDraftsByProjectIdAndIsDeletedFalse(Long projectId) {
+    public List<PostDto> findDraftsByProjectId(Long projectId) {
         return postRepository.findByProjectId(projectId)
                 .filter(post -> !post.isDeleted() && !post.isPublished())
                 .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
@@ -112,7 +119,7 @@ public class PostService {
                 .toList();
     }
 
-    public List<PostDto> findPublishedByAuthorIdAndIsDeletedFalse(Long authorId) {
+    public List<PostDto> findPublishedByAuthorId(Long authorId) {
         return postRepository.findByAuthorId(authorId)
                 .filter(post -> !post.isDeleted() && post.isPublished())
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
@@ -120,7 +127,7 @@ public class PostService {
                 .toList();
     }
 
-    public List<PostDto> findPublishedByProjectIdAndIsDeletedFalse(Long projectId) {
+    public List<PostDto> findPublishedByProjectId(Long projectId) {
         return postRepository.findByProjectId(projectId)
                 .filter(post -> !post.isDeleted() && post.isPublished())
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed())

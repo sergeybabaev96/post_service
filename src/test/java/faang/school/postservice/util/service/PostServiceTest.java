@@ -3,10 +3,17 @@ package faang.school.postservice.util.service;
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.PostDto;
+import faang.school.postservice.dto.project.ProjectDto;
+import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exceptions.PostAlreadyPublishedException;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.mapper.PostMapperImpl;
+import faang.school.postservice.model.Album;
+import faang.school.postservice.model.Comment;
+import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.model.Resource;
+import faang.school.postservice.model.ad.Ad;
 import faang.school.postservice.repository.AlbumRepository;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.LikeRepository;
@@ -21,7 +28,9 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -131,12 +140,14 @@ public class PostServiceTest {
         assertTrue(post.isDeleted());
         assertFalse(post.isPublished());
     }
+
     @Test
     public void testNegativeDeletePostIdIsNull() {
         assertThrows(NullPointerException.class, () -> postService.deleteById(null));
     }
+
     @Test
-    public void testPositiveGetPost(){
+    public void testPositiveGetPost() {
         Post post = Post.builder()
                 .id(1L)
                 .build();
@@ -144,8 +155,230 @@ public class PostServiceTest {
         PostDto dto = postService.getPost(post.getId());
         assertEquals(post.getId(), dto.id());
     }
+
     @Test
     public void testNegativeGetPostIdIsNull() {
         assertThrows(NullPointerException.class, () -> postService.getPost(null));
+    }
+
+    @Test
+    public void testPositiveFindDraftsByAuthorId() {
+        Post post = Post.builder()
+                .id(1L)
+                .deleted(false)
+                .published(false)
+                .content("content")
+                .build();
+        Post post1 = Post.builder()
+                .id(1L)
+                .published(true)
+                .deleted(false)
+                .build();
+        Post post2 = Post.builder()
+                .id(2L)
+                .published(true)
+                .deleted(true)
+                .build();
+        Stream<Post> stream = Stream.of(post, post1, post2);
+
+        when(postRepository.findByAuthorId(1L)).thenReturn(stream);
+        List<PostDto> list = postService.findDraftsByAuthorId(1L);
+
+        assertEquals(1, list.size());
+        assertEquals(post.getId(), list.get(0).id());
+        assertEquals(post.isDeleted(), list.get(0).deleted());
+        assertEquals(post.isPublished(), list.get(0).published());
+        assertEquals(post.getContent(), list.get(0).content());
+    }
+
+    @Test
+    public void testNegativeFindDraftsByAuthorIdIsEmpty() {
+        Stream<Post> stream = Stream.empty();
+
+        when(postRepository.findByAuthorId(1L)).thenReturn(stream);
+        List<PostDto> list = postService.findDraftsByAuthorId(1L);
+
+        assertEquals(0, list.size());
+        assertTrue(list.isEmpty());
+    }
+
+    @Test
+    public void testPositiveFindDraftsByProjectId() {
+        Post post = Post.builder()
+                .id(1L)
+                .deleted(false)
+                .published(false)
+                .content("content")
+                .build();
+        Post post1 = Post.builder()
+                .id(1L)
+                .published(true)
+                .deleted(false)
+                .build();
+        Post post2 = Post.builder()
+                .id(2L)
+                .published(true)
+                .deleted(true)
+                .build();
+        Stream<Post> stream = Stream.of(post, post1, post2);
+
+        when(postRepository.findByProjectId(1L)).thenReturn(stream);
+        List<PostDto> list = postService.findDraftsByProjectId(1L);
+
+        assertEquals(1, list.size());
+        assertEquals(post.getId(), list.get(0).id());
+        assertEquals(post.isDeleted(), list.get(0).deleted());
+        assertEquals(post.isPublished(), list.get(0).published());
+        assertEquals(post.getContent(), list.get(0).content());
+    }
+
+    @Test
+    public void testNegativeFindDraftsByProjectIdIsEmpty() {
+        Stream<Post> stream = Stream.empty();
+
+        when(postRepository.findByProjectId(1L)).thenReturn(stream);
+        List<PostDto> list = postService.findDraftsByProjectId(1L);
+
+        assertEquals(0, list.size());
+        assertTrue(list.isEmpty());
+    }
+
+    @Test
+    public void testPositiveFindPublishedByAuthorId() {
+        Post post = Post.builder()
+                .id(1L)
+                .deleted(false)
+                .published(true)
+                .content("content")
+                .build();
+        Post post1 = Post.builder()
+                .id(1L)
+                .published(false)
+                .deleted(false)
+                .build();
+        Post post2 = Post.builder()
+                .id(2L)
+                .published(true)
+                .deleted(true)
+                .build();
+        Stream<Post> stream = Stream.of(post, post1, post2);
+
+        when(postRepository.findByAuthorId(1L)).thenReturn(stream);
+        List<PostDto> list = postService.findPublishedByAuthorId(1L);
+
+        assertEquals(1, list.size());
+        assertEquals(post.getId(), list.get(0).id());
+        assertEquals(post.isDeleted(), list.get(0).deleted());
+        assertEquals(post.isPublished(), list.get(0).published());
+        assertEquals(post.getContent(), list.get(0).content());
+    }
+
+    @Test
+    public void testNegativeFindPublishedByAuthorIdIsEmpty() {
+        Stream<Post> stream = Stream.empty();
+
+        when(postRepository.findByAuthorId(1L)).thenReturn(stream);
+        List<PostDto> list = postService.findPublishedByAuthorId(1L);
+
+        assertEquals(0, list.size());
+        assertTrue(list.isEmpty());
+    }
+
+    @Test
+    public void testPositiveFindPublishedByProjectId() {
+        Post post = Post.builder()
+                .id(1L)
+                .deleted(false)
+                .published(true)
+                .content("content")
+                .build();
+        Post post1 = Post.builder()
+                .id(1L)
+                .published(false)
+                .deleted(false)
+                .build();
+        Post post2 = Post.builder()
+                .id(2L)
+                .published(true)
+                .deleted(true)
+                .build();
+        Stream<Post> stream = Stream.of(post, post1, post2);
+
+        when(postRepository.findByProjectId(1L)).thenReturn(stream);
+        List<PostDto> list = postService.findPublishedByProjectId(1L);
+
+        assertEquals(1, list.size());
+        assertEquals(post.getId(), list.get(0).id());
+        assertEquals(post.isDeleted(), list.get(0).deleted());
+        assertEquals(post.isPublished(), list.get(0).published());
+        assertEquals(post.getContent(), list.get(0).content());
+    }
+
+    @Test
+    public void testNegativeFindPublishedByProjectIdIsEmpty() {
+        Stream<Post> stream = Stream.empty();
+
+        when(postRepository.findByProjectId(1L)).thenReturn(stream);
+        List<PostDto> list = postService.findPublishedByProjectId(1L);
+
+        assertEquals(0, list.size());
+        assertTrue(list.isEmpty());
+    }
+
+    @Test
+    public void testPositiveCreate() {
+        PostDto postDto = PostDto.builder()
+                .content("content")
+                .build();
+        when(adRepository.findById(any())).thenReturn(Optional.of(Ad.builder()
+                .id(2L)
+                .build()));
+        when(userServiceClient.getUser(any())).thenReturn(UserDto.builder()
+                .id(3L)
+                .build());
+        when(projectServiceClient.getProject(any())).thenReturn(ProjectDto.builder()
+                .id(4L)
+                .build());
+        when(commentRepository.findByIdIn(any())).thenReturn(List.of(Comment.builder()
+                .id(5L)
+                .build()));
+        when(likeRepository.findByIdIn(any())).thenReturn(List.of(Like.builder()
+                .id(6L)
+                .build()));
+        when(albumRepository.findByIdIn(any())).thenReturn(List.of(Album.builder()
+                .id(7L)
+                .build()));
+        when(resourceRepository.findByIdIn(any())).thenReturn(List.of(Resource.builder()
+                .id(8L)
+                .build()));
+
+        PostDto postDto1 = postService.create(postDto);
+
+        verify(postRepository, times(1)).save(any(Post.class));
+
+        assertEquals(2L, postDto1.adId());
+        assertEquals(7L, postDto1.albumsId().get(0));
+        assertEquals(8L, postDto1.resourcesId().get(0));
+        assertEquals(6L, postDto1.likesId().get(0));
+        assertEquals(5L, postDto1.commentsId().get(0));
+
+
+    }
+
+    @Test
+    public void testNegativeCreatePostDtoIsNull() {
+        assertThrows(NullPointerException.class, () -> postService.create(null));
+    }
+
+    @Test
+    public void testNegativeCreateContentIsNull() {
+        assertThrows(NullPointerException.class, () -> postService.create(PostDto.builder().build()));
+    }
+
+    @Test
+    public void testNegativeCreateContentIsEmpty() {
+        assertThrows(NullPointerException.class, () -> postService.create(PostDto.builder()
+                .content("")
+                .build()));
     }
 }

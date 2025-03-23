@@ -47,21 +47,21 @@ public class PostController {
 
     @GetMapping("/drafts/author/{authorId}")
     public List<PostDto> getDraftsByAuthor(@PathVariable Long authorId) {
-        return postService.findDraftsByAuthorIdAndIsDeletedFalse(authorId);
+        return postService.findDraftsByAuthorId(authorId);
     }
 
     @GetMapping("/drafts/project/{projectId}")
     public List<PostDto> getDraftsByProject(@PathVariable Long projectId) {
-        return postService.findDraftsByProjectIdAndIsDeletedFalse(projectId);
+        return postService.findDraftsByProjectId(projectId);
     }
 
     @GetMapping("/published/author/{authorId}")
     public List<PostDto> getPublishedByAuthor(@PathVariable Long authorId) {
-        return postService.findPublishedByAuthorIdAndIsDeletedFalse(authorId);
+        return postService.findPublishedByAuthorId(authorId);
     }
 
     @GetMapping("/published/project/{projectId}")
     public List<PostDto> getPublishedByProject(@PathVariable Long projectId) {
-        return postService.findPublishedByProjectIdAndIsDeletedFalse(projectId);
+        return postService.findPublishedByProjectId(projectId);
     }
 }
