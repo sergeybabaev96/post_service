@@ -61,16 +61,17 @@ public class LikeService {
 
     @Transactional
     public LikeDto likePost(Long postId) {
-        Long userId = userContext.getUserId();
-        userValidator.validateUserExist(userId);
-        if (likeRepository.findByPostIdAndUserId(postId, userId).isPresent()) {
-            throw new UserAlreadyLikedException("User with id %d is already liked post with id %d"
-                    .formatted(userId, postId));
-        } else {
-            Like like = Like.builder().userId(userId).post(postValidator.getPostById(postId)).build();
-            likeRepository.save(like);
-            return likeMapper.toLikeDto(like);
-        }
+        Long userId = validateAndGetUserId();
+        likeRepository.findByPostIdAndUserId(postId, userId).ifPresent(like -> {
+            log.warn("User with id %d is already liked post with id %d".formatted(userId, postId));
+            throw new UserAlreadyLikedException("User is already liked post");
+        });
+        Like like = Like.builder()
+                .userId(userId)
+                .post(postValidator.getPostById(postId))
+                .build();
+        likeRepository.save(like);
+        return likeMapper.toLikeDto(like);
     }
 
     private List<UserDto> fetchUsersInBatches(List<Long> userIds) {
@@ -86,27 +87,29 @@ public class LikeService {
 
     @Transactional
     public LikeDto removeLikeOnPost(Long postId) {
-        Long userId = userContext.getUserId();
-        userValidator.validateUserExist(userId);
-        Like like = likeRepository.findByPostIdAndUserId(postId, userId).orElseThrow(() ->
-                new EntityNotFoundException("Like by user with id %d on post with id %d does not exist"
-                        .formatted(userId, postId)));
+        Long userId = validateAndGetUserId();
+        Like like = likeRepository.findByPostIdAndUserId(postId, userId)
+                .orElseThrow(() -> {
+                    log.warn("Like by user with id %d on post with id %d does not exist"
+                            .formatted(userId, postId));
+                    return new EntityNotFoundException(
+                            "Like by user with id %d on post with id %d does not exist"
+                                    .formatted(userId, postId));
+                });
         likeRepository.delete(like);
         return likeMapper.toLikeDto(like);
     }
 
     @Transactional
     public LikeDto likeComment(Long commentId) {
-        Long userId = userContext.getUserId();
-        userValidator.validateUserExist(userId);
-        if (likeRepository.findByCommentIdAndUserId(commentId, userId).isPresent()) {
-            throw new UserAlreadyLikedException("User with id %d is already liked comment with id %d"
-                    .formatted(userId, commentId));
-        } else {
-            Like like = Like.builder().userId(userId).comment(commentValidator.getCommentById(commentId)).build();
-            likeRepository.save(like);
-            return likeMapper.toLikeDto(like);
-        }
+        Long userId = validateAndGetUserId();
+        likeRepository.findByCommentIdAndUserId(commentId, userId).ifPresent(like -> {
+            log.warn("User with id %d is already liked comment with id %d".formatted(userId, commentId));
+            throw new UserAlreadyLikedException("User is already liked comment");
+        });
+        Like like = Like.builder().userId(userId).comment(commentValidator.getCommentById(commentId)).build();
+        likeRepository.save(like);
+        return likeMapper.toLikeDto(like);
     }
 
     private List<UserDto> getUsers(List<Long> userIds) {
@@ -118,16 +121,26 @@ public class LikeService {
 
     @Transactional
     public LikeDto removeLikeOnComment(Long commentId) {
-        Long userId = userContext.getUserId();
-        userValidator.validateUserExist(userId);
-        Like like = likeRepository.findByCommentIdAndUserId(commentId, userId).orElseThrow(() ->
-                new EntityNotFoundException("Like by user with id %d on comment with id %d does not exist"
-                        .formatted(userId, commentId)));
+        Long userId = validateAndGetUserId();
+        Like like = likeRepository.findByCommentIdAndUserId(commentId, userId)
+                .orElseThrow(() -> {
+                    log.warn("Like by user with id %d on comment with id %d does not exist"
+                            .formatted(userId, commentId));
+                       return new EntityNotFoundException(
+                        "Like by user with id %d on comment with id %d does not exist"
+                                .formatted(userId, commentId));
+                });
         likeRepository.delete(like);
         return likeMapper.toLikeDto(like);
     }
 
     public PostDto countLikesPost(Long postId) {
         return postMapper.toDto(postValidator.getPostById(postId));
+    }
+
+    public Long validateAndGetUserId() {
+        Long userId = userContext.getUserId();
+        userValidator.validateUserExist(userId);
+        return userId;
     }
 }
