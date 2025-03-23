@@ -1,33 +1,67 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.dto.PostDto;
-import faang.school.postservice.exception.DataInvalidException;
+import faang.school.postservice.exception.PostValidationException;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.validation.PostValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
 public class PostService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
+    private final PostValidator postValidator;
 
+    @Transactional
     public PostDto createDraft(PostDto postDto) {
-        validatePostDto(postDto);
-        //Post post = postMapper.toEntity(postDto);
-       Post savedPost = postRepository.save(postMapper.toEntity(postDto));
+        postValidator.validatePostDto(postDto);
+        Post post = postMapper.toEntity(postDto);
+        post.setCreatedAt(LocalDateTime.now());
+        Post savedPost = postRepository.save(post);
         return postMapper.toDto(savedPost);
     }
 
-    private void validatePostDto(PostDto postDto) {
-        if (postDto == null) {
-            throw new DataInvalidException("postDto cannot be null");
-        } if (postDto.content() == null || postDto.content().isBlank()) {
-            throw new DataInvalidException("Post content cannot be empty");
-        } if (postDto.authorId() == null) {
-            throw new DataInvalidException("author id cannot be null");
-        }
+    @Transactional
+    public PostDto getPost(long postId) {
+        Post post = postRepository.findById(postId).orElseThrow(() ->
+                new PostValidationException("Post with id %d does not exist".formatted(postId)));
+        return postMapper.toDto(post);
     }
+
+    @Transactional
+    public PostDto publishPost(long postId) {
+
+        Post post = postRepository.findById(postId).orElseThrow(() ->
+                new PostValidationException("Post with id %d does not exist".formatted(postId)));
+        post.setPublished(true);
+        post.setPublishedAt(LocalDateTime.now());
+        postRepository.save(post);
+        return postMapper.toDto(post);
+    }
+
+    @Transactional
+    public PostDto updatePost(long postId, String content) {
+        Post post = postRepository.findById(postId).orElseThrow(() ->
+                new PostValidationException("Post with id %d does not exist".formatted(postId)));
+        post.setContent(content);
+        post.setUpdatedAt(LocalDateTime.now());
+        postRepository.save(post);
+        return postMapper.toDto(post);
+    }
+
+    @Transactional
+    public void softDeletePost(long postId) {
+        Post post = postRepository.findById(postId).orElseThrow(() ->
+                new PostValidationException("Post with id %d does not exist".formatted(postId)));
+        post.setDeleted(true);
+        postRepository.save(post);
+    }
+
 }
