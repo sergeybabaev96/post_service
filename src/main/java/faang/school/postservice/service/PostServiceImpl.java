@@ -14,10 +14,8 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public Post findPostById(long postId) {
-        Post post = postRepository.findById(postId).orElse(null);
-        if (post == null) {
-            throw new DataValidationException(String.format("Post with id %s not found", postId));
-        }
-        return post;
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new DataValidationException(String.format("Post with id %s not found", postId)));
+
     }
 }

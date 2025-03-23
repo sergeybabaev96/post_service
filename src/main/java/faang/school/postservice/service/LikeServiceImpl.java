@@ -4,19 +4,17 @@ import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.CommentDto;
 import faang.school.postservice.dto.LikeDto;
 import faang.school.postservice.dto.PostDto;
-import faang.school.postservice.dto.user.UserDto;
-import faang.school.postservice.exception.DataValidationException;
+import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.mapper.LikeMapper;
 import faang.school.postservice.mapper.PostMapper;
+import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.LikeRepository;
-import faang.school.postservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -27,17 +25,18 @@ public class LikeServiceImpl implements LikeService {
     private final UserServiceClient userServiceClient;
     private final PostMapper postMapper;
     private final LikeMapper likeMapper;
+    private final CommentMapper commentMapper;
     private final PostService postService;
+    private final CommentService commentService;
 
     @Override
     public PostDto addLikeToPost(LikeDto likeDto) {
-        UserDto userDto = getUserById(likeDto.userId());
-        boolean isLiked = likeRepository.findByPostIdAndUserId(likeDto.postId(), likeDto.userId()).isPresent();
-        if (isLiked) {
-            return postMapper.toDto(postService.findPostById(likeDto.postId()));
+        getUserById(likeDto.userId());
+        Post post = postService.findPostById(likeDto.postId());
+        if (isLikedPost(likeDto.postId(), likeDto.userId())) {
+            return postMapper.toDto(post);
         }
         Like like = likeMapper.toEntity(likeDto);
-        Post post = postService.findPostById(likeDto.postId());
         like.setPost(post);
         likeRepository.save(like);
         return postMapper.toDto(post);
@@ -45,25 +44,55 @@ public class LikeServiceImpl implements LikeService {
 
     @Override
     public PostDto removeLikeFromPost(LikeDto likeDto) {
-        return null;
+        getUserById(likeDto.userId());
+        Post post = postService.findPostById(likeDto.postId());
+        if (!isLikedPost(likeDto.postId(), likeDto.userId())) {
+            return postMapper.toDto(post);
+        }
+        likeRepository.deleteByPostIdAndUserId(likeDto.postId(), likeDto.userId());
+        return postMapper.toDto(post);
     }
 
     @Override
     public CommentDto addLikeToComment(LikeDto likeDto) {
-        return null;
+        getUserById(likeDto.userId());
+        Comment comment = commentService.findCommentById(likeDto.commentId());
+        if(isLikedComment(likeDto.commentId(), likeDto.userId())){
+           return commentMapper.toDto(comment);
+        }
+        Like like = likeMapper.toEntity(likeDto);
+        like.setComment(comment);
+        likeRepository.save(like);
+        return commentMapper.toDto(comment);
     }
 
     @Override
     public CommentDto removeLikeFromComment(LikeDto likeDto) {
-        return null;
+        getUserById(likeDto.userId());
+        Comment comment = commentService.findCommentById(likeDto.commentId());
+        if(!isLikedComment(likeDto.commentId(), likeDto.userId())){
+            return commentMapper.toDto(comment);
+        }
+        likeRepository.deleteByCommentIdAndUserId(likeDto.commentId(), likeDto.userId());
+        return commentMapper.toDto(comment);
     }
 
-    private UserDto getUserById(Long userId) {
+    @Override
+    public boolean isLikedPost(Long postId, Long userId) {
+        return likeRepository.findByPostIdAndUserId(postId, userId).isPresent();
+    }
+
+    @Override
+    public boolean isLikedComment(Long commentId, Long userId) {
+        return likeRepository.findByCommentIdAndUserId(commentId,userId).isPresent();
+    }
+
+
+    private void getUserById(Long userId) {
         try {
-            return userServiceClient.getUser(userId);
-        } catch (RuntimeException e) {
+            userServiceClient.getUser(userId);
+        } catch (NullPointerException e) {
             log.error(e.getMessage());
-            throw e;
         }
     }
 }
