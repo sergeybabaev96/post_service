@@ -1,5 +1,6 @@
 package faang.school.postservice.dto.like;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.time.LocalDateTime;
@@ -10,5 +11,6 @@ public record LikeDto(Long userId,
                       @JsonInclude(JsonInclude.Include.NON_NULL)
                       Long commentId,
                       @JsonInclude(JsonInclude.Include.NON_NULL)
+                      @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS")
                       LocalDateTime timestamp) {
 }

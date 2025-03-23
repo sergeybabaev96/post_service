@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Slf4j
 public class UserValidator {
+
     private final UserServiceClient userServiceClient;
 
     public void validateUserExist(Long userId) {
