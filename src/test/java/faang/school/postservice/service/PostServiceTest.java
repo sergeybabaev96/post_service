@@ -62,7 +62,8 @@ public class PostServiceTest {
         postMapper = Mappers.getMapper(PostMapper.class);
         postValidator = mock(PostValidator.class);
         resourseService = mock(ResourseService.class);
-        postService = new PostService(postRepository, cacheRepository, kafkaTemplate, postMapper, postValidator, resourseService);
+        postService = new PostService(postRepository, cacheRepository, kafkaTemplate,
+                postMapper, postValidator, resourseService);
     }
 
     @Test

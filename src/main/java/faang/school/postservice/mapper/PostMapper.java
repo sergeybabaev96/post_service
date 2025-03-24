@@ -4,7 +4,6 @@ import faang.school.postservice.PostCacheDto;
 import faang.school.postservice.dto.Post.CreatePostDraftDto;
 import faang.school.postservice.dto.Post.PostResponseDto;
 import faang.school.postservice.dto.Post.UpdatePostDto;
-import faang.school.postservice.dto.comment.CommentForListDto;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
 import org.mapstruct.Mapper;
@@ -18,8 +17,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring",
-        unmappedTargetPolicy = ReportingPolicy.IGNORE,
-        imports = {ArrayList.class, CommentForListDto.class})
+        unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface PostMapper {
     @Mapping(
             target = "adId",
