@@ -8,12 +8,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -31,7 +35,7 @@ public class PostController {
         return postService.getPost(postId);
     }
 
-    @PutMapping("/{postId}/publish")
+    @PatchMapping("/{postId}/publish")
     public PostDto publishPost(@PathVariable long postId) {
         return postService.publishPost(postId);
     }
@@ -40,9 +44,31 @@ public class PostController {
     public PostDto updatePost(@PathVariable long postId, @RequestBody @Valid PostDto postDto) {
         return postService.updatePost(postId, postDto.content());
     }
+
     @DeleteMapping("/{postId}")
     public ResponseEntity<Void> softDeletePost(@PathVariable long postId) {
         postService.softDeletePost(postId);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/draft/by-author")
+    public List<PostDto> getAllDraftsByAuthorId(@RequestParam long authorId) {
+        return postService.getAllDraftsByAuthorId(authorId);
+    }
+
+    @GetMapping("/draft/by-project")
+    public List<PostDto> getAllDraftsByProjectId(@RequestParam long projectId) {
+        return postService.getAllDraftsByProjectId(projectId);
+    }
+
+    @GetMapping("/by-author")
+    public List<PostDto> getAllPostsByAuthorId(@RequestParam long authorId) {
+        return postService.getAllPostsByAuthorId(authorId);
+    }
+
+    @GetMapping("/by-project")
+    public List<PostDto> getAllPostsByProjectId(@RequestParam long projectId) {
+        return postService.getAllPostsByProjectId(projectId);
+    }
+
 }

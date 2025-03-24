@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.function.Predicate;
 
 @Service
 @RequiredArgsConstructor
@@ -30,16 +33,14 @@ public class PostService {
 
     @Transactional
     public PostDto getPost(long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() ->
-                new PostValidationException("Post with id %d does not exist".formatted(postId)));
+        Post post = getPostById(postId);
         return postMapper.toDto(post);
     }
 
     @Transactional
     public PostDto publishPost(long postId) {
 
-        Post post = postRepository.findById(postId).orElseThrow(() ->
-                new PostValidationException("Post with id %d does not exist".formatted(postId)));
+        Post post = getPostById(postId);
         post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
         postRepository.save(post);
@@ -48,8 +49,7 @@ public class PostService {
 
     @Transactional
     public PostDto updatePost(long postId, String content) {
-        Post post = postRepository.findById(postId).orElseThrow(() ->
-                new PostValidationException("Post with id %d does not exist".formatted(postId)));
+        Post post = getPostById(postId);
         post.setContent(content);
         post.setUpdatedAt(LocalDateTime.now());
         postRepository.save(post);
@@ -58,10 +58,47 @@ public class PostService {
 
     @Transactional
     public void softDeletePost(long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() ->
-                new PostValidationException("Post with id %d does not exist".formatted(postId)));
+        Post post = getPostById(postId);
         post.setDeleted(true);
         postRepository.save(post);
+    }
+
+    @Transactional
+    public List<PostDto> getAllDraftsByAuthorId(long authorId) {
+        List<Post> posts = postRepository.findByAuthorId(authorId);
+        return filterPostsAndMapToDto(posts, post -> !post.isPublished());
+    }
+
+    @Transactional
+    public List<PostDto> getAllDraftsByProjectId(long projectId) {
+        List<Post> posts = postRepository.findByProjectId(projectId);
+        return filterPostsAndMapToDto(posts, post -> !post.isPublished());
+    }
+
+    @Transactional
+    public List<PostDto> getAllPostsByAuthorId(long authorId) {
+        List<Post> posts = postRepository.findByAuthorId(authorId);
+        return filterPostsAndMapToDto(posts, Post::isPublished);
+    }
+
+    @Transactional
+    public List<PostDto> getAllPostsByProjectId(long projectId) {
+        List<Post> posts = postRepository.findByProjectId(projectId);
+        return filterPostsAndMapToDto(posts, Post::isPublished);
+    }
+
+    private List<PostDto> filterPostsAndMapToDto(List<Post> posts, Predicate<Post> isPublishedCondition) {
+        List<Post> filteredPosts = posts.stream()
+                .filter(post -> !post.isDeleted())
+                .filter(isPublishedCondition)
+                .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
+                .toList();
+        return postMapper.toDtoList(filteredPosts);
+    }
+
+    private Post getPostById(long postId) {
+        return postRepository.findById(postId).orElseThrow(() ->
+                new PostValidationException("Post with id %d does not exist".formatted(postId)));
     }
 
 }
