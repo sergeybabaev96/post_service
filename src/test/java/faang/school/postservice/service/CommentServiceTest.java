@@ -80,7 +80,7 @@ public class CommentServiceTest {
 
         Mockito.when(postService.getPostById(POST_ID)).thenReturn(post);
 
-        assertThrows(BusinessException.class, ()-> commentService.create(createDto));
+        assertThrows(BusinessException.class, () -> commentService.create(createDto));
     }
 
     @Test
@@ -95,7 +95,7 @@ public class CommentServiceTest {
 
         Mockito.when(postService.getPostById(POST_ID)).thenReturn(post);
 
-        assertThrows(BusinessException.class, ()-> commentService.create(createDto));
+        assertThrows(BusinessException.class, () -> commentService.create(createDto));
     }
 
     @Test

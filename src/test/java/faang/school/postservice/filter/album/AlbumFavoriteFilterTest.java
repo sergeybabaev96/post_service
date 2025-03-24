@@ -21,13 +21,13 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class AlbumFavoriteFilterTest {
+    Stream<Album> stream;
     private AlbumFavoriteFilter filter;
     private AlbumRepository albumRepository;
     private UserContext userContext;
     private AlbumFilterDto filterDto;
     private Album album1;
     private Album album2;
-    Stream<Album> stream;
 
     @BeforeEach
     public void init() {

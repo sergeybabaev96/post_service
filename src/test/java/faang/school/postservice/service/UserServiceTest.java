@@ -18,15 +18,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
     public static final long ID = 1L;
-
-    @Mock
-    private UserContext userContext;
-
     @Mock
     UserServiceClient userServiceClient;
-
     @InjectMocks
     UserService userService;
+    @Mock
+    private UserContext userContext;
 
     @Test
     public void testUserExist() {
