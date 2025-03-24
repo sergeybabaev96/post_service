@@ -15,7 +15,7 @@ import java.util.List;
  *     <li>Содержимое поста ({@link #content})</li>
  *     <li>Идентификатор автора ({@link #authorId})</li>
  *     <li>Идентификатор проекта ({@link #projectId})</li>
- *     <li>Список идентификаторов лайков ({@link #likeIds})</li>
+ *     <li>Количество лайков лайков ({@link #likeCounter})</li>
  *     <li>Список идентификаторов комментариев ({@link #commentIds})</li>
  *     <li>Список идентификаторов ресурсов ({@link #resourceIds})</li>
  *     <li>Идентификатор рекламного объявления ({@link #adId})</li>
@@ -33,7 +33,7 @@ public class PostViewDto {
     private String content;
     private Long authorId;
     private Long projectId;
-    private List<Long> likeIds;
+    private Long likeCounter;
     private List<Long> commentIds;
     private List<Long> resourceIds;
     private Long adId;
@@ -41,5 +41,4 @@ public class PostViewDto {
     private LocalDateTime publishedAt;
     private LocalDateTime scheduledAt;
     private boolean deleted;
-
 }

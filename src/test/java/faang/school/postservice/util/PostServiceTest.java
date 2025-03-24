@@ -280,13 +280,15 @@ public class PostServiceTest {
         post.setDeleted(false);
         post.setPublishedAt(LocalDateTime.now());
 
-        Mockito.when(postRepository.findByAuthorId(userId)).thenReturn(List.of(post));
+        Mockito.when(postRepository.findByAuthorIdWithLikes(userId)).thenReturn(List.of(post));
         Mockito.when(postMapper.toViewDto(post)).thenReturn(postViewDto);
 
         Assertions.assertNotNull(postService.getAuthorPublishedPost(userId));
 
-        Mockito.verify(postRepository, Mockito.times(1)).findByAuthorId(userId);
-        Mockito.verify(postMapper, Mockito.times(1)).toViewDto(post);
+        Mockito.verify(postRepository, Mockito.times(1))
+                .findByAuthorIdWithLikes(userId);
+        Mockito.verify(postMapper, Mockito.times(1))
+                .toViewDto(post);
     }
 
     @Test
@@ -310,12 +312,12 @@ public class PostServiceTest {
         post.setDeleted(false);
         post.setPublishedAt(LocalDateTime.now());
 
-        Mockito.when(postRepository.findByProjectId(projectId)).thenReturn(List.of(post));
+        Mockito.when(postRepository.findByProjectIdWithLikes(projectId)).thenReturn(List.of(post));
         Mockito.when(postMapper.toViewDto(post)).thenReturn(postViewDto);
 
         Assertions.assertNotNull(postService.getProjectPublishedPost(projectId));
 
-        Mockito.verify(postRepository, Mockito.times(1)).findByProjectId(projectId);
+        Mockito.verify(postRepository, Mockito.times(1)).findByProjectIdWithLikes(projectId);
         Mockito.verify(postMapper, Mockito.times(1)).toViewDto(post);
     }
 
@@ -326,10 +328,10 @@ public class PostServiceTest {
         post.setDeleted(false);
         post.setPublishedAt(LocalDateTime.now());
 
-        Mockito.when(postRepository.findByProjectId(projectId)).thenReturn(List.of());
+        Mockito.when(postRepository.findByProjectIdWithLikes(projectId)).thenReturn(List.of());
 
         Assertions.assertNotNull(postService.getProjectPublishedPost(projectId));
 
-        Mockito.verify(postRepository, Mockito.times(1)).findByProjectId(projectId);
+        Mockito.verify(postRepository, Mockito.times(1)).findByProjectIdWithLikes(projectId);
     }
 }

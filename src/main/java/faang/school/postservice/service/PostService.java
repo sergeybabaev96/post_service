@@ -173,13 +173,13 @@ public class PostService {
     }
 
     /**
-     * Возвращает список опубликованных постов автора с указанным ID.
+     * Возвращает список опубликованных постов автора с указанным ID и лайками.
      *
      * @param userId ID автора.
      * @return {@link List<PostViewDto>} - список DTO с данными опубликованных постов автора.
      */
     public List<PostViewDto> getAuthorPublishedPost(long userId) {
-        return postRepository.findByAuthorId(userId).stream()
+        return postRepository.findByAuthorIdWithLikes(userId).stream()
                 .filter(post-> !(post.isDeleted()))
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
                 .map(postMapper::toViewDto)
@@ -187,13 +187,13 @@ public class PostService {
     }
 
     /**
-     * Возвращает список опубликованных постов проекта с указанным ID.
+     * Возвращает список опубликованных постов проекта с указанным ID и лайками.
      *
      * @param projectId ID проекта.
      * @return {@link List<PostViewDto>} - список DTO с данными опубликованных постов проекта.
      */
     public List<PostViewDto> getProjectPublishedPost(long projectId) {
-        return postRepository.findByProjectId(projectId).stream()
+        return postRepository.findByProjectIdWithLikes(projectId).stream()
                 .filter(post-> !(post.isDeleted()))
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
                 .map(postMapper::toViewDto)

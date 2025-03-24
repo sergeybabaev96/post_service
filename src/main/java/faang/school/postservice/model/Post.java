@@ -67,9 +67,9 @@ public class Post {
     private String content;
 
     /**
-     * Идентификатор автора поста. Поле не может быть пустым.
+     * Идентификатор автора поста.
      */
-    @Column(name = "author_id", nullable = false)
+    @Column(name = "author_id")
     private Long authorId;
 
     /**
