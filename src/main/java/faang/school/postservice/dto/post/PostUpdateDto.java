@@ -1,8 +1,10 @@
 package faang.school.postservice.dto.post;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Класс `PostUpdateDto` используется для передачи данных, необходимых для обновления существующего поста.
@@ -11,7 +13,10 @@ import lombok.Data;
  * <p>Основные поля:
  * <ul>
  *     <li>Содержимое поста ({@link #content})</li>
- *     <li>Идентификатор автора ({@link #authorId})</li>
+ *     <li>Флаг публикации ({@link #published})</li>
+ *     <li>Флаг удаления поста ({@link #deleted})</li>
+ *     <li>Список идентификаторов ресурсов ({@link #resourceIds})</li>
+ *     <li>Дата запланированной публикации ({@link #scheduledAt})</li>
  * </ul>
  * </p>
  *
@@ -21,6 +26,8 @@ import lombok.Data;
 public class PostUpdateDto {
     @NotBlank(message = "Content is not blank")
     private String content;
-    @NotNull(message = "Author can not be null")
-    private Long authorId;
+    private boolean published;
+    private boolean deleted;
+    private List<Long> resourceIds;
+    private LocalDateTime scheduledAt;
 }

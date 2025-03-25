@@ -3,11 +3,10 @@ package faang.school.postservice.validation;
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.post.PostCreateDto;
-import faang.school.postservice.dto.post.PostUpdateDto;
+import faang.school.postservice.dto.project.ProjectDto;
+import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
-import faang.school.postservice.model.Post;
-import faang.school.postservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -20,7 +19,6 @@ import org.springframework.stereotype.Component;
  * <p>Основные методы:
  * <ul>
  *     <li>{@link #validateAuthorAndProject(PostCreateDto)} - проверяет существование автора и проекта.</li>
- *     <li>{@link #validateAuthor(PostUpdateDto, long)} - проверяет, не изменился ли автор поста.</li>
  * </ul>
  * </p>
  *
@@ -30,7 +28,6 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class PostValidator {
-    private final PostRepository postRepository;
     private final UserServiceClient userServiceClient;
     private final ProjectServiceClient projectServiceClient;
 
@@ -48,43 +45,21 @@ public class PostValidator {
 
         if (authorId == null && projectId == null) {
             log.warn("Validation failed: Both author and project are missing in the post");
-            throw new DataValidationException("Author or Project in the post is not found");
+            throw new DataValidationException("Post cannot be missing an author and a project");
         }
 
-        if(authorId != null){
-            if(userServiceClient.getUser(authorId) == null){
+        if (authorId != null) {
+            UserDto author = userServiceClient.getUser(authorId);
+            if (author == null) {
                 log.error("Validation failed: Author with ID {} does not exist", authorId);
                 throw new EntityNotFoundException("Author does not exist");
             }
         } else {
-            if(projectServiceClient.getProject(projectId) == null){
+            ProjectDto project = projectServiceClient.getProject(projectId);
+            if (project == null) {
                 log.error("Validation failed: Project with ID {} does not exist", projectId);
                 throw new EntityNotFoundException("Project does not exist");
             }
-        }
-    }
-
-    /**
-     * Проверяет, не изменился ли автор поста при обновлении.
-     * Если новый идентификатор автора не совпадает с текущим, выбрасывает исключение.
-     *
-     * @param postUpdateDto объект DTO для обновления поста
-     * @param postId идентификатор поста
-     * @throws EntityNotFoundException если пост не найден
-     * @throws DataValidationException если автор поста изменился
-     */
-    public void validateAuthor(PostUpdateDto postUpdateDto, long postId) {
-        Post oldPost = postRepository.findById(postId).orElseThrow(() -> {
-            log.error("Validation failed: Post with ID {} not found", postId);
-            return new EntityNotFoundException("Post not found with id: " + postId);
-        });
-
-        Long oldAuthorId = oldPost.getAuthorId();
-        Long newAuthorId = postUpdateDto.getAuthorId();
-
-        if (!newAuthorId.equals(oldAuthorId)) {
-            log.warn("Validation failed: Author mismatch. Old ID: {}, New ID: {}", oldAuthorId, newAuthorId);
-            throw new DataValidationException("Authors should not differ");
         }
     }
 }

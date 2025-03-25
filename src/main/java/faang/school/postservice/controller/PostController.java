@@ -30,10 +30,10 @@ import java.util.List;
  *     <li>{@link #updatePost(PostUpdateDto, long)}: Обновление поста.</li>
  *     <li>{@link #softDeletePost(long)}: Мягкое удаление поста.</li>
  *     <li>{@link #getPost(long)}: Получение поста по его ID.</li>
- *     <li>{@link #getUserDraft(long)}: Получение черновиков постов для пользователя.</li>
- *     <li>{@link #getProjectDraft(long)}: Получение черновиков постов для проекта.</li>
- *     <li>{@link #getAuthorPublishedPost(long)}: Получение опубликованных постов для пользователя.</li>
- *     <li>{@link #getProjectPublishedPost(long)}: Получение опубликованных постов для проекта.</li>
+ *     <li>{@link #getUserDrafts(long)}: Получение черновиков постов для пользователя.</li>
+ *     <li>{@link #getProjectDrafts(long)}: Получение черновиков постов для проекта.</li>
+ *     <li>{@link #getAuthorPublishedPosts(long)}: Получение опубликованных постов для пользователя.</li>
+ *     <li>{@link #getProjectPublishedPosts(long)}: Получение опубликованных постов для проекта.</li>
  * </ul>
  * <p>
  * Все методы контроллера используют DTO (Data Transfer Objects) для передачи данных между клиентом и сервером.
@@ -55,7 +55,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
-    private final PostValidator postValidator;
 
     /**
      * Создает черновик поста.
@@ -67,7 +66,6 @@ public class PostController {
     public ResponseEntity<PostViewDto> createDraft(@Valid @RequestBody PostCreateDto postCreateDto) {
         log.info("Received request to create a draft post: {}", postCreateDto);
 
-        postValidator.validateAuthorAndProject(postCreateDto);
         PostViewDto postViewDto = postService.createDraft(postCreateDto);
 
         log.info("Draft post created successfully: {}", postViewDto);
@@ -102,7 +100,6 @@ public class PostController {
                                                   @PathVariable long postId) {
         log.info("Received request to update post with ID: {}", postId);
 
-        postValidator.validateAuthor(postUpdateDto, postId);
         PostViewDto postViewDto = postService.updatePost(postUpdateDto, postId);
 
         log.info("Post updated successfully: {}", postViewDto);
@@ -139,7 +136,6 @@ public class PostController {
 
         log.info("Post get successfully: {}", postViewDto);
         return ResponseEntity.ok(postViewDto);
-
     }
 
     /**
@@ -149,13 +145,13 @@ public class PostController {
      * @return ResponseEntity со списком черновиков в формате PostViewDto.
      */
     @GetMapping("/user/{userId}/draft")
-    public ResponseEntity<List<PostViewDto>> getUserDraft(@PathVariable long userId) {
+    public ResponseEntity<List<PostViewDto>> getUserDrafts(@PathVariable long userId) {
         log.info("Received request to get user draft post with ID: {}", userId);
 
-        List<PostViewDto> postsViewDto = postService.getUserDraft(userId);
+        List<PostViewDto> postsViewDto = postService.getUserDrafts(userId);
 
         log.info("Draft posts fetched successfully for user with ID: {}." +
-                        " Number of posts: {}", userId, postsViewDto.size());
+                " Number of posts: {}", userId, postsViewDto.size());
         return ResponseEntity.ok(postsViewDto);
     }
 
@@ -166,13 +162,13 @@ public class PostController {
      * @return ResponseEntity со списком черновиков в формате PostViewDto.
      */
     @GetMapping("/project/{projectId}/draft")
-    public ResponseEntity<List<PostViewDto>> getProjectDraft(@PathVariable long projectId) {
+    public ResponseEntity<List<PostViewDto>> getProjectDrafts(@PathVariable long projectId) {
         log.info("Received request to fetch draft posts for project with ID: {}", projectId);
 
-        List<PostViewDto> postsViewDto = postService.getProjectDraft(projectId);
+        List<PostViewDto> postsViewDto = postService.getProjectDrafts(projectId);
 
         log.info("Draft posts fetched successfully for project with ID:" +
-                        " {}. Number of posts: {}", projectId, postsViewDto.size());
+                " {}. Number of posts: {}", projectId, postsViewDto.size());
         return ResponseEntity.ok(postsViewDto);
     }
 
@@ -183,10 +179,10 @@ public class PostController {
      * @return ResponseEntity со списком опубликованных постов в формате PostViewDto.
      */
     @GetMapping("/user/{userId}/published-post")
-    public ResponseEntity<List<PostViewDto>> getAuthorPublishedPost(@PathVariable long userId) {
+    public ResponseEntity<List<PostViewDto>> getAuthorPublishedPosts(@PathVariable long userId) {
         log.info("Received request to fetch published posts for user with ID: {}", userId);
 
-        List<PostViewDto> postsViewDto = postService.getAuthorPublishedPost(userId);
+        List<PostViewDto> postsViewDto = postService.getAuthorPublishedPosts(userId);
 
         log.info("Published posts fetched successfully for user with ID: {}." +
                 " Number of posts: {}", userId, postsViewDto.size());
@@ -200,10 +196,10 @@ public class PostController {
      * @return ResponseEntity со списком опубликованных постов в формате PostViewDto.
      */
     @GetMapping("/project/{projectId}/published-post")
-    public ResponseEntity<List<PostViewDto>> getProjectPublishedPost(@PathVariable long projectId) {
+    public ResponseEntity<List<PostViewDto>> getProjectPublishedPosts(@PathVariable long projectId) {
         log.info("Received request to fetch published posts for project with ID: {}", projectId);
 
-        List<PostViewDto> postsViewDto = postService.getProjectPublishedPost(projectId);
+        List<PostViewDto> postsViewDto = postService.getProjectPublishedPosts(projectId);
 
         log.info("Published posts fetched successfully for project with ID: {}." +
                 " Number of posts: {}", projectId, postsViewDto.size());

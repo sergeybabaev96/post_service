@@ -8,6 +8,7 @@ import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.validation.PostValidator;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
@@ -29,10 +30,10 @@ import java.util.List;
  *     <li>{@link #updatePost(PostUpdateDto, long)} - обновление поста.</li>
  *     <li>{@link #softDeletePost(long)} - мягкое удаление поста.</li>
  *     <li>{@link #getPost(long)} - получение поста по ID.</li>
- *     <li>{@link #getUserDraft(long)} - получение черновиков пользователя.</li>
- *     <li>{@link #getProjectDraft(long)} - получение черновиков проекта.</li>
- *     <li>{@link #getAuthorPublishedPost(long)} - получение опубликованных постов автора.</li>
- *     <li>{@link #getProjectPublishedPost(long)} - получение опубликованных постов проекта.</li>
+ *     <li>{@link #getUserDrafts(long)} - получение черновиков пользователя.</li>
+ *     <li>{@link #getProjectDrafts(long)} - получение черновиков проекта.</li>
+ *     <li>{@link #getAuthorPublishedPosts(long)} - получение опубликованных постов автора.</li>
+ *     <li>{@link #getProjectPublishedPosts(long)} - получение опубликованных постов проекта.</li>
  * </ul>
  * </p>
  *
@@ -44,6 +45,7 @@ import java.util.List;
 public class PostService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
+    private final PostValidator postValidator;
 
     /**
      * Создает черновик поста на основе переданного DTO.
@@ -52,6 +54,8 @@ public class PostService {
      * @return {@link PostViewDto} - DTO с данными созданного поста.
      */
     public PostViewDto createDraft(@NotNull PostCreateDto postCreateDto) {
+        postValidator.validateAuthorAndProject(postCreateDto);
+
         Post post = postMapper.createDtoToEntity(postCreateDto);
         post = postRepository.save(post);
 
@@ -68,12 +72,9 @@ public class PostService {
      */
     @Transactional
     public PostViewDto publishPost(long postId) {
-        Post publishPost = postRepository.findById(postId).orElseThrow(() -> {
-            log.error("Post with ID {} not found", postId);
-            return new EntityNotFoundException("Post not found with id: " + postId);
-        });
+        Post publishPost = getPostEntity(postId);
 
-        if(publishPost.isPublished()){
+        if (publishPost.isPublished()) {
             log.warn("Post with ID {} is already published", postId);
             throw new DataValidationException("Post is already published");
         }
@@ -94,10 +95,7 @@ public class PostService {
      */
     @Transactional
     public PostViewDto updatePost(@NotNull PostUpdateDto postUpdateDto, long postId) {
-        Post oldPost = postRepository.findById(postId).orElseThrow(() -> {
-            log.error("Post with ID {} not found", postId);
-            return new EntityNotFoundException("Post not found with id: " + postId);
-        });
+        Post oldPost = getPostEntity(postId);
 
         postMapper.update(postUpdateDto, oldPost);
 
@@ -114,10 +112,7 @@ public class PostService {
      */
     @Transactional
     public PostViewDto softDeletePost(long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> {
-            log.error("Post with ID {} not found", postId);
-            return new EntityNotFoundException("Post not found with id: " + postId);
-        });
+        Post post = getPostEntity(postId);
 
         if (post.isDeleted()) {
             throw new DataValidationException("Post is already deleted");
@@ -135,10 +130,7 @@ public class PostService {
      * @throws EntityNotFoundException если пост с указанным ID не найден.
      */
     public PostViewDto getPost(long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> {
-            log.error("Post with ID {} not found", postId);
-            return new EntityNotFoundException("Post not found with id: " + postId);
-        });
+        Post post = getPostEntity(postId);
 
         return postMapper.toViewDto(post);
     }
@@ -149,9 +141,10 @@ public class PostService {
      * @param userId ID пользователя.
      * @return {@link List<PostViewDto>} - список DTO с данными черновиков пользователя.
      */
-    public List<PostViewDto> getUserDraft(long userId) {
+    public List<PostViewDto> getUserDrafts(long userId) {
         return postRepository.findByAuthorId(userId).stream()
-                .filter(post-> !(post.isDeleted()))
+                .filter(post -> !(post.isDeleted()))
+                .filter(post -> !post.isPublished())
                 .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
                 .map(postMapper::toViewDto)
                 .toList();
@@ -163,13 +156,13 @@ public class PostService {
      * @param projectId ID проекта.
      * @return {@link List<PostViewDto>} - список DTO с данными черновиков проекта.
      */
-    public List<PostViewDto> getProjectDraft(long projectId) {
+    public List<PostViewDto> getProjectDrafts(long projectId) {
         return postRepository.findByProjectId(projectId).stream()
-                .filter(post-> !(post.isDeleted()))
+                .filter(post -> !(post.isDeleted()))
+                .filter(post -> !post.isPublished())
                 .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
                 .map(postMapper::toViewDto)
                 .toList();
-
     }
 
     /**
@@ -178,9 +171,10 @@ public class PostService {
      * @param userId ID автора.
      * @return {@link List<PostViewDto>} - список DTO с данными опубликованных постов автора.
      */
-    public List<PostViewDto> getAuthorPublishedPost(long userId) {
+    public List<PostViewDto> getAuthorPublishedPosts(long userId) {
         return postRepository.findByAuthorIdWithLikes(userId).stream()
-                .filter(post-> !(post.isDeleted()))
+                .filter(post -> !(post.isDeleted()))
+                .filter(Post::isPublished)
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
                 .map(postMapper::toViewDto)
                 .toList();
@@ -192,11 +186,26 @@ public class PostService {
      * @param projectId ID проекта.
      * @return {@link List<PostViewDto>} - список DTO с данными опубликованных постов проекта.
      */
-    public List<PostViewDto> getProjectPublishedPost(long projectId) {
+    public List<PostViewDto> getProjectPublishedPosts(long projectId) {
         return postRepository.findByProjectIdWithLikes(projectId).stream()
-                .filter(post-> !(post.isDeleted()))
+                .filter(post -> !(post.isDeleted()))
+                .filter(Post::isPublished)
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
                 .map(postMapper::toViewDto)
                 .toList();
+    }
+
+    /**
+     * Получение поста по айди
+     *
+     * @param postId айди поста
+     * @return возвращает Post
+     * @throws EntityNotFoundException если пост с указанным ID не найден.
+     */
+    private Post getPostEntity(long postId) {
+        return postRepository.findById(postId).orElseThrow(() -> {
+            log.error("Post with ID {} not found", postId);
+            return new EntityNotFoundException(String.format("Post not found with id: %s", postId));
+        });
     }
 }

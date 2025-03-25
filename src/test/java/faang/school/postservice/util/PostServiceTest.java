@@ -9,6 +9,7 @@ import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.PostService;
+import faang.school.postservice.validation.PostValidator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,6 +36,8 @@ public class PostServiceTest {
     private PostRepository postRepository;
     @Mock
     private PostMapper postMapper;
+    @Mock
+    private PostValidator postValidator;
 
     @InjectMocks
     private PostService postService;
@@ -50,7 +53,6 @@ public class PostServiceTest {
         postViewDto = new PostViewDto();
         postUpdateDto = new PostUpdateDto();
         post = new Post();
-
     }
 
     @Test
@@ -90,11 +92,12 @@ public class PostServiceTest {
     @DisplayName("Проверка ошибки при публикации несуществующего поста")
     public void givenNotExistPostIdWhenPublishPostThenReturnEntityNotFoundException() {
         long postId = INVALID_POST_ID;
+
         Mockito.when(postRepository.findById(postId)).thenReturn(Optional.empty());
         Exception exception = Assertions.assertThrows(EntityNotFoundException.class,
                 () -> postService.publishPost(postId));
 
-        Assertions.assertEquals("Post not found with id: " + postId, exception.getMessage());
+        Assertions.assertEquals(String.format("Post not found with id: %s", postId), exception.getMessage());
     }
 
     @Test
@@ -102,6 +105,7 @@ public class PostServiceTest {
     public void givenPublishedPostIdWhenPublishPostThenReturnDataValidationException() {
         long postId = VALID_POST_ID;
         post.setPublished(true);
+
         Mockito.when(postRepository.findById(postId)).thenReturn(Optional.of(post));
         Exception exception = Assertions.assertThrows(DataValidationException.class,
                 () -> postService.publishPost(postId));
@@ -121,6 +125,7 @@ public class PostServiceTest {
 
         Mockito.verify(postMapper, Mockito.times(1)).toViewDto(post);
         Mockito.verify(postRepository, Mockito.times(1)).findById(postId);
+        Mockito.verify(postMapper, Mockito.times(1)).update(postUpdateDto, post);
     }
 
     @Test
@@ -132,7 +137,7 @@ public class PostServiceTest {
         Exception exception = Assertions.assertThrows(EntityNotFoundException.class,
                 () -> postService.updatePost(postUpdateDto, postId));
 
-        Assertions.assertEquals("Post not found with id: " + postId, exception.getMessage());
+        Assertions.assertEquals(String.format("Post not found with id: %s", postId), exception.getMessage());
     }
 
     @Test
@@ -160,7 +165,7 @@ public class PostServiceTest {
         Exception exception = Assertions.assertThrows(EntityNotFoundException.class,
                 () -> postService.softDeletePost(postId));
 
-        Assertions.assertEquals("Post not found with id: " + postId, exception.getMessage());
+        Assertions.assertEquals(String.format("Post not found with id: %s", postId), exception.getMessage());
 
         Mockito.verify(postRepository, Mockito.times(1)).findById(postId);
     }
@@ -184,8 +189,7 @@ public class PostServiceTest {
     @Test
     @DisplayName("Проверка успешного получения поста")
     public void givenValidPostIdWhenGetPostThenReturnPostViewDto() {
-        long postId =VALID_POST_ID;
-        post = new Post();
+        long postId = VALID_POST_ID;
 
         Mockito.when(postRepository.findById(postId)).thenReturn(Optional.of(post));
         Mockito.when(postMapper.toViewDto(post)).thenReturn(postViewDto);
@@ -208,22 +212,23 @@ public class PostServiceTest {
         Exception exception = Assertions.assertThrows(EntityNotFoundException.class,
                 () -> postService.getPost(postId));
 
-        Assertions.assertEquals("Post not found with id: " + postId, exception.getMessage());
+        Assertions.assertEquals(String.format("Post not found with id: %s", postId), exception.getMessage());
 
         Mockito.verify(postRepository, Mockito.times(1)).findById(postId);
     }
 
     @Test
     @DisplayName("Проверка успешного получения черновиков пользователя")
-    public void givenValidUserIdWhenGetUserDraftThenReturnListOfPostViewDto() {
+    public void givenValidUserIdWhenGetUserDraftsThenReturnListOfPostViewDto() {
         long userId = VALID_USER_ID;
         post.setDeleted(false);
+        post.setPublished(false);
         post.setCreatedAt(LocalDateTime.now());
 
         Mockito.when(postRepository.findByAuthorId(userId)).thenReturn(List.of(post));
         Mockito.when(postMapper.toViewDto(post)).thenReturn(postViewDto);
 
-        Assertions.assertNotNull(postService.getUserDraft(userId));
+        Assertions.assertNotNull(postService.getUserDrafts(userId));
 
         Mockito.verify(postRepository, Mockito.times(1)).findByAuthorId(userId);
         Mockito.verify(postMapper, Mockito.times(1)).toViewDto(post);
@@ -231,29 +236,28 @@ public class PostServiceTest {
 
     @Test
     @DisplayName("Проверка получения пустого списка черновиков пользователя")
-    public void givenInvalidUserIdWhenGetUserDraftThenReturnListOfPostViewDto() {
+    public void givenInvalidUserIdWhenGetUserDraftsThenReturnListOfPostViewDto() {
         long userId = VALID_USER_ID;
-        post.setDeleted(false);
-        post.setCreatedAt(LocalDateTime.now());
 
         Mockito.when(postRepository.findByAuthorId(userId)).thenReturn(List.of());
 
-        Assertions.assertNotNull(postService.getUserDraft(userId));
+        Assertions.assertNotNull(postService.getUserDrafts(userId));
 
         Mockito.verify(postRepository, Mockito.times(1)).findByAuthorId(userId);
     }
 
     @Test
     @DisplayName("Проверка успешного получения черновиков проекта")
-    public void givenValidProjectIdWhenGetProjectDraftThenReturnListOfPostViewDto() {
+    public void givenValidProjectIdWhenGetProjectDraftsThenReturnListOfPostViewDto() {
         long projectId = VALID_PROJECT_ID;
         post.setDeleted(false);
+        post.setPublished(false);
         post.setCreatedAt(LocalDateTime.now());
 
         Mockito.when(postRepository.findByProjectId(projectId)).thenReturn(List.of(post));
         Mockito.when(postMapper.toViewDto(post)).thenReturn(postViewDto);
 
-        Assertions.assertNotNull(postService.getProjectDraft(projectId));
+        Assertions.assertNotNull(postService.getProjectDrafts(projectId));
 
         Mockito.verify(postRepository, Mockito.times(1)).findByProjectId(projectId);
         Mockito.verify(postMapper, Mockito.times(1)).toViewDto(post);
@@ -261,29 +265,28 @@ public class PostServiceTest {
 
     @Test
     @DisplayName("Проверка получения пустого списка черновиков проекта")
-    public void givenInvalidProjectIdWhenGetProjectDraftThenReturnListOfPostViewDto() {
+    public void givenInvalidProjectIdWhenGetProjectDraftsThenReturnListOfPostViewDto() {
         long projectId = VALID_PROJECT_ID;
-        post.setDeleted(false);
-        post.setCreatedAt(LocalDateTime.now());
 
         Mockito.when(postRepository.findByProjectId(projectId)).thenReturn(List.of());
 
-        Assertions.assertNotNull(postService.getProjectDraft(projectId));
+        Assertions.assertNotNull(postService.getProjectDrafts(projectId));
 
         Mockito.verify(postRepository, Mockito.times(1)).findByProjectId(projectId);
     }
 
     @Test
     @DisplayName("Проверка успешного получения опубликованных постов пользователя")
-    public void givenValidUserIdWhenGetAuthorPublishedPostThenReturnListOfPostViewDto() {
+    public void givenValidUserIdWhenGetAuthorPublishedPostThenReturnListOfPostsViewDto() {
         long userId = VALID_USER_ID;
         post.setDeleted(false);
+        post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
 
         Mockito.when(postRepository.findByAuthorIdWithLikes(userId)).thenReturn(List.of(post));
         Mockito.when(postMapper.toViewDto(post)).thenReturn(postViewDto);
 
-        Assertions.assertNotNull(postService.getAuthorPublishedPost(userId));
+        Assertions.assertNotNull(postService.getAuthorPublishedPosts(userId));
 
         Mockito.verify(postRepository, Mockito.times(1))
                 .findByAuthorIdWithLikes(userId);
@@ -293,29 +296,30 @@ public class PostServiceTest {
 
     @Test
     @DisplayName("Проверка получения пустого списка опубликованных постов пользователя")
-    public void givenInvalidUserIdWhenGetAuthorPublishedPostThenReturnListOfPostViewDto() {
+    public void givenInvalidUserIdWhenGetAuthorPublishedPostThenReturnListOfPostsViewDto() {
         long userId = VALID_USER_ID;
         post.setDeleted(false);
         post.setPublishedAt(LocalDateTime.now());
 
-        Mockito.when(postRepository.findByAuthorId(userId)).thenReturn(List.of());
+        Mockito.when(postRepository.findByAuthorIdWithLikes(userId)).thenReturn(List.of());
 
-        Assertions.assertNotNull(postService.getUserDraft(userId));
+        Assertions.assertNotNull(postService.getAuthorPublishedPosts(userId));
 
-        Mockito.verify(postRepository, Mockito.times(1)).findByAuthorId(userId);
+        Mockito.verify(postRepository, Mockito.times(1)).findByAuthorIdWithLikes(userId);
     }
 
     @Test
     @DisplayName("Проверка успешного получения опубликованных постов проекта")
-    public void givenValidProjectIdWhenGetProjectPublishedPostThenReturnListOfPostViewDto() {
+    public void givenValidProjectIdWhenGetProjectPublishedPostThenReturnListOfPostsViewDto() {
         long projectId = VALID_PROJECT_ID;
         post.setDeleted(false);
+        post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
 
         Mockito.when(postRepository.findByProjectIdWithLikes(projectId)).thenReturn(List.of(post));
         Mockito.when(postMapper.toViewDto(post)).thenReturn(postViewDto);
 
-        Assertions.assertNotNull(postService.getProjectPublishedPost(projectId));
+        Assertions.assertNotNull(postService.getProjectPublishedPosts(projectId));
 
         Mockito.verify(postRepository, Mockito.times(1)).findByProjectIdWithLikes(projectId);
         Mockito.verify(postMapper, Mockito.times(1)).toViewDto(post);
@@ -323,14 +327,15 @@ public class PostServiceTest {
 
     @Test
     @DisplayName("Проверка получения пустого списка опубликованных постов проекта")
-    public void givenInvalidProjectIdWhenGetProjectPublishedPostThenReturnListOfPostViewDto() {
+    public void givenInvalidProjectIdWhenGetProjectPublishedPostThenReturnListOfPostsViewDto() {
         long projectId = VALID_PROJECT_ID;
         post.setDeleted(false);
+        post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
 
         Mockito.when(postRepository.findByProjectIdWithLikes(projectId)).thenReturn(List.of());
 
-        Assertions.assertNotNull(postService.getProjectPublishedPost(projectId));
+        Assertions.assertNotNull(postService.getProjectPublishedPosts(projectId));
 
         Mockito.verify(postRepository, Mockito.times(1)).findByProjectIdWithLikes(projectId);
     }

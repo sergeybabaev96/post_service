@@ -6,8 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +17,7 @@ import java.util.Map;
  * Этот класс перехватывает исключения, возникающие в контроллерах, и возвращает соответствующие HTTP-ответы.
  */
 @Slf4j
-@ControllerAdvice
+@RestControllerAdvice
 public class GlobalExceptionHandler {
 
     /**
@@ -30,8 +30,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DataValidationException.class)
     public ResponseEntity<String> handleDataValidationException(DataValidationException dataValidationException) {
         log.warn("Data validation error: {}", dataValidationException.getMessage(), dataValidationException);
-        return ResponseEntity.badRequest()
-                .body("Ошибка валидации данных: " + dataValidationException.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(String.format("Ошибка валидации данных: %s", dataValidationException.getMessage()));
     }
 
     /**
@@ -45,7 +45,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException entityNotFoundException) {
         log.error("Entity not found: {}", entityNotFoundException.getMessage(), entityNotFoundException);
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body("Сущность не найдена: " + entityNotFoundException.getMessage());
+                .body(String.format("Сущность не найдена: %s", entityNotFoundException.getMessage()));
     }
 
     /**
@@ -59,20 +59,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleException(Exception exception) {
         log.error("Internal server error: {}", exception.getMessage(), exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Произошла внутренняя ошибка: " + exception.getMessage());
+                .body(String.format("Произошла внутренняя ошибка: %s", exception.getMessage()));
     }
 
-/**
- * Обрабатывает исключение {@link MethodArgumentNotValidException}, которое возникает при валидации данных,
- * переданных в метод контроллера. Этот метод собирает все ошибки валидации и возвращает их в виде
- * JSON-объекта, где ключ — это имя поля, а значение — сообщение об ошибке.
- *
- * @param exception Исключение {@link MethodArgumentNotValidException}, содержащее информацию об ошибках валидации.
- * @return Объект {@link ResponseEntity}, содержащий:
- *         <ul>
- *             <li>Тело ответа в виде {@link Map}, где ключ — это имя поля, а значение — сообщение об ошибке.</li>
- *             <li>HTTP-статус {@link HttpStatus#BAD_REQUEST} (400), указывающий на некорректный запрос
- */
+    /**
+     * Обрабатывает исключение {@link MethodArgumentNotValidException}, которое возникает при валидации данных,
+     * переданных в метод контроллера. Этот метод собирает все ошибки валидации и возвращает их в виде
+     * JSON-объекта, где ключ — это имя поля, а значение — сообщение об ошибке.
+     *
+     * @param exception Исключение {@link MethodArgumentNotValidException}, содержащее информацию об ошибках валидации.
+     * @return Объект {@link ResponseEntity}, содержащий:
+     *         <ul>
+     *             <li>Тело ответа в виде {@link Map}, где ключ — это имя поля, а значение — сообщение об ошибке.</li>
+     *             <li>HTTP-статус {@link HttpStatus#BAD_REQUEST} (400), указывающий на некорректный запрос
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException exception) {
         Map<String, String> errors = new HashMap<>();
