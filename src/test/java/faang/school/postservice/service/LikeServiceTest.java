@@ -1,6 +1,8 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
+import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.ConcurrentLikeException;
 import faang.school.postservice.exception.DuplicateEntityException;
 import faang.school.postservice.exception.EntityNotFoundException;
@@ -11,7 +13,6 @@ import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.LikeRepository;
 import faang.school.postservice.repository.PostRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -47,36 +48,43 @@ public class LikeServiceTest {
     @Mock
     private UserContext userContext;
 
+    @Mock
+    private UserServiceClient userClient;
+
     @BeforeEach
     public void setUp() {
-        likeService = new LikeService(likeRepository, postRepository, commentRepository, userContext);
+        likeService = new LikeService(likeRepository, postRepository, commentRepository, userContext, userClient);
     }
 
     @Test
-    @DisplayName("Test negative put like on post when user not found")
-    public void testNegativeFirstPutLikeOnPost() {
+    public void testNegativePutLikeOnPostWhenUserNotFound() {
+        assertThrows(NullPointerException.class, () -> likeService.putLikeOnPost(firstId));
+    }
+
+    @Test
+    public void testNegativePutLikeOnPostWhenPostNotFound() {
+        includeCheckUser();
+
         assertThrows(EntityNotFoundException.class, () -> likeService.putLikeOnPost(firstId));
     }
 
     @Test
-    @DisplayName("Test negative put like on post when user already put like on this post")
-    public void testNegativeSecondPutLikeOnPost() {
+    public void testNegativePutLikeOnPostWhenDuplicateLike() {
+        includeCheckUser();
         includeSecondNegativeTestLikeOnPost();
         Optional<Like> like = Optional.ofNullable(createLike(firstId, null, null));
-        when(userContext.getUserId()).thenReturn(firstId);
         when(likeRepository.findByPostIdAndUserId(firstId, firstId)).thenReturn(like);
 
         assertThrows(DuplicateEntityException.class, () -> likeService.putLikeOnPost(firstId));
     }
 
     @Test
-    @DisplayName("Test negative put like on post when user already put like on comment of this post")
-    public void testNegativeThirdPutLikeOnPost() {
+    public void testNegativePutLikeOnPostWhenLikeAlreadyExists() {
+        includeCheckUser();
         includeSecondNegativeTestLikeOnPost();
         Like like = createLike(firstId, null, null);
         Comment comment = createComment(firstId, List.of(like), null);
         Post post = createPost(firstId, List.of(comment), Collections.emptyList());
-        when(userContext.getUserId()).thenReturn(firstId);
         when(likeRepository.findByPostIdAndUserId(firstId, firstId)).thenReturn(Optional.empty());
         when(postRepository.findById(firstId)).thenReturn(Optional.of(post));
 
@@ -85,11 +93,10 @@ public class LikeServiceTest {
 
     @Test
     public void testPositivePutLikeOnPostSuccessful() {
+        includeCheckUser();
         includeSecondNegativeTestLikeOnPost();
         Post post = createPost(firstId, Collections.emptyList(), Collections.emptyList());
         Like like = createLike(firstId, post, null);
-
-        when(userContext.getUserId()).thenReturn(firstId);
         when(likeRepository.findByPostIdAndUserId(firstId, firstId)).thenReturn(Optional.empty());
 
         likeService.putLikeOnPost(firstId);
@@ -98,15 +105,20 @@ public class LikeServiceTest {
     }
 
     @Test
-    @DisplayName("Test negative remove like at post when user not found")
-    public void testNegativeFirstRemoveLikeAtPost() {
+    public void testNegativeRemoveLikeAtPostWhenUserNotFound() {
+        assertThrows(NullPointerException.class, () -> likeService.removeLikeAtPost(firstId));
+    }
+
+    @Test
+    public void testNegativeRemoveLikeAtPostWhenIdInvalid() {
+        includeCheckUser();
+
         assertThrows(EntityNotFoundException.class, () -> likeService.removeLikeAtPost(firstId));
     }
 
     @Test
-    @DisplayName("Test negative remove like on post when post not found")
-    public void testNegativeSecondRemoveLikeAtPost() {
-        when(userContext.getUserId()).thenReturn(firstId);
+    public void testNegativeRemoveLikeAtPostWhenPostNotFound() {
+        includeCheckUser();
         when(likeRepository.findByPostIdAndUserId(firstId, firstId)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> likeService.removeLikeAtPost(firstId));
@@ -116,7 +128,7 @@ public class LikeServiceTest {
     public void testPositiveRemoveLikeAtPostSuccessful() {
         Like like = createLike(firstId,
                 createPost(firstId, Collections.emptyList(), Collections.emptyList()), null);
-        when(userContext.getUserId()).thenReturn(firstId);
+        includeCheckUser();
         when(likeRepository.findByPostIdAndUserId(firstId, firstId)).thenReturn(Optional.ofNullable(like));
 
         likeService.removeLikeAtPost(firstId);
@@ -125,30 +137,34 @@ public class LikeServiceTest {
     }
 
     @Test
-    @DisplayName("Test negative put like on comment when user not found")
-    public void testNegativeFirstPutLikeOnComment() {
+    public void testNegativePutLikeOnCommentWhenUserNotFound() {
+        assertThrows(NullPointerException.class, () -> likeService.putLikeOnComment(firstId));
+    }
+
+    @Test
+    public void testNegativePutLikeOnCommentWhenCommentNotFound() {
+        includeCheckUser();
+
         assertThrows(EntityNotFoundException.class, () -> likeService.putLikeOnComment(firstId));
     }
 
     @Test
-    @DisplayName("Test negative put like on comment when user already put like on this comment")
-    public void testNegativeSecondPutLikeOnComment() {
+    public void testNegativePutLikeOnCommentWhenDuplicateLike() {
+        includeCheckUser();
         includeSecondNegativeTestLikeOnComment();
         Optional<Like> like = Optional.ofNullable(createLike(firstId, null, null));
-        when(userContext.getUserId()).thenReturn(firstId);
         when(likeRepository.findByCommentIdAndUserId(firstId, firstId)).thenReturn(like);
 
         assertThrows(DuplicateEntityException.class, () -> likeService.putLikeOnComment(firstId));
     }
 
     @Test
-    @DisplayName("Test negative put like on comment when user already put like on post with this comment")
-    public void testNegativeThirdPutLikeOnComment() {
+    public void testNegativePutLikeOnCommentWhenLikeAlreadyExists() {
+        includeCheckUser();
         includeSecondNegativeTestLikeOnComment();
         Like like = createLike(firstId, null, null);
         Post post = createPost(firstId, null, List.of(like));
         Comment comment = createComment(firstId, null, post);
-        when(userContext.getUserId()).thenReturn(firstId);
         when(likeRepository.findByCommentIdAndUserId(firstId, firstId)).thenReturn(Optional.empty());
         when(commentRepository.findById(firstId)).thenReturn(Optional.of(comment));
 
@@ -157,11 +173,11 @@ public class LikeServiceTest {
 
     @Test
     public void testPositivePutLikeOnCommentSuccessful() {
+        includeCheckUser();
         includeSecondNegativeTestLikeOnComment();
         Post post = createPost(firstId, Collections.emptyList(), Collections.emptyList());
         Comment comment = createComment(firstId, Collections.emptyList(), post);
         Like like = createLike(firstId, null, comment);
-        when(userContext.getUserId()).thenReturn(firstId);
         when(likeRepository.findByCommentIdAndUserId(firstId, firstId)).thenReturn(Optional.empty());
 
         likeService.putLikeOnComment(firstId);
@@ -170,15 +186,20 @@ public class LikeServiceTest {
     }
 
     @Test
-    @DisplayName("Test negative remove like at comment when user not found")
-    public void testNegativeFirstRemoveLikeAtComment() {
+    public void testNegativeRemoveLikeAtCommentWhenUserNotFound() {
+        assertThrows(NullPointerException.class, () -> likeService.removeLikeAtComment(firstId));
+    }
+
+    @Test
+    public void testNegativeRemoveLikeAtCommentWhenInvalidId() {
+        includeCheckUser();
+
         assertThrows(EntityNotFoundException.class, () -> likeService.removeLikeAtComment(firstId));
     }
 
     @Test
-    @DisplayName("Test negative remove like at comment when comment not found")
-    public void testNegativeSecondRemoveLikeAtComment() {
-        when(userContext.getUserId()).thenReturn(firstId);
+    public void testNegativeRemoveLikeAtCommentWhenCommentNotFound() {
+        includeCheckUser();
         when(likeRepository.findByCommentIdAndUserId(firstId, firstId)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> likeService.removeLikeAtComment(firstId));
@@ -186,8 +207,8 @@ public class LikeServiceTest {
 
     @Test
     public void testPositiveRemoveLikeAtCommentSuccessful() {
+        includeCheckUser();
         Like like = createLike(firstId, null, createComment(firstId, null, null));
-        when(userContext.getUserId()).thenReturn(firstId);
         when(likeRepository.findByCommentIdAndUserId(firstId, firstId)).thenReturn(Optional.ofNullable(like));
 
         likeService.removeLikeAtComment(firstId);
@@ -219,6 +240,12 @@ public class LikeServiceTest {
                 .build();
     }
 
+    private UserDto createUser(Long id) {
+        return UserDto.builder()
+                .id(id)
+                .build();
+    }
+
     private void includeSecondNegativeTestLikeOnPost() {
         Optional<Post> post = Optional.ofNullable(
                 createPost(firstId, Collections.emptyList(), Collections.emptyList()));
@@ -230,5 +257,10 @@ public class LikeServiceTest {
                 createComment(firstId, Collections.emptyList(),
                         createPost(firstId, Collections.emptyList(), Collections.emptyList())));
         when(commentRepository.findById(firstId)).thenReturn(comment);
+    }
+
+    private void includeCheckUser() {
+        when(userContext.getUserId()).thenReturn(firstId);
+        when(userClient.getUser(firstId)).thenReturn(createUser(firstId));
     }
 }

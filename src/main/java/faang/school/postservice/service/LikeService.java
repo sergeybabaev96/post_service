@@ -1,5 +1,6 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.exception.ConcurrentLikeException;
 import faang.school.postservice.exception.DuplicateEntityException;
@@ -35,6 +36,7 @@ public class LikeService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserContext userContext;
+    private final UserServiceClient userClient;
 
     public void putLikeOnPost(Long postId) {
         Long userId = getContextUser();
@@ -154,6 +156,6 @@ public class LikeService {
     }
 
     private Long getContextUser() {
-        return userContext.getUserId();
+        return userClient.getUser(userContext.getUserId()).id();
     }
 }
