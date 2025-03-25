@@ -37,4 +37,15 @@ public interface AlbumRepository extends CrudRepository<Album, Long> {
              )
              """)
     List<Album> findFavoriteAlbumsByUserId(long userId);
+
+    @Query(nativeQuery = true, value = "SELECT user_id FROM album_allowed_users WHERE album_id = :id")
+    List<Long> findSelectedUsersForAlbum(long id);
+
+    @Query(nativeQuery = true, value = """
+            INSERT INTO album_allowed_users (album_id, user_id)
+            VALUES (:albumId, :userId)
+            ON CONFLICT (album_id, user_id) DO NOTHING
+            """)
+    @Modifying
+    void addUserForVisibilityAtAlbum(long albumId, long userId);
 }
