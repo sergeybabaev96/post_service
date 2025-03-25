@@ -52,7 +52,7 @@ public class CommentControllerTest {
 
         when(commentService.createComment(any(CommentDto.class))).thenReturn(commentDto);
 
-        mockMvc.perform(post("/api/posts/{postId}/comments", postId)
+        mockMvc.perform(post("/api/v1/posts/{postId}/comments", postId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentDto)))
                 .andExpect(status().isCreated()) // Ожидаем статус 201
@@ -74,7 +74,7 @@ public class CommentControllerTest {
 
         when(commentService.getAllCommentsByPostId(postId)).thenReturn(comments);
 
-        mockMvc.perform(get("/api/posts/{postId}/comments", postId))
+        mockMvc.perform(get("/api/v1/posts/{postId}/comments", postId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].content").value("Test comment"))
                 .andExpect(jsonPath("$[0].postId").value(postId));
@@ -97,7 +97,7 @@ public class CommentControllerTest {
 
         when(commentService.updateComment(any(CommentDto.class))).thenReturn(commentDto);
 
-        mockMvc.perform(put("/api/posts/{postId}/comments/{commentId}", postId, commentId)
+        mockMvc.perform(put("/api/v1/posts/{postId}/comments/{commentId}", postId, commentId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(commentDto)))
                 .andExpect(status().isOk())
@@ -116,7 +116,7 @@ public class CommentControllerTest {
 
         doNothing().when(commentService).deleteComment(commentId, postId);
 
-        mockMvc.perform(delete("/api/posts/{postId}/comments/{commentId}", 1L, commentId))
+        mockMvc.perform(delete("/api/v1/posts/{postId}/comments/{commentId}", 1L, commentId))
                 .andExpect(status().isNoContent());
 
         verify(commentService, times(1)).deleteComment(commentId, postId);

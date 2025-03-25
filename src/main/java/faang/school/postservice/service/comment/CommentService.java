@@ -9,12 +9,15 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommentService {
@@ -24,7 +27,9 @@ public class CommentService {
     private final UserServiceClient userServiceClient;
     private final CommentMapper commentMapper;
 
+    @Transactional
     public CommentDto createComment(CommentDto commentDto) {
+        log.info("Creating a comment for post ID: {} by user ID: {}", commentDto.getPostId(), commentDto.getAuthorId());
         if (!postRepository.existsById(commentDto.getPostId())) {
             throw new DataValidationException("Post with ID " + commentDto.getPostId() + " does not exist.");
         }
@@ -35,10 +40,13 @@ public class CommentService {
         LocalDateTime createdAt = LocalDateTime.now();
         Comment comment = commentMapper.toEntity(commentDto, createdAt);
         Comment savedComment = commentRepository.save(comment);
+        log.info("Comment created with ID: {}", savedComment.getId());
         return commentMapper.toDto(savedComment);
     }
 
+    @Transactional
     public CommentDto updateComment(CommentDto commentDto) {
+        log.info("Updating comment with ID: {}", commentDto.getId());
         Comment existingComment = commentRepository.findById(commentDto.getId())
                 .orElseThrow(() -> new DataValidationException("Comment with ID " + commentDto.getId() + " does not exist."));
 
@@ -46,10 +54,13 @@ public class CommentService {
         existingComment.setUpdatedAt(LocalDateTime.now());
 
         Comment updatedComment = commentRepository.save(existingComment);
+        log.info("Comment with ID: {} updated successfully.", commentDto.getId());
         return commentMapper.toDto(updatedComment);
     }
 
+    @Transactional
     public List<CommentDto> getAllCommentsByPostId(long postId) {
+        log.info("Fetching comments for post ID: {} in chronological order", postId);
         List<Comment> comments = commentRepository.findAllByPostId(postId);
         return comments.stream()
                 .map(commentMapper::toDto)
@@ -57,7 +68,9 @@ public class CommentService {
                 .toList();
     }
 
+    @Transactional
     public void deleteComment(long commentId, long postId) {
+        log.info("Deleting comment with ID: {}", commentId);
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new DataValidationException("Comment not found with ID: " + commentId));
 
@@ -66,5 +79,6 @@ public class CommentService {
         }
 
         commentRepository.deleteById(commentId);
+        log.info("Comment with ID: {} has been deleted.", commentId);
     }
 }
