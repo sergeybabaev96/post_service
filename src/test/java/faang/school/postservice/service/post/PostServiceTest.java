@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+
 class PostServiceTest {
 
     @InjectMocks
@@ -145,7 +146,7 @@ class PostServiceTest {
         postDto.setProjectId(projectId);
         assertThrows(DataValidationException.class, () -> postService.createDraftPost(postDto));
     }
-    //
+
     @Test
     void publishPost_ShouldPublish() {
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
