@@ -4,7 +4,6 @@ import faang.school.postservice.model.*;
 import faang.school.postservice.model.ad.Ad;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.annotation.Id;
@@ -15,7 +14,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@RedisHash("post")
+@RedisHash(value = "post")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor(force = true)
