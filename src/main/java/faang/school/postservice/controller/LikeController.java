@@ -28,7 +28,7 @@ public class LikeController {
         return likeService.addLikeToPost(likeDto);
     }
 
-    @DeleteMapping("/like/post/{postId}/user/{userId}")
+    @DeleteMapping("/like/posts/{postId}/users/{userId}")
     public PostDto removeLikeFromPost(@RequestParam Long postId, @RequestParam Long userId) {
         LikeDto likeDto = new LikeDto(userId,postId,null);
         validateLike(likeDto);
@@ -41,7 +41,7 @@ public class LikeController {
         return likeService.addLikeToComment(likeDto);
     }
 
-    @DeleteMapping("/like/comment/{commentId}/user/{userId}")
+    @DeleteMapping("/like/comments/{commentId}/users/{userId}")
     public CommentDto removeLikeFromComment(@RequestParam Long commentId, @RequestParam Long userId) {
         LikeDto likeDto = new LikeDto(userId,null, commentId);
         validateLike(likeDto);
