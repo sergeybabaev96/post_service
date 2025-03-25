@@ -16,8 +16,8 @@ import faang.school.postservice.mapper.PostMapperImpl;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.service.GrammarService;
 import faang.school.postservice.repository.ResourceRepository;
+import faang.school.postservice.service.GrammarService;
 import faang.school.postservice.service.HashtagService;
 import faang.school.postservice.service.PaginationService;
 import faang.school.postservice.service.s3.S3Service;
@@ -53,6 +53,8 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class PostServiceTest {
+    @Captor
+    ArgumentCaptor<Post> postArgumentCaptor;
     @Mock
     private UserServiceClient userServiceClient;
     @Mock
@@ -81,11 +83,7 @@ public class PostServiceTest {
     private ResourceRepository resourceRepository;
     @Mock
     private PostImageService postImageService;
-
     private Post post;
-
-    @Captor
-    ArgumentCaptor<Post> postArgumentCaptor;
 
     @BeforeEach
     void setUp() {

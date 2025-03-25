@@ -30,9 +30,9 @@ spring:
     openfeign:
       client:
         config:
-            default:
-                connectTimeout: 5_000
-                readTimeout: 10_000
+          default:
+            connectTimeout: 5_000
+            readTimeout: 10_000
 
 resilience4j:
   retry:

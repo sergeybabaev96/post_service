@@ -1,6 +1,5 @@
 package faang.school.postservice.filter.album;
 
-
 import faang.school.postservice.dto.album.AlbumFilterDto;
 import faang.school.postservice.filters.album.impl.AlbumDateFilter;
 import faang.school.postservice.model.Album;
@@ -18,10 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @ExtendWith(MockitoExtension.class)
 public class AlbumDateFilterTest {
     private final AlbumDateFilter filter = new AlbumDateFilter();
+    private Stream<Album> stream;
     private AlbumFilterDto filterDto;
     private Album album1;
     private Album album2;
-    Stream<Album> stream;
 
     @BeforeEach
     public void init() {

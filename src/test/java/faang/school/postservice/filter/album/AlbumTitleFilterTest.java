@@ -17,10 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class AlbumTitleFilterTest {
 
     private final AlbumTitleFilter filter = new AlbumTitleFilter();
+    private Stream<Album> stream;
     private AlbumFilterDto filterDto;
     private Album album1;
     private Album album2;
-    Stream<Album> stream;
 
     @BeforeEach
     public void init() {

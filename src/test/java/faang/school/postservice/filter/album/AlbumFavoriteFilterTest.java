@@ -1,6 +1,5 @@
 package faang.school.postservice.filter.album;
 
-
 import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.album.AlbumFilterDto;
 import faang.school.postservice.filters.album.impl.AlbumFavoriteFilter;
@@ -21,13 +20,13 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class AlbumFavoriteFilterTest {
+    private Stream<Album> stream;
     private AlbumFavoriteFilter filter;
     private AlbumRepository albumRepository;
     private UserContext userContext;
     private AlbumFilterDto filterDto;
     private Album album1;
     private Album album2;
-    Stream<Album> stream;
 
     @BeforeEach
     public void init() {
