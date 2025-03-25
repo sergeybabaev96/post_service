@@ -17,22 +17,23 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    private static final String HANDLE_FORM = "Обработано исключение {}: {}";
 
     @ExceptionHandler(DataValidationException.class)
     public ResponseEntity<String> handleDataValidationException(DataValidationException ex) {
-        log.error("Обработано исключение валидации: " + ex.getMessage(), ex);
+        log.error(HANDLE_FORM, "валидации данных", ex.getMessage(), ex);
         return BadRequest(ex);
     }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException ex) {
-        log.error("Обработано исключение отсутствия сущности: " + ex.getMessage(), ex);
+        log.error(HANDLE_FORM, "отсутствия сущности", ex.getMessage(), ex);
         return NotFound(ex);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<String> handleConstraintViolationException(ConstraintViolationException ex) {
-        log.error("Обработано исключение нарушения ограничений: " + ex.getMessage(), ex);
+        log.error(HANDLE_FORM, "нарушения ограничений", ex.getMessage(), ex);
         return BadRequest(ex);
     }
 
@@ -44,13 +45,13 @@ public class GlobalExceptionHandler {
             String errorMessage = error.getDefaultMessage();
             errors.put(fieldName, errorMessage);
         });
-        log.error("Обработано исключение валидации аргументов метода: " + ex.getMessage(), ex);
+        log.error(HANDLE_FORM, "валидации аргументов метода", ex.getMessage(), ex);
         return ResponseEntity.badRequest().body(errors);
     }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
-        log.error("Обработано исключение в ходе работы программы: " + ex.getMessage(), ex);
+        log.error(HANDLE_FORM, "в ходе работы программы", ex.getMessage(), ex);
         return InternalServerError(ex);
     }
 
