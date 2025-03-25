@@ -2,6 +2,7 @@ package faang.school.postservice.service;
 
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.like.LikeCommentRequest;
+import faang.school.postservice.dto.like.LikePostEvent;
 import faang.school.postservice.dto.like.LikePostRequest;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exceptions.CommentWasNotFoundException;
@@ -25,8 +26,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -47,6 +47,8 @@ public class LikeServiceTest {
     private CommentService commentService;
     @Mock
     private CommentRepository commentRepository;
+    @Mock
+    private KafkaService kafkaService;
     @InjectMocks
     private LikeService likeService;
 
@@ -61,6 +63,7 @@ public class LikeServiceTest {
         post = Post.builder()
                 .id(1L)
                 .authorId(13L)
+                .likes(new ArrayList<>())
                 .createdAt(LocalDateTime.now())
                 .build();
         comment = Comment.builder()
@@ -98,27 +101,28 @@ public class LikeServiceTest {
         verify(likeRepository).save(captor.capture());
         Like newLike = captor.getValue();
 
+        verify(kafkaService).sendPostLikeMessage(any(LikePostEvent.class));
+
         Assertions.assertTrue(newLike.getUserId() == userDto.id());
         Assertions.assertTrue(newLike.getPost().getId() == post.getId());
     }
 
     @Test
     public void toggleLikePost_SuccessUnLike() {
-        post.setLikes(List.of(
-                Like.builder().userId(userDto.id()).build())
-        );
+        List<Like> likes = new ArrayList<>();
+        Like like = Like.builder().userId(userDto.id()).build();
+        likes.add(like);
+        post.setLikes(likes);
 
         when(postRepository.findById(1L)).thenReturn(Optional.of(post));
         when(userServiceClient.getUser(1L)).thenReturn(userDto);
 
         likeService.toggleLikePost(new LikePostRequest(1L, 1L));
 
-        ArgumentCaptor<Long> postIdCaptor = ArgumentCaptor.forClass(Long.class);
-        ArgumentCaptor<Long> userIdCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(likeRepository).deleteByPostIdAndUserId(postIdCaptor.capture(), userIdCaptor.capture());
+        ArgumentCaptor<Like> likeCaptor = ArgumentCaptor.forClass(Like.class);
+        verify(likeRepository).delete(likeCaptor.capture());
 
-        Assertions.assertEquals(postIdCaptor.getValue(), post.getId());
-        Assertions.assertEquals(userIdCaptor.getValue(), userDto.id());
+        Assertions.assertEquals(likeCaptor.getValue().getId(), like.getId());
     }
 
     @Test
@@ -138,21 +142,20 @@ public class LikeServiceTest {
 
     @Test
     public void toggleLikeComment_SuccessUnLike() {
-        comment.setLikes(List.of(
-                Like.builder().userId(userDto.id()).build())
-        );
+        Set<Like> likes = new HashSet<>();
+        Like like = Like.builder().userId(userDto.id()).build();
+        likes.add(like);
+        comment.setLikes(likes);
 
         when(commentRepository.findById(1L)).thenReturn(Optional.of(comment));
         when(userServiceClient.getUser(1L)).thenReturn(userDto);
 
         likeService.toggleLikeComment(new LikeCommentRequest(1L, 1L));
 
-        ArgumentCaptor<Long> commentIdCaptor = ArgumentCaptor.forClass(Long.class);
-        ArgumentCaptor<Long> userIdCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(likeRepository).deleteByCommentIdAndUserId(commentIdCaptor.capture(), userIdCaptor.capture());
+        ArgumentCaptor<Like> likeCaptor = ArgumentCaptor.forClass(Like.class);
+        verify(likeRepository).delete(likeCaptor.capture());
 
-        Assertions.assertEquals(commentIdCaptor.getValue(), comment.getId());
-        Assertions.assertEquals(userIdCaptor.getValue(), userDto.id());
+        Assertions.assertEquals(likeCaptor.getValue().getId(), like.getId());
     }
 
     @Test
@@ -275,6 +278,4 @@ public class LikeServiceTest {
         assertEquals("Failed users service", exception.getMessage());
         verify(userServiceClient, times(1)).getUsersByIds(List.of(1L, 2L, 3L));
     }
-
-
 }

@@ -1,5 +1,6 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.config.kafka.KafkaProducer;
 import faang.school.postservice.dto.comment.CommentCreateEventDto;
 import faang.school.postservice.dto.comment.CommentResponse;
 import faang.school.postservice.dto.comment.CommentUpdateRequest;
@@ -15,26 +16,30 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static faang.school.postservice.config.MinioBuckets.COMMENT_IMAGE_BUCKET_NAME;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommentService {
 
+    private static final int SMALL_IMAGE_SIZE = 170;
+    private static final int LARGE_IMAGE_SIZE = 1080;
     private final ValidateService validateService;
     private final CommentMapper commentMapper;
     private final CommentRepository commentRepository;
-    private static final int SMALL_IMAGE_SIZE = 170;
-    private static final int LARGE_IMAGE_SIZE = 1080;
     private final ImageService imageService;
     private final KafkaService kafkaService;
     private final PostService postService;
+    private final KafkaProducer kafkaProducer;
 
     @Transactional
     public CommentResponse create(@Valid CreateCommentRequest createCommentRequest) {
@@ -43,14 +48,14 @@ public class CommentService {
 
         Post post = postService.getPostById(createCommentRequest.postId());
         Comment comment = commentMapper.toEntity(createCommentRequest);
-        comment = commentRepository.save(comment);
         CommentCreateEventDto eventDto = CommentCreateEventDto.builder()
                 .authorId(comment.getAuthorId())
                 .postId(post.getId())
                 .content(comment.getContent())
+                .date(LocalDateTime.now())
                 .build();
         kafkaService.sendCommentCreateMessage(eventDto);
-        return commentMapper.toCommentResponse(comment);
+        return commentMapper.toCommentResponse(commentRepository.save(comment));
     }
 
     @Transactional
@@ -106,4 +111,12 @@ public class CommentService {
         return commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("Comment with id " + commentId + " not found"));
     }
+
+    public void processUnverifiedComments() {
+        List<Long> authorIds = commentRepository.findAuthorIdsWithMoreThanFiveUnverifiedComments();
+        authorIds.forEach(kafkaProducer::sendEventToUserServiceForBan);
+
+        log.info("User ban events sent successfully.");
+    }
+
 }

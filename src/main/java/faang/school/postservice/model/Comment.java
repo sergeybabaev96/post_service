@@ -19,7 +19,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -40,7 +40,7 @@ public class Comment {
     private Long authorId;
 
     @OneToMany(mappedBy = "comment", orphanRemoval = true)
-    private List<Like> likes;
+    private Set<Like> likes;
 
     @ManyToOne
     @JoinColumn(name = "post_id", nullable = false)
@@ -61,4 +61,11 @@ public class Comment {
 
     @Column(name = "small_image_file_key")
     private String smallImageFileKey;
+
+    @Column(name = "verified")
+    private Boolean verified;
+
+    @Column(name = "verified_at")
+    private LocalDateTime verifiedAt;
+
 }
