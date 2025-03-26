@@ -25,13 +25,16 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostService {
     @Value("${spring.data.redis.properties.post-collection.hours-to-expire}")
-    public long postHoursToExpire;
+    private long postHoursToExpire;
+    @Value("${spring.kafka.topics.post.followers-batch-size:10000}")
+    private int followersBatchSize;
 
     private final PostRepository postRepository;
     private final RedisPostRepository postCacheRepository;
@@ -69,7 +72,7 @@ public class PostService {
         postCacheRepository.save(postCacheDto);
 
         List<Long> followersIds = userServiceClient.getFollowers(post.getAuthorId());
-        postEventPublisher.publish(new PostEvent(savedPost.getId(), followersIds));
+        publishPostEvent(savedPost.getId(), followersIds);
 
         return postMapper.toResponseDto(savedPost);
     }
@@ -170,5 +173,15 @@ public class PostService {
                 .sorted(Comparator.comparing(fieldToSortBy).reversed())
                 .map(postMapper::toResponseDto)
                 .toList();
+    }
+
+    private void publishPostEvent(Long postId, List<Long> followersIds) {
+        int batchAmount = (int) Math.ceil((double) followersIds.size() / followersBatchSize);
+        IntStream.range(0, batchAmount)
+                .forEach(i -> {
+                    int start = i * followersBatchSize;
+                    int end = Math.min((i + 1) * followersBatchSize, followersIds.size());
+                    postEventPublisher.publish(new PostEvent(postId, followersIds.subList(start, end)));
+                });
     }
 }
