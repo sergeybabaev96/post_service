@@ -26,6 +26,17 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
+    consumer:
+      group-id: postServiceListenerGroup
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: "*"
     producer:
       acks: all
       security:
@@ -43,11 +54,13 @@ spring:
         name: "like_topic"
         partitions: 10
         replicas: 1
-      post:
-        name: "posts"
-        followers-batch-size: 10000
       comment:
         name: "comment-create"
+      post:
+        name: "post_topic"
+        partitions: 10
+        replicas: 3
+        followers-batch-size: 10000
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
@@ -62,6 +75,9 @@ spring:
       properties:
         post-collection:
           hours-to-expire: 24
+        feed-collection:
+          max-cache-size: 500
+          name: 'feedCache:'
         author-collection:
           hours-to-expire: 24
 
