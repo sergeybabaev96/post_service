@@ -11,6 +11,7 @@ import faang.school.postservice.filter.post.PostPublishedSpecification;
 import faang.school.postservice.mapper.PostMapperImpl;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.service.feed.FeedEventService;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,6 +39,8 @@ class PostServiceImplTest {
     private PostMapperImpl postMapper;
     @Mock
     ExecutorService executorService;
+    @Mock
+    FeedEventService feedEventService;
     @InjectMocks
     private PostServiceImpl postService;
     private PostCreateRequestDto postCreateRequestDto;
@@ -60,7 +63,8 @@ class PostServiceImplTest {
                 postServiceValidatorMock,
                 postMapper,
                 postSpecificationFilters,
-                executorService
+                executorService,
+                feedEventService
         );
 
         postCreateRequestDto = PostCreateRequestDto.builder()

@@ -9,6 +9,7 @@ import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.PostService;
+import faang.school.postservice.service.feed.FeedEventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
@@ -34,6 +35,7 @@ public class PostServiceImpl implements PostService {
     private final PostMapper postMapper;
     private final List<PostSpecificationFilter> postSpecificationFilters;
     private final ExecutorService executorService;
+    private final FeedEventService feedEventService;
 
     @Override
     public PostResponseDto createPostDraft(PostCreateRequestDto postCreateRequestDto) {
