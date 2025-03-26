@@ -18,29 +18,19 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
 
-      - name: Validate Gradle Wrapper
-        uses: gradle/wrapper-validation-action@v1
-
-      - name: Cache Gradle dependencies
+      - name: Cache Gradle packages
         uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            gradle-${{ runner.os }}-
+            ${{ runner.os }}-gradle-
 
-      - name: Build project
-        run: ./gradlew clean build --no-daemon --stacktrace
-
-      - name: Upload Built JAR
-        uses: actions/upload-artifact@v4
-        with:
-          name: service-jar
-          path: build/libs/service.jar
+      - name: Build with Gradle
+        run: ./gradlew build --no-daemon
 
   test:
     runs-on: ubuntu-latest
@@ -55,23 +45,25 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
 
-      - name: Restore Gradle cache
+      - name: Cache Gradle packages
         uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            gradle-${{ runner.os }}-
+            ${{ runner.os }}-gradle-
 
       - name: Run tests
-        run: ./gradlew test jacocoTestReport jacocoTestCoverageVerification --no-daemon --stacktrace
+        run: ./gradlew test --no-daemon
+
+      - name: Build, Test, and Validate Coverage with Gradle
+        run: ./gradlew clean build test jacocoTestReport jacocoTestCoverageVerification
 
       - name: Upload JaCoCo Report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: jacoco-report
           path: build/reports/jacoco/test
