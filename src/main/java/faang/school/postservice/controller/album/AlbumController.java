@@ -30,10 +30,10 @@ public class AlbumController {
     public ResponseEntity<AlbumDto> createAlbum(
             @RequestHeader(value = "x-user-id") Long userId,
             @Valid @RequestBody AlbumDto albumDto) {
-            if (userId == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(null);
-            }
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null);
+        }
         AlbumDto savedDto = albumService.createAlbum(userId, albumDto);
         return new ResponseEntity<>(savedDto, HttpStatus.CREATED);
     }

@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AlbumService {
 
-    private static final String POST_NOT_FOUND_MESSAGE= "Post not found";
-    private static final String ALBUM_NOT_FOUND_MESSAGE= "Album not found";
+    private static final String POST_NOT_FOUND_MESSAGE = "Post not found";
+    private static final String ALBUM_NOT_FOUND_MESSAGE = "Album not found";
 
     private final UserServiceClient userServiceClient;
     private final AlbumMapper albumMapper;
@@ -103,7 +103,7 @@ public class AlbumService {
                 .filter(album -> {
                     if (filters.getCreatedAt() == null) {
                         return true;
-                    } else if(filters.getCreatedBefore() != null && filters.getCreatedBefore()) {
+                    } else if (filters.getCreatedBefore() != null && filters.getCreatedBefore()) {
                         return album.getCreatedAt().isBefore(filters.getCreatedAt());
                     } else {
                         return album.getCreatedAt().isAfter(filters.getCreatedAt());
@@ -119,7 +119,7 @@ public class AlbumService {
                 .filter(album -> {
                     if (filters.getCreatedAt() == null) {
                         return true;
-                    } else if(filters.getCreatedBefore() != null && filters.getCreatedBefore()) {
+                    } else if (filters.getCreatedBefore() != null && filters.getCreatedBefore()) {
                         return album.getCreatedAt().isBefore(filters.getCreatedAt());
                     } else {
                         return album.getCreatedAt().isAfter(filters.getCreatedAt());
@@ -140,7 +140,7 @@ public class AlbumService {
 
     @Transactional
     public void deleteFavouriteAlbum(long userId, long albumId) {
-        albumRepository.deleteAlbumFromFavorites(albumId, userId );
+        albumRepository.deleteAlbumFromFavorites(albumId, userId);
     }
 
     public List<AlbumDto> getFavouriteAlbumsByUserId(long userId, AlbumFilterDto filters) {
@@ -149,7 +149,7 @@ public class AlbumService {
                 .filter(album -> {
                     if (filters.getCreatedAt() == null) {
                         return true;
-                    } else if(filters.getCreatedBefore() != null && filters.getCreatedBefore()) {
+                    } else if (filters.getCreatedBefore() != null && filters.getCreatedBefore()) {
                         return album.getCreatedAt().isBefore(filters.getCreatedAt());
                     } else {
                         return album.getCreatedAt().isAfter(filters.getCreatedAt());
