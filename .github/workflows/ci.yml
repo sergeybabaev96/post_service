@@ -20,22 +20,28 @@ jobs:
           distribution: 'temurin'
           cache: 'gradle'
 
-      - name: Cache Gradle packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
 
-      - name: Build and test with Gradle
-        run: ./gradlew clean build jacocoTestReport jacocoTestCoverageVerification --no-daemon --refresh-dependencies
+      - name: Verify dependencies
+        run: ./gradlew dependencies --no-daemon --refresh-dependencies
+
+      - name: Build project
+        run: ./gradlew clean build --no-daemon --stacktrace
+
+      - name: Run tests with coverage
+        run: ./gradlew test jacocoTestReport jacocoTestCoverageVerification --no-daemon --stacktrace
 
       - name: Upload JaCoCo Report
-        if: success() || failure()
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-report
           path: build/reports/jacoco/test
+
+      - name: Upload Built JAR
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: service-jar
+          path: build/libs/service.jar
