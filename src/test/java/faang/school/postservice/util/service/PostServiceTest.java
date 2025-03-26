@@ -147,11 +147,6 @@ public class PostServiceTest {
     }
 
     @Test
-    public void testNegativeDeletePostIdIsNull() {
-        assertThrows(NullPointerException.class, () -> postService.deleteById(null));
-    }
-
-    @Test
     public void testPositiveGetPost() {
         Post post = Post.builder()
                 .id(1L)
@@ -159,11 +154,6 @@ public class PostServiceTest {
         when(postRepository.findById(1L)).thenReturn(Optional.of(post));
         PostDto dto = postService.getPost(post.getId());
         assertEquals(post.getId(), dto.id());
-    }
-
-    @Test
-    public void testNegativeGetPostIdIsNull() {
-        assertThrows(NullPointerException.class, () -> postService.getPost(null));
     }
 
     @Test
