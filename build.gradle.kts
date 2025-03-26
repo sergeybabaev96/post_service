@@ -59,8 +59,38 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
+val jacocoIncludes = listOf(
+    "**/service/**",
+    "**/controller/**"
+)
+
+val minimalCoverage = "0.3".toBigDecimal()
+
 tasks.test {
-    useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+    classDirectories.setFrom(
+        sourceSets.main.get().output.asFileTree.matching {
+            include(jacocoIncludes)
+        }
+    )
+}
+
+tasks.jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            element = "CLASS"
+            limit {
+                minimum = minimalCoverage
+            }
+        }
+    }
 }
 
 tasks.withType<Test> {
