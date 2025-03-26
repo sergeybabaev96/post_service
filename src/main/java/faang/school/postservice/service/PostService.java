@@ -1,11 +1,14 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.Post.PostCacheDto;
 import faang.school.postservice.dto.Post.CreatePostDraftDto;
 import faang.school.postservice.dto.Post.PostResponseDto;
 import faang.school.postservice.dto.Post.UpdatePostDto;
+import faang.school.postservice.kafka.PostEventPublisher;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.model.PostEvent;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.RedisPostRepository;
 import faang.school.postservice.validator.PostValidator;
@@ -32,10 +35,12 @@ public class PostService {
 
     private final PostRepository postRepository;
     private final RedisPostRepository postCacheRepository;
-    private final KafkaTemplate<String, Long> kafkaTemplate;
+    private final KafkaTemplate<String, Long> authorBunKafkaTemplate;
     private final PostMapper postMapper;
     private final PostValidator postValidator;
     private final ResourseService resourseService;
+    private final PostEventPublisher postEventPublisher;
+    private final UserServiceClient userServiceClient;
 
     @Value("${author.banner.rejected_posts_to_ban}")
     private int rejectedPostsToBan;
@@ -62,6 +67,9 @@ public class PostService {
         PostCacheDto postCacheDto = postMapper.toCacheDto(savedPost);
         postCacheDto.setHoursToExpire(postHoursToExpire);
         postCacheRepository.save(postCacheDto);
+
+        List<Long> followersIds = userServiceClient.getFollowers(post.getAuthorId());
+        postEventPublisher.publish(new PostEvent(savedPost.getId(), followersIds));
 
         return postMapper.toResponseDto(savedPost);
     }
@@ -134,7 +142,7 @@ public class PostService {
         log.info("Start publishing authors to ban");
         for (Long authorIdToBan : authorIdsToBan) {
             log.debug("Publishing author {} to ban", authorIdToBan);
-            kafkaTemplate.send(banTopic, authorIdToBan);
+            authorBunKafkaTemplate.send(banTopic, authorIdToBan);
         }
         log.info("Finish publishing authors to ban");
     }

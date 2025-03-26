@@ -41,6 +41,8 @@ spring:
         name: "like_topic"
         partitions: 10
         replicas: 1
+      post:
+        name: "posts"
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
@@ -69,6 +71,7 @@ logging:
 user-service:
   host: localhost
   port: 8080
+  path: /api/v1
 project-service:
   host: localhost
   port: 8082

@@ -1,13 +1,16 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.Post.PostCacheDto;
 import faang.school.postservice.dto.Post.CreatePostDraftDto;
 import faang.school.postservice.dto.Post.PostResponseDto;
 import faang.school.postservice.dto.Post.UpdatePostDto;
 import faang.school.postservice.exception.DataValidationException;
+import faang.school.postservice.kafka.PostEventPublisher;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.model.PostEvent;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.RedisPostRepository;
 import faang.school.postservice.validator.PostValidator;
@@ -51,6 +54,9 @@ public class PostServiceTest {
     private PostService postService;
     private ResourseService resourseService;
     private KafkaTemplate<String, Long> kafkaTemplate;
+    private PostEventPublisher postEventPublisher;
+    private UserServiceClient userServiceClient;
+
     @Captor
     private ArgumentCaptor<List<MultipartFile>> captor;
 
@@ -62,8 +68,11 @@ public class PostServiceTest {
         postMapper = Mappers.getMapper(PostMapper.class);
         postValidator = mock(PostValidator.class);
         resourseService = mock(ResourseService.class);
+        postEventPublisher = mock(PostEventPublisher.class);
+        userServiceClient = mock(UserServiceClient.class);
+
         postService = new PostService(postRepository, cacheRepository, kafkaTemplate,
-                postMapper, postValidator, resourseService);
+                postMapper, postValidator, resourseService, postEventPublisher, userServiceClient);
     }
 
     @Test
@@ -122,6 +131,8 @@ public class PostServiceTest {
         assertNotNull(actualResponse.getPublishedAt());
         verify(postRepository, times(1)).save(post);
         verify(cacheRepository, times(1)).save(any(PostCacheDto.class));
+        verify(postEventPublisher, times(1)).publish(any(PostEvent.class));
+        verify(userServiceClient, times(1)).getFollowers(post.getAuthorId());
     }
 
     @Test
