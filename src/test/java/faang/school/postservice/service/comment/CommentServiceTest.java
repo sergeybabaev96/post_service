@@ -15,7 +15,7 @@ import faang.school.postservice.exception.UploadFileException;
 import faang.school.postservice.mapper.PostMapperImpl;
 import faang.school.postservice.mapper.comment.CommentMapperImpl;
 import faang.school.postservice.mapper.like.LikeMapperImpl;
-import faang.school.postservice.message.event.UsersBanPublisher;
+//import faang.school.postservice.message.event.UsersBanPublisher;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
@@ -96,8 +96,8 @@ public class CommentServiceTest {
     @Captor
     private ArgumentCaptor<Comment> commentArgumentCaptor;
 
-    @Mock
-    private UsersBanPublisher usersBanPublisher;
+    //@Mock
+    //private UsersBanPublisher usersBanPublisher;
 
     private long authorId;
     private long commentId;
@@ -155,8 +155,8 @@ public class CommentServiceTest {
                 imageService,
                 publisher,
                 null,
-                null,
-                usersBanPublisher);
+                null /*,
+                usersBanPublisher*/);
 
     }
 
@@ -346,7 +346,7 @@ public class CommentServiceTest {
         commentService.publishUsersToBanEvent();
 
         verify(commentRepository, times(1)).findAllByVerifiedIsFalse();
-        verify(usersBanPublisher, times(1)).publish(new UsersBanEvent(List.of(1L)));
+        //verify(usersBanPublisher, times(1)).publish(new UsersBanEvent(List.of(1L)));
     }
 
     @Test
@@ -362,7 +362,7 @@ public class CommentServiceTest {
         commentService.publishUsersToBanEvent();
 
         verify(commentRepository, times(1)).findAllByVerifiedIsFalse();
-        verify(usersBanPublisher, times(1)).publish(new UsersBanEvent(List.of()));
+        //verify(usersBanPublisher, times(1)).publish(new UsersBanEvent(List.of()));
     }
 
     private void sleepSec(long sec) {

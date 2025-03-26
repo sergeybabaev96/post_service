@@ -91,3 +91,9 @@ comment:
   thread-pool-size: 4
   word-split-regex: "(?<=\\p{L})(?=\\p{P})|(?<=\\p{P})(?=\\p{L})|\\s+"
   number-bad-comments: 5
+
+retry:
+  maxAttempts: 3
+  backoff:
+    delay: 1000
+    multiplier: 2.0

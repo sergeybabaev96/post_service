@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
@@ -18,28 +20,42 @@ public class RedisConfig {
     private final ObjectMapper objectMapper;
 
     @Bean
-    public JedisConnectionFactory jedisConnectionFactory() {
-        RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration(
+    public LettuceConnectionFactory connectionFactory() {
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(
                 redisProperties.getHost(),
                 redisProperties.getPort());
-        return new JedisConnectionFactory(redisConfig);
+        return new LettuceConnectionFactory(config);
     }
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate() {
-        RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(jedisConnectionFactory());
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
-
-        return template;
+        return createRedisTemplate(connectionFactory(), new StringRedisSerializer());
     }
 
     @Bean
-    RedisMessageListenerContainer redisContainer() {
-        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-        container.setConnectionFactory(jedisConnectionFactory());
+    public RedisTemplate<String, Object> cacheRedisTemplate() {
+        return createRedisTemplate(
+                connectionFactory(),
+                new GenericJackson2JsonRedisSerializer(objectMapper)
+        );
+    }
 
+    @Bean
+    public RedisMessageListenerContainer redisContainer() {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory());
         return container;
+    }
+
+    private RedisTemplate<String, Object> createRedisTemplate(
+            RedisConnectionFactory connectionFactory,
+            RedisSerializer<?> valueSerializer
+    ) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(connectionFactory);
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+        redisTemplate.setValueSerializer(valueSerializer);
+        redisTemplate.afterPropertiesSet();
+        return redisTemplate;
     }
 }
