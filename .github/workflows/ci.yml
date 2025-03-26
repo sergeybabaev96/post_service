@@ -3,7 +3,7 @@ name: Post Service CI Pipeline
 on:
   pull_request:
     branches:
-      - hippogriff-master-stream8
+      - murloc-master-stream9
 
 jobs:
   build:
@@ -18,19 +18,29 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'gradle'
 
-      - name: Cache Gradle packages
+      - name: Validate Gradle Wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Cache Gradle dependencies
         uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            gradle-${{ runner.os }}-
 
-      - name: Build with Gradle
-        run: ./gradlew build --no-daemon
+      - name: Build project
+        run: ./gradlew clean build --no-daemon --stacktrace
+
+      - name: Upload Built JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: service-jar
+          path: build/libs/service.jar
 
   test:
     runs-on: ubuntu-latest
@@ -45,25 +55,23 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'gradle'
 
-      - name: Cache Gradle packages
+      - name: Restore Gradle cache
         uses: actions/cache@v3
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            gradle-${{ runner.os }}-
 
       - name: Run tests
-        run: ./gradlew test --no-daemon
-
-      - name: Build, Test, and Validate Coverage with Gradle
-        run: ./gradlew clean build test jacocoTestReport jacocoTestCoverageVerification
+        run: ./gradlew test jacocoTestReport jacocoTestCoverageVerification --no-daemon --stacktrace
 
       - name: Upload JaCoCo Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jacoco-report
           path: build/reports/jacoco/test
