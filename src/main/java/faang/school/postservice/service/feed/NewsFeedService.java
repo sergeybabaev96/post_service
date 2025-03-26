@@ -1,5 +1,6 @@
 package faang.school.postservice.service.feed;
 
+import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.cache.UserCache;
 import faang.school.postservice.repository.redis.RedisUserRepository;
@@ -17,6 +18,14 @@ public class NewsFeedService {
     public void addAuthorToCacheByPost(Post post) {
         long authorId = post.getAuthorId();
         String username = userService.getUserDtoById(authorId).username();
+        UserCache userCache = new UserCache(authorId, username);
+        redisUserRepository.save(userCache);
+    }
+
+    public void addAuthorToCacheByComment(Comment comment) {
+        long authorId = comment.getId();
+        String username = userService.getUserDtoById(authorId).username();
+
         UserCache userCache = new UserCache(authorId, username);
         redisUserRepository.save(userCache);
     }

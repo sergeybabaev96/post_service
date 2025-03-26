@@ -17,6 +17,7 @@ import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.FileRepository;
 import faang.school.postservice.repository.redis.RedisUserRepository;
 import faang.school.postservice.service.UserService;
+import faang.school.postservice.service.feed.NewsFeedService;
 import faang.school.postservice.service.post.PostService;
 import faang.school.postservice.service.s3.S3Service;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +39,7 @@ public class CommentService {
     private final S3Service s3Service;
     private final FileRepository fileRepository;
     private final CommentCreateMessagePublisher commentCreateMessagePublisher;
-    private final RedisUserRepository redisUserRepository;
+    private final NewsFeedService newsFeedService;
 
     @Value("${services.s3.max_image_size}")
     private int maxImageSize;
@@ -51,7 +52,7 @@ public class CommentService {
                 commentMapper.toEvent(newComment, CommentEventType.CREATE)
         );
 
-        addAuthorToCacheByComment(newComment);
+        newsFeedService.addAuthorToCacheByComment(newComment);
         return commentMapper.toDto(newComment);
     }
 
@@ -138,14 +139,6 @@ public class CommentService {
     public File getFileById(long fileId) {
         return fileRepository.findById(fileId)
                 .orElseThrow(() -> new EntityNotFoundException("Файл с ID " + fileId + " не найден"));
-    }
-
-    private void addAuthorToCacheByComment(Comment comment) {
-        long authorId = comment.getId();
-        String username = userService.getUserDtoById(authorId).username();
-
-        UserCache userCache = new UserCache(authorId, username);
-        redisUserRepository.save(userCache);
     }
 
 }
