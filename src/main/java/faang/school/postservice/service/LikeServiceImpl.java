@@ -11,14 +11,12 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
 public class LikeServiceImpl implements LikeService {
     @Value("${user-service.maxNumberUsersInRequest}")
     private int maxNumberUsersInRequest;
-
     private final LikeRepository likeRepository;
     private final UserServiceClient userServiceClient;
 
@@ -39,12 +37,9 @@ public class LikeServiceImpl implements LikeService {
     }
 
     private List<List<UserDto>> splitUsers(List<Long> ids) {
-        List<List<Long>> chunksIds = IntStream.range(0, (int) Math.ceil((double) ids.size() / maxNumberUsersInRequest))
-                .mapToObj(i -> ids.subList(i * maxNumberUsersInRequest,
-                        Math.min(ids.size(), (i + 1) * maxNumberUsersInRequest)))
-                .toList();
         List<List<UserDto>> chunksUserDto = new ArrayList<>();
-        for (List<Long> chunkIds : chunksIds) {
+        for (int i = 0; i < ids.size(); i += maxNumberUsersInRequest) {
+            List<Long> chunkIds = ids.subList(i, Math.min(ids.size(), i + maxNumberUsersInRequest));
             chunksUserDto.add(userServiceClient.getUsersByIds(chunkIds));
         }
         return chunksUserDto;
