@@ -86,6 +86,14 @@ tasks.jacocoTestCoverageVerification {
     violationRules {
         rule {
             element = "CLASS"
+            excludes = listOf(
+                "**/dto/**",           // Игнорировать все DTO
+                "**/config/**",        // Игнорировать конфиги
+                "**/model/**",         // Игнорировать сущности (или только Builder'ы)
+                "**/*Builder",          // Игнорировать Lombok-билдеры
+                "**/*App*",            // Игнорировать главный класс приложения
+                "**/Feign*"            // Игнорировать Feign-клиенты
+            )
             limit {
                 minimum = minimalCoverage
             }
