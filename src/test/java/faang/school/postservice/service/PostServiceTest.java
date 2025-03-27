@@ -13,7 +13,7 @@ import faang.school.postservice.mapper.UserMapper;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.repository.RedisPostAuthorRepository;
+import faang.school.postservice.repository.RedisAuthorRepository;
 import faang.school.postservice.repository.RedisPostRepository;
 import faang.school.postservice.validator.PostValidator;
 import jakarta.persistence.EntityNotFoundException;
@@ -51,7 +51,7 @@ import static org.mockito.Mockito.when;
 public class PostServiceTest {
     private PostRepository postRepository;
     private RedisPostRepository cacheRepository;
-    private RedisPostAuthorRepository postAuthorCacheRepository;
+    private RedisAuthorRepository postAuthorCacheRepository;
 
     private PostMapper postMapper;
     private UserMapper userMapper;
@@ -70,7 +70,7 @@ public class PostServiceTest {
     public void setUp() {
         postRepository = mock(PostRepository.class);
         cacheRepository = mock(RedisPostRepository.class);
-        postAuthorCacheRepository = mock(RedisPostAuthorRepository.class);
+        postAuthorCacheRepository = mock(RedisAuthorRepository.class);
         kafkaTemplate = mock(KafkaTemplate.class);
         postMapper = Mappers.getMapper(PostMapper.class);
         userMapper = Mappers.getMapper(UserMapper.class);
@@ -145,7 +145,7 @@ public class PostServiceTest {
         verify(cacheRepository, times(1)).save(any(PostCacheDto.class));
         verify(userServiceClient, times(1)).getFollowers(post.getAuthorId());
         verify(postAuthorCacheRepository, times(1))
-                .save(userMapper.toPostAuthorCacheDto(userDto));
+                .save(userMapper.toAuthorCacheDto(userDto));
     }
 
     @Test
