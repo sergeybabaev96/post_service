@@ -6,7 +6,6 @@ import faang.school.postservice.dto.Post.CreatePostDraftDto;
 import faang.school.postservice.dto.Post.PostResponseDto;
 import faang.school.postservice.dto.Post.UpdatePostDto;
 import faang.school.postservice.kafka.PostEventPublisher;
-import faang.school.postservice.dto.user.PostAuthorCacheDto;
 import faang.school.postservice.dto.user.AuthorCacheDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.mapper.PostMapper;
