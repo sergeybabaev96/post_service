@@ -5,13 +5,15 @@ import faang.school.postservice.dto.Post.PostCacheDto;
 import faang.school.postservice.dto.Post.CreatePostDraftDto;
 import faang.school.postservice.dto.Post.PostResponseDto;
 import faang.school.postservice.dto.Post.UpdatePostDto;
+import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.kafka.PostEventPublisher;
 import faang.school.postservice.mapper.PostMapper;
+import faang.school.postservice.mapper.UserMapper;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
-import faang.school.postservice.model.PostEvent;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.repository.RedisPostAuthorRepository;
 import faang.school.postservice.repository.RedisPostRepository;
 import faang.school.postservice.validator.PostValidator;
 import jakarta.persistence.EntityNotFoundException;
@@ -49,7 +51,12 @@ import static org.mockito.Mockito.when;
 public class PostServiceTest {
     private PostRepository postRepository;
     private RedisPostRepository cacheRepository;
+    private RedisPostAuthorRepository postAuthorCacheRepository;
+
     private PostMapper postMapper;
+    private UserMapper userMapper;
+
+    private UserServiceClient userServiceClient;
     private PostValidator postValidator;
     private PostService postService;
     private ResourseService resourseService;
@@ -64,8 +71,10 @@ public class PostServiceTest {
     public void setUp() {
         postRepository = mock(PostRepository.class);
         cacheRepository = mock(RedisPostRepository.class);
+        postAuthorCacheRepository = mock(RedisPostAuthorRepository.class);
         kafkaTemplate = mock(KafkaTemplate.class);
         postMapper = Mappers.getMapper(PostMapper.class);
+        userMapper = Mappers.getMapper(UserMapper.class);
         postValidator = mock(PostValidator.class);
         resourseService = mock(ResourseService.class);
         postEventPublisher = mock(PostEventPublisher.class);
@@ -73,6 +82,9 @@ public class PostServiceTest {
 
         postService = new PostService(postRepository, cacheRepository, kafkaTemplate,
                 postMapper, postValidator, resourseService, postEventPublisher, userServiceClient);
+        userServiceClient = mock(UserServiceClient.class);
+        postService = new PostService(postRepository, cacheRepository, postAuthorCacheRepository, kafkaTemplate,
+                postMapper, userMapper, postValidator, resourseService, userServiceClient);
     }
 
     @Test
@@ -121,9 +133,13 @@ public class PostServiceTest {
         long postId = 1L;
         Post post = new Post();
         post.setPublished(false);
+        post.setAuthorId(1L);
+
+        UserDto userDto = new UserDto(1L, "Bob", "Bob@mail.com");
 
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
         when(postRepository.save(post)).thenReturn(post);
+        when(userServiceClient.getUser(1)).thenReturn(userDto);
 
         PostResponseDto actualResponse = postService.publishPost(postId);
 
@@ -132,6 +148,8 @@ public class PostServiceTest {
         verify(postRepository, times(1)).save(post);
         verify(cacheRepository, times(1)).save(any(PostCacheDto.class));
         verify(userServiceClient, times(1)).getFollowers(post.getAuthorId());
+        verify(postAuthorCacheRepository, times(1))
+                .save(userMapper.toPostAuthorCacheDto(userDto));
     }
 
     @Test
