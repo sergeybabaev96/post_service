@@ -38,6 +38,7 @@ public class PostService {
     private final PostCorrector postCorrector;
     private final ModerationService moderationService;
     private final AsyncConfig asyncConfig;
+    private final PostEventPublisher postEventPublisher;
 
     public Post findById(@NotNull Long id) {
         return postRepository.findById(id)
