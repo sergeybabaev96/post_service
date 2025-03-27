@@ -19,4 +19,7 @@ public interface UserServiceClient {
 
     @GetMapping("${user-service.api-prefix}/subscription/{followerId}/follow/{authorId}")
     boolean isFollow(@PathVariable long followerId, @PathVariable long authorId);
+
+    @GetMapping("${user-service.api-prefix}/user/{userId}/followers")
+    List<Long> getFollowersIdsByUserId(@PathVariable long userId);
 }

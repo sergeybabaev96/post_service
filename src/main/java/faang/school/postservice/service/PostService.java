@@ -1,5 +1,6 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.config.kafka.KafkaFeedPostProducer;
 import faang.school.postservice.dto.posts.PostCreatingRequest;
 import faang.school.postservice.dto.posts.PostResultResponse;
 import faang.school.postservice.dto.posts.PostUpdatingDto;
@@ -34,6 +35,7 @@ public class PostService {
     private final PostMapper postMapper;
     private final PostRepository postRepository;
     private final PostUtil postUtil;
+    private final KafkaFeedPostProducer kafkaFeedPostProducer;
     private final RewriterService rewriterService;
     private final ExecutorService scheduledPublishPostThreadPool;
     private static final int MAX_POST_COUNT_PUBLISH_ON_THREAD = 1000;
@@ -53,18 +55,18 @@ public class PostService {
         log.info("Validating the post creator with id : {}", post.getId());
         int result = postUtil.validateCreator(postCreatingDto.authorId(), postCreatingDto.projectId());
         switch (result) {
-            case 0:
-                post.setAuthorId(postCreatingDto.authorId());
-                break;
-            case 1:
-                post.setProjectId(postCreatingDto.projectId());
-                break;
-            default:
+            case 0 -> post.setAuthorId(postCreatingDto.authorId());
+            case 1 -> post.setProjectId(postCreatingDto.projectId());
+            default -> {
+            }
         }
         log.info("Success validation for post : {}", post.getId());
 
         post = postRepository.save(post);
         log.info("Saved post with id : {}", post.getId());
+
+        kafkaFeedPostProducer.sendCreatePostEvent(post);
+        log.info("Sent CreatePostEvent with id : {}", post.getId());
 
         return postMapper.toDto(post);
     }
