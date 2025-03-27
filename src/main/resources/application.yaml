@@ -46,26 +46,6 @@ spring:
           name: delete-post
           partitions: 3
           replicas: 1
-        comment:
-          name: comment
-          partitions: 3
-          replicas: 1
-        delete-comment:
-          name: delete-comment
-          partitions: 3
-          replicas: 1
-        like:
-          name: like
-          partitions: 3
-          replicas: 1
-        unlike:
-          name: unlike
-          partitions: 3
-          replicas: 1
-        feed-heater:
-          name: feed-heater
-          partitions: 3
-          replicas: 1
       producer:
         retries: 3
         retry-backoff-ms: 1000
@@ -78,8 +58,6 @@ spring:
           spring.json.use.type.headers: false
         groups:
           post: postGroup
-          comment: commentGroup
-          like: likeGroup
       listener:
         missing-topics-fatal: false
 
@@ -152,3 +130,8 @@ retry:
   backoff:
     delay: 1000
     multiplier: 2.0
+
+feed:
+  kafka:
+    subscribers-batch-size: 1000
+    post-topic: post

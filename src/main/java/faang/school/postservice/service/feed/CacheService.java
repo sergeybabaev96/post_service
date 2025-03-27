@@ -1,7 +1,6 @@
 package faang.school.postservice.service.feed;
 
 import faang.school.postservice.client.UserServiceClient;
-import faang.school.postservice.dto.post.PostDto;
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.mapper.PostMapper;
@@ -12,11 +11,9 @@ import faang.school.postservice.repository.RedisPostRepository;
 import faang.school.postservice.repository.RedisUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -36,14 +33,11 @@ public class CacheService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
 
-    @Value("${spring.data.redis.cache.feed.showLastComments}")
-    private int showLastComments;
-
     public void savePost(PostResponseDto postDto) {
         redisPostRepository.addNewPost(postDto);
     }
 
-    @Async("feedExecutor")
+    //@Async("feedExecutor")
     public void savePosts(List<PostResponseDto> postDtos) {
         postDtos.forEach(this::savePost);
     }
@@ -90,7 +84,7 @@ public class CacheService {
         return userServiceClient.getUsersByIds(missingUserIds);
     }
 
-    @Async("feedExecutor")
+    //@Async("feedExecutor")
     public void saveUsers(List<UserDto> userDtos) {
         redisUserRepository.save(userDtos);
     }
@@ -140,7 +134,7 @@ public class CacheService {
     }
 
     private void processNonexistentPosts(List<Long> expectedIds, List<PostResponseDto> actualPosts) {
-        Set<Long> actualIds = actualPosts.stream().map(PostDto::id).collect(Collectors.toSet());
+        Set<Long> actualIds = actualPosts.stream().map(PostResponseDto::id).collect(Collectors.toSet());
         List<Long> missingIds = findMissingIds(actualIds, expectedIds);
         missingIds.forEach(id -> {
             handlePostDeletion(id);

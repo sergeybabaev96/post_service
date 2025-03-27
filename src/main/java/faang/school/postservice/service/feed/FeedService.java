@@ -1,8 +1,8 @@
 package faang.school.postservice.service.feed;
 
 import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.config.redis.CacheProperties;
 import faang.school.postservice.dto.feed.FeedPostDto;
-import faang.school.postservice.dto.post.PostDto;
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.mapper.PostMapper;
@@ -16,11 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -34,9 +32,7 @@ public class FeedService {
     private final UserServiceClient userServiceClient;
     private final PostRepository postRepository;
     private final PostMapper postMapper;
-
-    @Value("${spring.data.redis.cache.feed.pageSize}")
-    private int pageSize;
+    private final CacheProperties properties;
 
     public void addPostToFeed(List<Long> subscribersIds, Long postId, LocalDateTime publishedAt) {
         redisFeedRepository.addPost(subscribersIds, postId, publishedAt);
@@ -65,8 +61,8 @@ public class FeedService {
         List<PostResponseDto> resultPostDtos = new ArrayList<>();
         LocalDateTime currentLastSeenDate = lastSeenDate;
 
-        while (resultPostDtos.size() < pageSize) {
-            List<Long> postIds = redisFeedRepository.getPostIds(userId, currentLastSeenDate, pageSize);
+        while (resultPostDtos.size() < properties.getPageSize()) {
+            List<Long> postIds = redisFeedRepository.getPostIds(userId, currentLastSeenDate, properties.getPageSize());
             if (postIds.isEmpty()) {
                 break;
             }
@@ -77,7 +73,7 @@ public class FeedService {
             }
         }
 
-        int quantityMissingPosts = pageSize - resultPostDtos.size();
+        int quantityMissingPosts = properties.getPageSize() - resultPostDtos.size();
         if (quantityMissingPosts > 0) {
             List<PostResponseDto> missingPostsFromDB = fetchPostsFromDB(userId, quantityMissingPosts, currentLastSeenDate);
             resultPostDtos.addAll(missingPostsFromDB);
