@@ -29,7 +29,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.IntStream;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -191,12 +191,9 @@ public class PostService {
     }
 
     private void publishPostEvent(Long postId, List<Long> followersIds) {
-        int batchAmount = (int) Math.ceil((double) followersIds.size() / followersBatchSize);
-        IntStream.range(0, batchAmount)
-                .forEach(i -> {
-                    int start = i * followersBatchSize;
-                    int end = Math.min((i + 1) * followersBatchSize, followersIds.size());
-                    postEventPublisher.publish(new PostEvent(postId, followersIds.subList(start, end)));
-                });
+        followersIds.stream()
+                .collect(Collectors.groupingBy(i -> i / followersBatchSize))
+                .values()
+                .forEach(batch -> postEventPublisher.publish(new PostEvent(postId, batch)));
     }
 }
