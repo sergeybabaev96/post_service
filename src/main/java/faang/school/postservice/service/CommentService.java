@@ -61,7 +61,8 @@ public class CommentService {
         commentEventPublisher.publish(new CommentEvent(
                 savedComment.getId(),
                 postId,
-                savedComment.getAuthorId())
+                savedComment.getAuthorId(),
+                savedComment.getContent())
         );
 
         return commentMapper.toCreateResponse(savedComment);

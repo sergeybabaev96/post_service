@@ -9,4 +9,5 @@ public class CommentEvent {
     private Long commentId;
     private Long postId;
     private Long authorId;
+    private String content;
 }
