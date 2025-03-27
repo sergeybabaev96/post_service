@@ -25,6 +25,24 @@ spring:
         calculations_channel:
           name: calculations_channel
 
+  servlet:
+    multipart:
+      file-size-threshold: 5MB
+      max-file-size: 50MB
+      max-request-size: 100MB
+
+  cloud:
+    aws:
+      s3:
+        endpoint: http://192.168.0.51:9000
+        bucket: corpbucket
+      credentials:
+        access-key: user
+        secret-key: password
+      region:
+        static: eu-central-1
+
+
 server:
   port: 8081
 
