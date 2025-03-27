@@ -1,5 +1,6 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.config.kafka.KafkaFeedPostProducer;
 import faang.school.postservice.dto.posts.PostCreatingRequest;
 import faang.school.postservice.dto.posts.PostResultResponse;
 import faang.school.postservice.dto.posts.PostUpdatingDto;
@@ -33,6 +34,8 @@ public class PostServiceTest {
     private PostRepository postRepository;
     @Mock
     private PostUtil postUtil;
+    @Mock
+    private KafkaFeedPostProducer kafkaFeedPostProducer;
     @Mock
     private RewriterService rewriterService;
     @Mock
