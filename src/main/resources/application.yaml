@@ -17,6 +17,30 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
+  kafka:
+    bootstrap-servers: "localhost:9092"
+    pool-size: 3
+    consumer:
+      group-id: "group"
+      auto-offset-reset: earliest
+    topics:
+      PostViewEvent:
+        name: post_views
+        num-partitions: 6
+        replication-factor: 3
+      PostEvent:
+        name: posts
+        num-partitions: 6
+        replication-factor: 3
+      CommentEvent:
+        name: comments
+        num-partitions: 6
+        replication-factor: 3
+      LikeEvent:
+          name: likes
+          num-partitions: 6
+          replication-factor: 3
+
   data:
     redis:
       port: 6379

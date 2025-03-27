@@ -32,8 +32,8 @@ dependencies {
      */
     implementation("org.liquibase:liquibase-core")
     implementation("redis.clients:jedis:4.3.2")
+    implementation("org.springframework.kafka:spring-kafka:3.3.4")
     runtimeOnly("org.postgresql:postgresql")
-
     /**
      * Amazon S3
      */

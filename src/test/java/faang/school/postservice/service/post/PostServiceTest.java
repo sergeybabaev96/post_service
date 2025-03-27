@@ -15,6 +15,8 @@ import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.mapper.PostMapperImpl;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
+import faang.school.postservice.publisher.kafka.post.PostEventPublisher;
+import faang.school.postservice.publisher.kafka.post.PostViewEventPublisher;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.ResourceRepository;
 import faang.school.postservice.service.GrammarService;
@@ -45,6 +47,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -83,6 +86,11 @@ public class PostServiceTest {
     private ResourceRepository resourceRepository;
     @Mock
     private PostImageService postImageService;
+    @Mock
+    private PostEventPublisher postEventPublisher;
+    @Mock
+    private PostViewEventPublisher postViewEventPublisher;
+
     private Post post;
 
     @BeforeEach
@@ -121,7 +129,10 @@ public class PostServiceTest {
     void testCreatePostDraftSuccessCase() {
         long userId = 1;
         when(userServiceClient.getUser(userId))
-                .thenReturn(new UserDto(1L, "user", "user@gmail.com"));
+                .thenReturn(UserDto.builder().id(1L)
+                        .username("user")
+                        .email("user@gmail.com")
+                        .build());
         var createDto = PostCreateDto.builder()
                 .content("content")
                 .authorId(userId)
@@ -136,7 +147,10 @@ public class PostServiceTest {
     void testCreatePostDraftWithNonExistingHashtag() {
         long userId = 1;
         when(userServiceClient.getUser(userId))
-                .thenReturn(new UserDto(1L, "user", "user@gmail.com"));
+                .thenReturn(UserDto.builder().id(1L)
+                        .username("user")
+                        .email("user@gmail.com")
+                        .build());
         var createDto = PostCreateDto.builder()
                 .content("content")
                 .authorId(userId)
@@ -163,11 +177,20 @@ public class PostServiceTest {
         long postId = 1;
         mockGetPostById(postId);
 
+        when(postRepository.save(any(Post.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(postMapper.toDto(any(Post.class))).thenReturn(PostReadDto.builder()
+                .authorId(1L)
+                .id(2L)
+                .build());
+        when(userServiceClient.getUser(anyLong())).thenReturn(UserDto.builder()
+                .id(3L).build());
+
         postService.publishPost(postId);
 
         verify(postRepository, atLeastOnce()).save(postArgumentCaptor.capture());
         Post capturedPost = postArgumentCaptor.getValue();
         assertTrue(capturedPost.isPublished());
+        verify(postEventPublisher).publish(any());
     }
 
     @Test
