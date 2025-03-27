@@ -82,3 +82,7 @@ cache:
   authors:
     collection: comment_authors
     ttl: 86400
+    corePoolSize: 5
+    maxPoolSize: 10
+    queueCapacity: 500
+    threadNamePrefix: "post-author-cache-"
