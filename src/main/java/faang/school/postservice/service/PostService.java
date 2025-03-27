@@ -53,6 +53,7 @@ public class PostService {
      * @param postCreateDto DTO с данными для создания поста.
      * @return {@link PostViewDto} - DTO с данными созданного поста.
      */
+    @Transactional
     public PostViewDto createDraft(@NotNull PostCreateDto postCreateDto) {
         postValidator.validateAuthorAndProject(postCreateDto);
 
@@ -142,7 +143,7 @@ public class PostService {
      */
     public List<PostViewDto> getUserDrafts(long userId) {
         return postRepository.findByAuthorId(userId).stream()
-                .filter(post -> !(post.isDeleted()))
+                .filter(post -> !post.isDeleted())
                 .filter(post -> !post.isPublished())
                 .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
                 .map(postMapper::toViewDto)
@@ -157,7 +158,7 @@ public class PostService {
      */
     public List<PostViewDto> getProjectDrafts(long projectId) {
         return postRepository.findByProjectId(projectId).stream()
-                .filter(post -> !(post.isDeleted()))
+                .filter(post -> !post.isDeleted())
                 .filter(post -> !post.isPublished())
                 .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
                 .map(postMapper::toViewDto)
@@ -172,7 +173,7 @@ public class PostService {
      */
     public List<PostViewDto> getAuthorPublishedPosts(long userId) {
         return postRepository.findByAuthorIdWithLikes(userId).stream()
-                .filter(post -> !(post.isDeleted()))
+                .filter(post -> !post.isDeleted())
                 .filter(Post::isPublished)
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
                 .map(postMapper::toViewDto)
@@ -187,7 +188,7 @@ public class PostService {
      */
     public List<PostViewDto> getProjectPublishedPosts(long projectId) {
         return postRepository.findByProjectIdWithLikes(projectId).stream()
-                .filter(post -> !(post.isDeleted()))
+                .filter(post -> !post.isDeleted())
                 .filter(Post::isPublished)
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
                 .map(postMapper::toViewDto)
