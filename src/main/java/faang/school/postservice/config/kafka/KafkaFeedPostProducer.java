@@ -26,7 +26,7 @@ public class KafkaFeedPostProducer {
     private int postFollowersBatchMaxSize;
 
     @Value("${spring.kafka.topics.post-create-event}")
-    private String topicName;
+    private String topicCreatePostName;
 
     @Async("kafkaSendEventThreadPool")
     public void sendCreatePostEvent(Post post) {
@@ -38,16 +38,12 @@ public class KafkaFeedPostProducer {
             List<Long> currentFollowersBatch = followersIds.stream().limit(postFollowersBatchMaxSize).toList();
             followersIds.removeAll(currentFollowersBatch);
             event = new CreatePostEvent(post.getId(), currentFollowersBatch);
-            try {
-                kafkaTemplate.send(topicName, objectMapper.writeValueAsString(event));
-            } catch (JsonProcessingException e) {
-                log.error("couldn't convert createPostEvent to json: " + e);
-            }
+            send(topicCreatePostName, event);
         }
 
         if (followersIds.size() > 0) {
             event = new CreatePostEvent(post.getId(), followersIds);
-
+            send(topicCreatePostName, event);
         }
     }
 
@@ -55,7 +51,7 @@ public class KafkaFeedPostProducer {
         try {
             kafkaTemplate.send(topicName, objectMapper.writeValueAsString(object));
         } catch (JsonProcessingException e) {
-            log.error("couldn't convert createPostEvent to json: " + e);
+            log.error("couldn't convert object to json: " + e);
         }
     }
 }
