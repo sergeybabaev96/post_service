@@ -1,6 +1,7 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.CommentDto;
 import faang.school.postservice.dto.LikeDto;
 import faang.school.postservice.dto.PostDto;
@@ -20,7 +21,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class LikeServiceImpl implements LikeService {
-    
+
     private final LikeRepository likeRepository;
     private final UserServiceClient userServiceClient;
     private final PostMapper postMapper;
@@ -28,52 +29,54 @@ public class LikeServiceImpl implements LikeService {
     private final CommentMapper commentMapper;
     private final PostService postService;
     private final CommentService commentService;
+    private final UserContext userContext;
 
     @Override
-    public PostDto addLikeToPost(LikeDto likeDto) {
-        getUserById(likeDto.userId());
-        Post post = postService.findPostById(likeDto.postId());
-        if (isLikedPost(likeDto.postId(), likeDto.userId())) {
+    public PostDto addLikeToPost(Long postId) {
+        long userId = getUserById();
+        Post post = postService.findPostById(postId);
+        if (isLikedPost(postId, userId)) {
             return postMapper.toDto(post);
         }
-        Like like = likeMapper.toEntity(likeDto);
+
+        Like like = likeMapper.toEntity(new LikeDto(userId, postId, null));
         like.setPost(post);
         likeRepository.save(like);
         return postMapper.toDto(post);
     }
 
     @Override
-    public PostDto removeLikeFromPost(LikeDto likeDto) {
-        getUserById(likeDto.userId());
-        Post post = postService.findPostById(likeDto.postId());
-        if (!isLikedPost(likeDto.postId(), likeDto.userId())) {
+    public PostDto removeLikeFromPost(Long postId) {
+        long userId = getUserById();
+        Post post = postService.findPostById(postId);
+        if (!isLikedPost(postId, userId)) {
             return postMapper.toDto(post);
         }
-        likeRepository.deleteByPostIdAndUserId(likeDto.postId(), likeDto.userId());
+        likeRepository.deleteByPostIdAndUserId(postId, userId);
         return postMapper.toDto(post);
     }
 
     @Override
-    public CommentDto addLikeToComment(LikeDto likeDto) {
-        getUserById(likeDto.userId());
-        Comment comment = commentService.findCommentById(likeDto.commentId());
-        if(isLikedComment(likeDto.commentId(), likeDto.userId())){
-           return commentMapper.toDto(comment);
+    public CommentDto addLikeToComment(Long commentId) {
+        long userId = getUserById();
+        Comment comment = commentService.findCommentById(commentId);
+        if (isLikedComment(commentId, userId)) {
+            return commentMapper.toDto(comment);
         }
-        Like like = likeMapper.toEntity(likeDto);
+        Like like = likeMapper.toEntity(new LikeDto(userId, null, commentId));
         like.setComment(comment);
         likeRepository.save(like);
         return commentMapper.toDto(comment);
     }
 
     @Override
-    public CommentDto removeLikeFromComment(LikeDto likeDto) {
-        getUserById(likeDto.userId());
-        Comment comment = commentService.findCommentById(likeDto.commentId());
-        if(!isLikedComment(likeDto.commentId(), likeDto.userId())){
+    public CommentDto removeLikeFromComment(Long commentId) {
+        long userId = getUserById();
+        Comment comment = commentService.findCommentById(commentId);
+        if (!isLikedComment(commentId, userId)) {
             return commentMapper.toDto(comment);
         }
-        likeRepository.deleteByCommentIdAndUserId(likeDto.commentId(), likeDto.userId());
+        likeRepository.deleteByCommentIdAndUserId(commentId, userId);
         return commentMapper.toDto(comment);
     }
 
@@ -82,15 +85,13 @@ public class LikeServiceImpl implements LikeService {
     }
 
     private boolean isLikedComment(Long commentId, Long userId) {
-        return likeRepository.findByCommentIdAndUserId(commentId,userId).isPresent();
+        return likeRepository.findByCommentIdAndUserId(commentId, userId).isPresent();
     }
 
 
-    private void getUserById(Long userId) {
-        try {
-            userServiceClient.getUser(userId);
-        } catch (NullPointerException e) {
-            log.error(e.getMessage());
-        }
+    private Long getUserById() {
+        long userId = userContext.getUserId();
+        userServiceClient.getUser(userId);
+        return userId;
     }
 }

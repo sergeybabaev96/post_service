@@ -1,6 +1,7 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.CommentDto;
 import faang.school.postservice.dto.LikeDto;
 import faang.school.postservice.dto.PostDto;
@@ -50,6 +51,8 @@ public class LikeServiceImplTest {
     private PostService postService;
     @Mock
     private CommentService commentService;
+    @Mock
+    private UserContext userContext;
     @Captor
     private ArgumentCaptor<Like> likeCaptor;
     @Captor
@@ -81,10 +84,12 @@ public class LikeServiceImplTest {
         Optional<Like> optionalLike = Optional.of(like1);
         UserDto userDto = new UserDto(userId,"ggf", "fef");
         when(postService.findPostById(likeDto.postId())).thenReturn(post);
+        when(userContext.getUserId()).thenReturn(userId);
         when(userServiceClient.getUser(userId)).thenReturn(userDto);
         when(likeRepository.findByPostIdAndUserId(postId,userId)).thenReturn(optionalLike);
 
-        PostDto postDto = likeService.addLikeToPost(likeDto);
+        PostDto postDto = likeService.addLikeToPost(postId);
+        verify(userContext,times(1)).getUserId();
         verify(postService,times(1)).findPostById(likeDto.postId());
         verify(userServiceClient, times(1)).getUser(userId);
         verify(likeRepository, times(1))
@@ -100,10 +105,12 @@ public class LikeServiceImplTest {
         Optional<Like> optionalLike = Optional.empty();
         UserDto userDto = new UserDto(userId,"ggf", "fef");
         when(postService.findPostById(likeDto.postId())).thenReturn(post);
+        when(userContext.getUserId()).thenReturn(userId);
         when(userServiceClient.getUser(userId)).thenReturn(userDto);
         when(likeRepository.findByPostIdAndUserId(postId,userId)).thenReturn(optionalLike);
 
-        PostDto postDto = likeService.addLikeToPost(likeDto);
+        PostDto postDto = likeService.addLikeToPost(postId);
+        verify(userContext,times(1)).getUserId();
         verify(postService,times(1)).findPostById(likeDto.postId());
         verify(userServiceClient, times(1)).getUser(userId);
         verify(likeRepository, times(1))
@@ -123,10 +130,12 @@ public class LikeServiceImplTest {
         Optional<Like> optionalLike = Optional.empty();
         UserDto userDto = new UserDto(userId,"ggf", "fef");
         when(postService.findPostById(likeDto.postId())).thenReturn(post);
+        when(userContext.getUserId()).thenReturn(userId);
         when(userServiceClient.getUser(userId)).thenReturn(userDto);
         when(likeRepository.findByPostIdAndUserId(postId,userId)).thenReturn(optionalLike);
 
-        PostDto postDto = likeService.removeLikeFromPost(likeDto);
+        PostDto postDto = likeService.removeLikeFromPost(postId);
+        verify(userContext,times(1)).getUserId();
         verify(postService,times(1)).findPostById(likeDto.postId());
         verify(userServiceClient, times(1)).getUser(userId);
         verify(likeRepository, times(1))
@@ -143,10 +152,12 @@ public class LikeServiceImplTest {
         Optional<Like> optionalLike = Optional.of(like1);
         UserDto userDto = new UserDto(userId,"ggf", "fef");
         when(postService.findPostById(likeDto.postId())).thenReturn(post);
+        when(userContext.getUserId()).thenReturn(userId);
         when(userServiceClient.getUser(userId)).thenReturn(userDto);
         when(likeRepository.findByPostIdAndUserId(postId,userId)).thenReturn(optionalLike);
 
-        PostDto postDto = likeService.removeLikeFromPost(likeDto);
+        PostDto postDto = likeService.removeLikeFromPost(postId);
+        verify(userContext,times(1)).getUserId();
         verify(likeRepository, times(1))
                 .deleteByPostIdAndUserId(postIdCaptor.capture(),userIdCaptor.capture());
         assertEquals(userId, userIdCaptor.getValue());
@@ -162,10 +173,12 @@ public class LikeServiceImplTest {
         Optional<Like> optionalLike = Optional.of(like1);
         UserDto userDto = new UserDto(userId,"ggf", "fef");
         when(commentService.findCommentById(likeDto.commentId())).thenReturn(comment);
+        when(userContext.getUserId()).thenReturn(userId);
         when(userServiceClient.getUser(userId)).thenReturn(userDto);
         when(likeRepository.findByCommentIdAndUserId(commentId,userId)).thenReturn(optionalLike);
 
-        CommentDto commentDto = likeService.addLikeToComment(likeDto);
+        CommentDto commentDto = likeService.addLikeToComment(commentId);
+        verify(userContext,times(1)).getUserId();
         verify(commentService,times(1)).findCommentById(likeDto.commentId());
         verify(userServiceClient, times(1)).getUser(userId);
         verify(likeRepository, times(1))
@@ -181,10 +194,12 @@ public class LikeServiceImplTest {
         Optional<Like> optionalLike = Optional.empty();
         UserDto userDto = new UserDto(userId,"ggf", "fef");
         when(commentService.findCommentById(likeDto.commentId())).thenReturn(comment);
+        when(userContext.getUserId()).thenReturn(userId);
         when(userServiceClient.getUser(userId)).thenReturn(userDto);
         when(likeRepository.findByCommentIdAndUserId(commentId,userId)).thenReturn(optionalLike);
 
-        CommentDto commentDto = likeService.addLikeToComment(likeDto);
+        CommentDto commentDto = likeService.addLikeToComment(commentId);
+        verify(userContext,times(1)).getUserId();
         verify(commentService,times(1)).findCommentById(likeDto.commentId());
         verify(userServiceClient, times(1)).getUser(userId);
         verify(likeRepository, times(1))
@@ -203,10 +218,12 @@ public class LikeServiceImplTest {
         Optional<Like> optionalLike = Optional.empty();
         UserDto userDto = new UserDto(userId,"ggf", "fef");
         when(commentService.findCommentById(likeDto.commentId())).thenReturn(comment);
+        when(userContext.getUserId()).thenReturn(userId);
         when(userServiceClient.getUser(userId)).thenReturn(userDto);
         when(likeRepository.findByCommentIdAndUserId(commentId,userId)).thenReturn(optionalLike);
 
-        CommentDto commentDto = likeService.removeLikeFromComment(likeDto);
+        CommentDto commentDto = likeService.removeLikeFromComment(commentId);
+        verify(userContext,times(1)).getUserId();
         verify(commentService,times(1)).findCommentById(likeDto.commentId());
         verify(userServiceClient, times(1)).getUser(userId);
         verify(likeRepository, times(1))
@@ -224,10 +241,12 @@ public class LikeServiceImplTest {
         Optional<Like> optionalLike = Optional.of(like1);
         UserDto userDto = new UserDto(userId,"ggf", "fef");
         when(commentService.findCommentById(likeDto.commentId())).thenReturn(comment);
+        when(userContext.getUserId()).thenReturn(userId);
         when(userServiceClient.getUser(userId)).thenReturn(userDto);
         when(likeRepository.findByCommentIdAndUserId(commentId,userId)).thenReturn(optionalLike);
 
-        CommentDto commentDto = likeService.removeLikeFromComment(likeDto);
+        CommentDto commentDto = likeService.removeLikeFromComment(commentId);
+        verify(userContext,times(1)).getUserId();
         verify(commentService,times(1)).findCommentById(likeDto.commentId());
         verify(userServiceClient, times(1)).getUser(userId);
         verify(likeRepository, times(1))
