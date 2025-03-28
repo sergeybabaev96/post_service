@@ -106,8 +106,14 @@ post-service:
       cron: "0 * * * * *"
     batch-size: 1000
     thread-amount: 10
+  post-created:
+    executor:
+      core-pool-size: 4
+      max-pool-size: 10
+      queue-capacity: 100
 
 kafka:
   bootstrap-servers: localhost:9092
   topic:
     comment: user-comment-post
+    post: user-create-post

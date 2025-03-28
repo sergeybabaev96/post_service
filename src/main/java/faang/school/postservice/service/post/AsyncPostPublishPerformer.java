@@ -15,6 +15,7 @@ import java.util.List;
 @Service
 public class AsyncPostPublishPerformer {
     private final PostRepository postRepository;
+    private final PostCreatedAsyncService asyncService;
 
     @Async("publishExecutor")
     public void publishBatch(List<Post> posts) {
@@ -23,6 +24,8 @@ public class AsyncPostPublishPerformer {
             post.setPublishedAt(LocalDateTime.now());
         });
         postRepository.saveAll(posts);
+        posts.forEach(asyncService::processPostCreated);
+
         log.info("Scheduled task #Publish post# completed");
     }
 }

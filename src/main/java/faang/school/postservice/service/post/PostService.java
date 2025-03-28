@@ -1,5 +1,6 @@
 package faang.school.postservice.service.post;
 
+import faang.school.aspect.CreatePost;
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.exception.PostAlreadyPublishedException;
@@ -57,8 +58,9 @@ public class PostService {
         postRepository.save(post);
     }
 
+    @CreatePost
     @Transactional
-    public void publishPost(Long postId) {
+    public Post publishPost(Long postId) {
         Post post = getPost(postId);
 
         if (post.getPublishedAt() != null) {
@@ -67,7 +69,7 @@ public class PostService {
 
         post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
-        postRepository.save(post);
+        return postRepository.save(post);
     }
 
     @Transactional
