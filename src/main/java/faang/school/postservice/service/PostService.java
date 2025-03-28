@@ -196,13 +196,13 @@ public class PostService {
     }
 
     /**
-     * Получение поста по айди
+     * Возвращает пост по его идентификатору.
      *
-     * @param postId айди поста
-     * @return возвращает Post
-     * @throws EntityNotFoundException если пост с указанным ID не найден.
+     * @param postId Идентификатор поста.
+     * @return Найденный пост.
+     * @throws EntityNotFoundException Если пост с указанным идентификатором не найден.
      */
-    private Post getPostEntity(long postId) {
+    public Post getPostEntity(long postId) {
         return postRepository.findById(postId).orElseThrow(() ->
                 new EntityNotFoundException(String.format("Post not found with id: %s", postId)));
     }
