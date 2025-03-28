@@ -1,8 +1,7 @@
-package faang.school.postservice.util;
+package faang.school.postservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import faang.school.postservice.config.context.UserContext;
-import faang.school.postservice.controller.PostController;
 import faang.school.postservice.dto.post.PostCreateDto;
 import faang.school.postservice.dto.post.PostUpdateDto;
 import faang.school.postservice.dto.post.PostViewDto;

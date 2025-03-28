@@ -1,6 +1,5 @@
-package faang.school.postservice.util;
+package faang.school.postservice.controller;
 
-import faang.school.postservice.controller.GlobalExceptionHandler;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;

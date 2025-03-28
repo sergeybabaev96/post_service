@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * Класс `PostUpdateDto` используется для передачи данных, необходимых для обновления существующего поста.
@@ -16,7 +15,6 @@ import java.util.List;
  *     <li>Содержимое поста ({@link #content})</li>
  *     <li>Флаг публикации ({@link #published})</li>
  *     <li>Флаг удаления поста ({@link #deleted})</li>
- *     <li>Список идентификаторов ресурсов ({@link #resourceIds})</li>
  *     <li>Дата запланированной публикации ({@link #scheduledAt})</li>
  * </ul>
  * </p>
@@ -37,10 +35,6 @@ public class PostUpdateDto {
     @Schema(description = "Флаг удаления поста",
             example = "true")
     private boolean deleted;
-
-    @Schema(description = "Список идентификаторов ресурсов",
-            example = "[1,2,3]")
-    private List<Long> resourceIds;
 
     @Schema(description = "Дата запланированной публикации",
             example = "2026-01-01T15:55:00")
