@@ -166,7 +166,7 @@ class AlbumServiceTest {
         post.setId(postId);
         when(userContext.getUserId()).thenReturn(authorId);
         when(albumRepository.findById(albumId)).thenReturn(Optional.of(album));
-        when(postService.getPost(postId)).thenReturn(post);
+        when(postService.getPostById(postId)).thenReturn(post);
         when(albumRepository.save(album)).thenReturn(album);
 
         AlbumDto albumDto = assertDoesNotThrow(() -> albumService.addPostToAlbum(albumId, postId));
@@ -175,7 +175,7 @@ class AlbumServiceTest {
 
         verify(userContext, times(1)).getUserId();
         verify(albumRepository, times(1)).findById(albumId);
-        verify(postService, times(1)).getPost(postId);
+        verify(postService, times(1)).getPostById(postId);
         verify(albumRepository, times(1)).save(album);
     }
 
