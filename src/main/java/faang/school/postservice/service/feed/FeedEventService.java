@@ -2,6 +2,7 @@ package faang.school.postservice.service.feed;
 
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.FeedProperties;
+import faang.school.postservice.dto.feed.FeedPostDeleteEvent;
 import faang.school.postservice.dto.feed.FeedPostEvent;
 import faang.school.postservice.producer.KafkaPostDeleteProducer;
 import faang.school.postservice.producer.KafkaPostProducer;
@@ -61,5 +62,10 @@ public class FeedEventService {
             partitions.add(list.subList(i, Math.min(i + batchSize, totalSize)));
         }
         return partitions;
+    }
+
+    //@Async("feedExecutor")
+    public void createAndSendFeedPostDeletedEvent(long postId) {
+        kafkaPostDeleteProducer.sendEvent(new FeedPostDeleteEvent(postId));
     }
 }

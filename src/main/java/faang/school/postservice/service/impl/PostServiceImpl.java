@@ -98,6 +98,7 @@ public class PostServiceImpl implements PostService {
         Post postToDelete = getPostById(postId);
         postToDelete.setDeleted(true);
         log.info("Post is deleted, id = {}", postToDelete.getId());
+        feedEventService.createAndSendFeedPostDeletedEvent(postToDelete.getId());
         postRepository.save(postToDelete);
     }
 

@@ -1,19 +1,14 @@
 package faang.school.postservice.service.feed;
 
-import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.redis.CacheProperties;
 import faang.school.postservice.dto.feed.FeedPostDto;
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.user.UserDto;
-import faang.school.postservice.mapper.PostMapper;
-import faang.school.postservice.model.Post;
-import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.RedisFeedRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -29,10 +24,8 @@ import java.util.stream.Stream;
 public class FeedService {
     private final RedisFeedRepository redisFeedRepository;
     private final CacheService cacheService;
-    private final UserServiceClient userServiceClient;
-    private final PostRepository postRepository;
-    private final PostMapper postMapper;
     private final CacheProperties properties;
+    private final FeedGetPostService feedGetPostService;
 
     public void addPostToFeed(List<Long> subscribersIds, Long postId, LocalDateTime publishedAt) {
         redisFeedRepository.addPost(subscribersIds, postId, publishedAt);
@@ -75,7 +68,8 @@ public class FeedService {
 
         int quantityMissingPosts = properties.getPageSize() - resultPostDtos.size();
         if (quantityMissingPosts > 0) {
-            List<PostResponseDto> missingPostsFromDB = fetchPostsFromDB(userId, quantityMissingPosts, currentLastSeenDate);
+            List<PostResponseDto> missingPostsFromDB = feedGetPostService.retrievePosts(userId,
+                    quantityMissingPosts, currentLastSeenDate);
             resultPostDtos.addAll(missingPostsFromDB);
         }
 
@@ -113,12 +107,5 @@ public class FeedService {
     }
 
 
-    @Transactional
-    public List<PostResponseDto> fetchPostsFromDB(Long userId, int quantity, LocalDateTime lastSeenDate) {
-        List<Long> followeeIds = userServiceClient.getFolloweeIdsByFollowerId(userId);
-        List<Post> postsForFeed = postRepository.findPostsForFeed(followeeIds, lastSeenDate, quantity);
-        return postsForFeed.stream()
-                .map(postMapper::toPostResponseDto)
-                .toList();
-    }
+
 }

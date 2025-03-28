@@ -17,7 +17,7 @@ public class RedisFeedRepository {
     private final CacheProperties properties;
     private static final String FEED_KEY_PREFIX = "feed:";
 
-    public void addPost(Long subscriberId, Long postId, LocalDateTime publishedAt) {
+    public void addPostToSubscriber(Long subscriberId, Long postId, LocalDateTime publishedAt) {
         String key = FEED_KEY_PREFIX + subscriberId;
         double score = publishedAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
 
@@ -26,7 +26,7 @@ public class RedisFeedRepository {
     }
 
     public void addPost(List<Long> subscribersIds, Long postId, LocalDateTime publishedAt) {
-        subscribersIds.forEach(subscriberId -> addPost(subscriberId, postId, publishedAt));
+        subscribersIds.forEach(subscriberId -> addPostToSubscriber(subscriberId, postId, publishedAt));
     }
 
     public void deletePostFromAllFeeds(Long postId) {
