@@ -7,6 +7,7 @@ import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.validation.PostValidator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostService {
@@ -24,11 +26,16 @@ public class PostService {
 
     @Transactional
     public PostDto createDraft(PostDto postDto) {
-        postValidator.validatePostDto(postDto);
+        log.info("Creating draft post: {}", postDto);
+       // postValidator.validatePostDto(postDto);
+        log.debug("PostDto validated successfully");
         Post post = postMapper.toEntity(postDto);
         post.setCreatedAt(LocalDateTime.now());
+
+        log.debug("Mapped Post entity: {}", post);
         Post savedPost = postRepository.save(post);
-        return postMapper.toDto(savedPost);
+        log.info("Post saved with ID: {}", savedPost.getId());
+        return postMapper.toDto(post);
     }
 
     @Transactional
@@ -42,7 +49,7 @@ public class PostService {
 
         Post post = getPostById(postId);
         post.setPublished(true);
-        post.setPublishedAt(LocalDateTime.now());
+       // post.setCreatedAt(LocalDateTime.now());
         postRepository.save(post);
         return postMapper.toDto(post);
     }

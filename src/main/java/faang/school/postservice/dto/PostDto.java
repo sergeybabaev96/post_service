@@ -19,6 +19,6 @@ public record PostDto(
 
         Long projectId,
         boolean published,
-        LocalDateTime CreatedAt) {
+        LocalDateTime createdAt) {
 
 }

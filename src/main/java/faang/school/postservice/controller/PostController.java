@@ -5,6 +5,7 @@ import faang.school.postservice.dto.PostDto;
 import faang.school.postservice.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,15 +20,19 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/posts")
+@RequestMapping("/api/v1/posts")
 public class PostController {
     private final PostService postService;
 
     @PostMapping("/draft")
     public PostDto createDraft(@RequestBody @Valid PostDto postDto) {
-        return postService.createDraft(postDto);
+        log.info("Received request to create draft post: {}", postDto);
+        PostDto createdDraft = postService.createDraft(postDto);
+        log.info("Draft post created successfully with ID: {}", createdDraft.id());
+        return createdDraft;
     }
 
     @GetMapping("/{postId}")
