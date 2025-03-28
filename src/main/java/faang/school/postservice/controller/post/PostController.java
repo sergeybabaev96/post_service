@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -90,7 +91,8 @@ public class PostController {
     }
 
     @PostMapping("/{postId}/files")
-    public ResponseEntity<Void> uploadFilesToPost(@PathVariable @Min(1) long postId,
+    public ResponseEntity<Void> uploadFilesToPost(@RequestHeader("x-user-id") @Min(1) long requesterUserId,
+                                                  @PathVariable @Min(1) long postId,
                                                   @RequestPart @NotNull @NotEmpty List<@NotNull MultipartFile> files) {
         postFileService.uploadFilesToPost(postId, files);
         return ResponseEntity.accepted().build();
@@ -103,7 +105,8 @@ public class PostController {
     }
 
     @GetMapping("/{postId}/files")
-    public ResponseEntity<List<PostFileDto>> getPostFilesInfo(@PathVariable @Min(1) long postId) {
+    public ResponseEntity<List<PostFileDto>> getPostFilesInfo(@RequestHeader("x-user-id") @Min(1) long requesterUserId,
+                                                              @PathVariable @Min(1) long postId) {
         List<PostFileDto> postFilesInfo = postFileService.getPostFilesInfo(postId);
         return ResponseEntity.ok(postFilesInfo);
     }
@@ -115,7 +118,8 @@ public class PostController {
     }
 
     @DeleteMapping("/{postId}/files/{fileId}")
-    public ResponseEntity<Void> deletePostFile(@PathVariable @Min(1) long postId,
+    public ResponseEntity<Void> deletePostFile(@RequestHeader("x-user-id") @Min(1) long requesterUserId,
+                                               @PathVariable @Min(1) long postId,
                                                @PathVariable @Min(1) long fileId) {
         postFileService.deletePostFile(postId, fileId);
         return ResponseEntity.noContent().build();
@@ -134,7 +138,8 @@ public class PostController {
     }
 
     @GetMapping("/{postId}/files/{fileId}")
-    public ResponseEntity<byte[]> downLoadPostFile(@PathVariable @Min(1) long postId,
+    public ResponseEntity<byte[]> downLoadPostFile(@RequestHeader("x-user-id") @Min(1) long requesterUserId,
+                                                   @PathVariable @Min(1) long postId,
                                                    @PathVariable @Min(1) long fileId) {
         FileMetaData fileMetaData = postFileService.downloadFile(postId, fileId);
         HttpHeaders headers = new HttpHeaders();
