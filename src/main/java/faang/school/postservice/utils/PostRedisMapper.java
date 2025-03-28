@@ -9,5 +9,6 @@ import org.springframework.stereotype.Component;
 @Component
 public interface PostRedisMapper {
     Post toEntity(PostRedis postRedis);
+
     PostRedis toDto(Post post);
 }
