@@ -54,6 +54,8 @@ class PostControllerTest {
     private Post testPost;
     private PostFileDto testPostFileDto;
     private FileMetaData testFileMetaData;
+    private static final long USER_ID = 1L;
+    private static final String USER_ID_HEADER = "x-user-id";
 
     @BeforeEach
     void setUp() {
@@ -376,6 +378,7 @@ class PostControllerTest {
 
         mockMvc.perform(multipart("/post-service/posts/1/files")
                         .file(file)
+                        .header(USER_ID_HEADER, USER_ID)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isAccepted());
     }
@@ -383,6 +386,7 @@ class PostControllerTest {
     @Test
     void testUploadFilesToPost_whenFilesAreEmpty() throws Exception {
         mockMvc.perform(multipart("/post-service/posts/1/files")
+                        .header(USER_ID_HEADER, USER_ID)
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isBadRequest());
     }
@@ -393,6 +397,7 @@ class PostControllerTest {
         when(postFileService.getPostFilesInfo(1L)).thenReturn(files);
 
         mockMvc.perform(get("/post-service/posts/1/files")
+                        .header(USER_ID_HEADER, USER_ID)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1L))
@@ -404,6 +409,7 @@ class PostControllerTest {
         when(postFileService.getPostFilesInfo(1L)).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/post-service/posts/1/files")
+                        .header(USER_ID_HEADER, USER_ID)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
@@ -415,6 +421,7 @@ class PostControllerTest {
         doNothing().when(postFileService).deletePostFile(1L, 1L);
 
         mockMvc.perform(delete("/post-service/posts/1/files/1")
+                        .header(USER_ID_HEADER, USER_ID)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
     }
@@ -423,7 +430,8 @@ class PostControllerTest {
     void testDownloadPostFileSuccessfully() throws Exception {
         when(postFileService.downloadFile(1L, 1L)).thenReturn(testFileMetaData);
 
-        mockMvc.perform(get("/post-service/posts/1/files/1"))
+        mockMvc.perform(get("/post-service/posts/1/files/1")
+                .header(USER_ID_HEADER, USER_ID))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type", "text/txt"))
                 .andExpect(header().string("Content-Disposition",
@@ -439,7 +447,8 @@ class PostControllerTest {
                 .build();
         when(postFileService.downloadFile(1L, 1L)).thenReturn(noTypeMetaData);
 
-        mockMvc.perform(get("/post-service/posts/1/files/1"))
+        mockMvc.perform(get("/post-service/posts/1/files/1")
+                .header(USER_ID_HEADER, USER_ID))
                 .andExpect(status().isOk())
                 .andExpect(header().string("Content-Type",
                         MediaType.APPLICATION_OCTET_STREAM_VALUE))
