@@ -10,6 +10,7 @@ import org.springframework.data.redis.core.TimeToLive;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @RedisHash("Posts")
@@ -23,7 +24,7 @@ public class PostCacheDto implements Serializable {
     private Long authorId;
     private Long projectId;
     private Long likeCount;
-    private List<CommentForListDto> comments;
+    private Set<CommentForListDto> comments;
     private List<String> resourceKeys;
 
     @TimeToLive(unit = TimeUnit.HOURS)

@@ -36,11 +36,27 @@ spring:
       batch-size: 1000
       properties:
         linger-ms: 30000
+    consumer:
+      security:
+        protocol: PLAINTEXT
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      properties:
+        spring.json.use.type.headers: false
+
     topics:
       like:
         name: "like_topic"
         partitions: 10
         replicas: 1
+      comment:
+        name: "comment-create"
+
+    groups:
+      comment:
+        name: "comment_group"
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
@@ -97,3 +113,6 @@ author:
     rejected_posts_to_ban: 5
     scheduler:
       cron: "0 0 3 * * *" #every day at 03.00
+
+cache:
+  max-comments: 3
