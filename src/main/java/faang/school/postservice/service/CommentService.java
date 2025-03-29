@@ -1,6 +1,7 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.config.app.AppConfig;
 import faang.school.postservice.dto.comment.CommentDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.DataValidationException;
@@ -24,14 +25,15 @@ public class CommentService {
     private final CommentMapper mapper;
     private final PostRepository postRepository;
     private final UserServiceClient client;
+    private final AppConfig appConfig;
 
     public CommentDto createComment(long userId, long postId, CommentDto commentDto) {
         UserDto user = client.getUser(userId);
         if (user == null) {
-            throw new faang.school.postservice.exception.DataValidationException("пользователь на найден");
+            throw new DataValidationException("пользователь на найден");
         }
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new DataValidationException("Пост не найден"));
+                .orElseThrow(() -> new DataValidationException("Пост с id {} не найден", postId));
         validateNullCommentDto(commentDto);
         validateCommentContent(commentDto);
         Comment commentForSave = mapper.toEntity(commentDto);
@@ -76,11 +78,11 @@ public class CommentService {
             throw new DataValidationException("комментарий не может быть пустым");
         }
 
-        int maxLength = 4096;
         int contentLength = commentDto.content().length();
 
-        if (contentLength > maxLength) {
-            throw new DataValidationException("Максимальная длина комментария {} символов", maxLength);
+        if (contentLength > appConfig.getMaxLength()) {
+            throw new DataValidationException(
+                    "Максимальная длина комментария {} символов, вы ввели {}", appConfig.getMaxLength(), contentLength);
         }
     }
 
