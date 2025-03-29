@@ -10,6 +10,7 @@ import faang.school.postservice.dto.user.subscription.SubscriptionUserDto;
 import faang.school.postservice.filter.post.PostSpecificationFilter;
 import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.repository.PostRedisRepository;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class PostServiceImpl implements PostService {
     private int postBatchSize;
 
     private final PostRepository postRepository;
+    private final PostRedisRepository postRedisRepository;
     private final PostServiceValidator postServiceValidator;
     private final PostMapper postMapper;
     private final List<PostSpecificationFilter> postSpecificationFilters;
@@ -61,6 +63,13 @@ public class PostServiceImpl implements PostService {
         Post publishedPost = postRepository.save(draftPostToPublish);
         log.info("Draft post is published, id = {}", publishedPost.getId());
 
+        try {
+            postRedisRepository.save(publishedPost);
+        }catch (Exception e) {
+            log.error("Error updating cache for post {}",publishedPost.getId());
+        }
+
+        //TODO надо в асинк перевести
         List<SubscriptionUserDto> followers = userServiceClient.getFollowers(publishedPost.getAuthorId());
 
         List<Long> followersIds = followers.stream()
@@ -91,38 +100,76 @@ public class PostServiceImpl implements PostService {
                     log.error("Error processing scheduled posts", error);
                     throw new RuntimeException("Failed to process scheduled posts", error);
                 })).forEach(CompletableFuture::join);
+        // TODO обновить кеш, подумать, надо ли
     }
 
     @Override
+    @Transactional
     public PostResponseDto updatePost(Long postId, PostUpdateRequestDto postUpdateRequestDto) {
         Post postToUpdate = getPostById(postId);
         Post requestPost = postMapper.toPostEntity(postUpdateRequestDto);
         Post updatedPost = postRepository.save(copyPostData(requestPost, postToUpdate));
+
+        try {
+            postRedisRepository.save(updatedPost);
+        }catch (Exception e) {
+            log.error("Error updating cache for post {}",updatedPost.getId());
+        }
+
         log.info("Post is updated, id = {}", updatedPost.getId());
         return postMapper.toPostResponseDto(updatedPost);
     }
 
     @Override
+    @Transactional
     public void deletePost(Long postId) {
         Post postToDelete = getPostById(postId);
         postToDelete.setDeleted(true);
         log.info("Post is deleted, id = {}", postToDelete.getId());
         postRepository.save(postToDelete);
+
+        try {
+            postRedisRepository.deleteById(postId);
+        }catch (Exception e) {
+            log.error("Error clearing cache for post {}", postId);
+        }
+
     }
 
     @Override
     public PostResponseDto getPost(Long postId) {
+        Optional<Post> cachedPost = postRedisRepository.findById(postId);
+        if (cachedPost.isPresent()) {
+            log.info("Post {} get from cache", postId);
+            return postMapper.toPostResponseDto(cachedPost.get());
+        }
         Post post = getPostById(postId);
-        return postMapper.toPostResponseDto(post);
+        log.info("Post {} get from database", postId);
+        if (post != null) {
+            postRedisRepository.save(post);
+            log.info("Post {} updated in cache", postId);
+        }
+        return post != null ? postMapper.toPostResponseDto(post) : null;
+    }
+
+/*    private Post getPostById(Long postId) {
+        try {
+            return postRepository.findById(postId).orElse(null);
+        } catch (Exception e) {
+            log.error("Error fetching post from DB with id: {}", postId, e);
+            return null;
+        }
+    }*/
+
+    private Post getPostById(Long postId) {
+        Optional<Post> optionalPost = postRepository.findById(postId);
+        return optionalPost.orElseThrow(() -> new IllegalArgumentException("Post not found, Id = " + postId));
     }
 
     @Override
     public List<PostResponseDto> findAllByFilter(PostFilterDto filter) {
         return postMapper.toPostResponseDtos(findAllPostsByFilter(filter));
     }
-
-
-
 
     private List<Post> preparePostList(List<Post> posts) {
         return posts.stream()
@@ -141,10 +188,7 @@ public class PostServiceImpl implements PostService {
         return postRepository.findAll(specification);
     }
 
-    private Post getPostById(Long postId) {
-        Optional<Post> optionalPost = postRepository.findById(postId);
-        return optionalPost.orElseThrow(() -> new IllegalArgumentException("Post not found, Id = " + postId));
-    }
+
 
     private Post copyPostData(Post sourcePost, Post targetPost) {
         targetPost.setContent(sourcePost.getContent());

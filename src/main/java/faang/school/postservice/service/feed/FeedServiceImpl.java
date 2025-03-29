@@ -28,13 +28,12 @@ public class FeedServiceImpl implements FeedService {
     }
 
     @Override
+    //@Async("asyncTaskExecutor")
     public void processNewPost(Long postId, List<Long> followersIds) {
 
         PostResponseDto post = postService.getPost(postId);
         FeedItemResponseDto feedItem = FeedItemResponseDto.builder()
-                //.postId(post.id())
                 .postLikesCounter(0)
-                //.publishedAt(post.publishedAt())
                 .post(new FeedItemResponseDto.Post(post.id(), post.content(), post.publishedAt(), post.authorId()))
                 .build();
         feedRepository.addPostToFollowersFeeds(followersIds, feedItem);

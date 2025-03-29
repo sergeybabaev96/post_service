@@ -45,6 +45,11 @@ spring:
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       acks: all
       retries: 3
+    listener:
+      ack-mode: manual
+      retry-attempts: 3 # Количество попыток повтора
+      retry-interval: 1000 # Интервал между попытками
+      default-retryable: false # Отправка в DLQ после неудачных попыток
     topic:
       posts-topic: posts
       likes-topic: likes
