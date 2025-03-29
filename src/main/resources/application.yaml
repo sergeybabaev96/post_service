@@ -20,9 +20,15 @@ spring:
   kafka:
     bootstrap-servers: "localhost:9092"
     pool-size: 3
+
+    producer:
+      acks: 1
+      retries: 3
+
     consumer:
       group-id: "group"
       auto-offset-reset: earliest
+
     topics:
       PostViewEvent:
         name: post_views
