@@ -28,13 +28,13 @@ public class AlbumController {
         return albumService.createAlbum(dto);
     }
 
-    @PostMapping("/{albumId}/post/{postId}")
+    @PostMapping("/{albumId}/post/{postDto}")
     public AlbumResponseDto addPostToAlbum(@PathVariable @Min(1) long postId,
                                            @PathVariable @Min(1) long albumId) {
         return albumService.addPostToAlbum(postId, albumId);
     }
 
-    @DeleteMapping("/{albumId}/post/{postId}")
+    @DeleteMapping("/{albumId}/post/{postDto}")
     public void deletePostFromAlbum(@PathVariable @Min(1) long postId,
                                     @PathVariable @Min(1) long albumId) {
         albumService.deletePostFromAlbum(postId, albumId);

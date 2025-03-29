@@ -3,7 +3,7 @@ package faang.school.postservice.service.kafka;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import faang.school.postservice.enums.KafkaStatus;
-import faang.school.postservice.kafka.KafkaProducer;
+import faang.school.postservice.kafka.producer.KafkaProducer;
 import faang.school.postservice.model.KafkaMessage;
 import faang.school.postservice.repository.KafkaMessageRepository;
 import jakarta.transaction.Transactional;

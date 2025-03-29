@@ -2,8 +2,8 @@ package faang.school.postservice.service.post;
 
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
-import faang.school.postservice.dto.event.CommentEvent;
 import faang.school.postservice.dto.kafka.PostPublishedEvent;
+import faang.school.postservice.dto.kafka.PostViewsEvent;
 import faang.school.postservice.dto.post.PostRequestDto;
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.user.UserDto;
@@ -11,14 +11,16 @@ import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.post.Post;
 import faang.school.postservice.properties.post.PostUnverifiedProperties;
 import faang.school.postservice.properties.user.UserBanRedisProperties;
-import faang.school.postservice.repository.post.PostRepository;
 import faang.school.postservice.publisher.redis.RedisPublisher;
+import faang.school.postservice.repository.post.PostRepository;
+import faang.school.postservice.service.cache.AuthorCacheService;
+import faang.school.postservice.service.cache.PostCacheService;
 import faang.school.postservice.service.kafka.KafkaMessageService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,16 +44,30 @@ public class PostServiceImpl implements PostService {
     private final UserContext userContext;
     private final UserServiceClient userServiceClient;
     private final KafkaMessageService kafkaMessageService;
+    private final PostCacheService postCacheService;
+    private final AuthorCacheService authorCacheService;
 
     @Value("${kafka.post.topic}")
-    private String topic;
+    private String postEventTopic;
 
-    @Cacheable(key = "#postId", value = "posts")
+    @Value("${kafka.post.views.topic}")
+    private String postViewsTopic;
+
+    @SneakyThrows
     @Override
     public PostResponseDto getPostById(long postId) {
-        Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException(String.format(
-                "Post with id = %d not found", postId
-        )));
+        UserDto user = Optional.ofNullable(userServiceClient.getUser(userContext.getUserId()))
+                .orElseThrow(() -> new EntityNotFoundException(String.format(
+                        "User with id = %d not found", userContext.getUserId()
+                )));
+        Optional<PostResponseDto> postFromCache = postCacheService.getCachedPost(postId);
+        if (postFromCache.isPresent()) {
+            kafkaMessageService.sendMessage(postViewsTopic, new PostViewsEvent(user.getId(), postFromCache.get().id()));
+            return postFromCache.get();
+        }
+        kafkaMessageService.sendMessage(postViewsTopic, new PostViewsEvent(user.getId(), postId));
+        Post post = postRepository.findById(postId).orElseThrow(
+                () -> new EntityNotFoundException(String.format("Post with id = %d not found", postId)));
         return postMapper.toDto(post);
     }
 
@@ -62,16 +78,11 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new EntityNotFoundException(String.format(
                         "User with id = %d not found", userContext.getUserId()
                 )));
-        List<Long> followersIds = userServiceClient.getFollowersByUserId(user.id()).stream()
-                .map(UserDto::id)
-                .toList();
-        kafkaMessageService.sendMessage(topic, new PostPublishedEvent(followersIds));
-        return postMapper.toDto(postRepository.save(buildPost(dto, user)));
+        Post savedPost = postRepository.save(buildPost(dto, user));
+        return postMapper.toDto(savedPost);
     }
 
-
     @Transactional(rollbackFor = Exception.class)
-    @CachePut(key = "#postId", value = "posts", condition = "#postId != null")
     @Override
     public PostResponseDto publishPost(long postId) {
         UserDto user = Optional.ofNullable(userServiceClient.getUser(userContext.getUserId()))
@@ -81,23 +92,14 @@ public class PostServiceImpl implements PostService {
         Post post = postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException(String.format(
                 "Post with id = %d not found", postId
         )));
-        if (post.getAuthorId().longValue() != user.id()) {
-            throw new IllegalArgumentException(String.format("Access denied for user with id = %d to post id = %d",
-                    user.id(), postId));
-        }
-        if (post.isPublished()) {
-            throw new IllegalArgumentException(String.format("Post with id = %d was published", postId));
-        }
+        checkAuthorAndPost(postId, post, user);
         post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
         Post savedPost = postRepository.save(post);
-        saveAuthorToCache(user);
+        sendPublishPostEventToKafka(user, savedPost);
+        postCacheService.cachePost(postMapper.toDto(savedPost));
+        authorCacheService.cacheAuthor(savedPost.getAuthorId(), user);
         return postMapper.toDto(savedPost);
-    }
-
-    @CachePut(key = "#id", value = "authors")
-    private void saveAuthorToCache(UserDto user) {
-
     }
 
     @Cacheable(key = "#hashtag", value = "postsByHashtag")
@@ -126,9 +128,27 @@ public class PostServiceImpl implements PostService {
     private Post buildPost(PostRequestDto dto, UserDto user) {
         return Post.builder()
                 .content(dto.content())
-                .authorId(user.id())
+                .authorId(user.getId())
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
+    }
+
+    private void checkAuthorAndPost(long postId, Post post, UserDto user) {
+        if (post.getAuthorId().longValue() != user.getId()) {
+            throw new IllegalArgumentException(String.format("Access denied for user with id = %d to post id = %d",
+                    user.getId(), postId));
+        }
+        if (post.isPublished()) {
+            throw new IllegalArgumentException(String.format("Post with id = %d was published", postId));
+        }
+    }
+
+    private void sendPublishPostEventToKafka(UserDto user, Post savedPost) {
+        List<Long> followersIds = userServiceClient.getFollowersByUserId(user.getId()).stream()
+                .map(UserDto::getId)
+                .toList();
+        kafkaMessageService.sendMessage(postEventTopic, new PostPublishedEvent(
+                postMapper.toDto(savedPost), savedPost.getAuthorId(), LocalDateTime.now(), followersIds, List.of()));
     }
 }

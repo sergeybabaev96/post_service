@@ -1,26 +1,20 @@
 package faang.school.postservice.dto.post;
 
-import lombok.*;
-
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-public final class PostResponseDto implements Serializable {
+public record PostResponseDto(
 
-    private Long id;
+        Long id,
 
-    private String content;
+        String content,
 
-    private Long authorId;
+        Long authorId,
 
-    private Long projectId;
+        Long projectId,
 
-    private LocalDateTime createdAt;
+        LocalDateTime createdAt,
 
-    private LocalDateTime updatedAt;
+        LocalDateTime updatedAt
+) {
 
 }

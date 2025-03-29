@@ -1,4 +1,4 @@
-package faang.school.postservice.kafka;
+package faang.school.postservice.kafka.producer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

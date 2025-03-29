@@ -28,7 +28,7 @@ public class FollowersVisibilityConverter implements VisibilityConverter {
         long userId = userContext.getUserId();
         List<UserDto> followers = userServiceClient.getFollowersByUserId(album.getAuthorId());
         boolean isUserFollower = followers.stream()
-                .map(UserDto::id)
+                .map(UserDto::getId)
                 .anyMatch(followerId -> followerId != null && followerId == userId);
         if (isUserFollower) {
             return albumMapper.toDto(album);
