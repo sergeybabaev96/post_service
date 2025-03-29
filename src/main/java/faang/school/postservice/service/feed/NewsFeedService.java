@@ -2,6 +2,7 @@ package faang.school.postservice.service.feed;
 
 import faang.school.postservice.dto.feed.PostFeedReadDto;
 import faang.school.postservice.dto.user.UserDto;
+import faang.school.postservice.event.kafka.KafkaPostEventDto;
 import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.mapper.FeedMapper;
 import faang.school.postservice.mapper.PostMapper;
@@ -16,20 +17,28 @@ import faang.school.postservice.repository.redis.RedisPostRepository;
 import faang.school.postservice.repository.redis.RedisUserRepository;
 import faang.school.postservice.service.UserService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NewsFeedService {
 
-    @Value("${news-feed.batch-size}")
+    @Value("${news-feed.max-feed-size:500}")
+    private int maxFeedSize;
+    @Value("${news-feed.batch-size:20}")
     private int postBatchSize;
+    @Value("${news-feed.prefix-name}")
+    private String newsFeedPrefix;
 
+    private final RedisTemplate<String, String> redisTemplate;
     private final FeedMapper feedMapper;
     private final PostMapper postMapper;
     private final RedisUserRepository redisUserRepository;
@@ -69,6 +78,24 @@ public class NewsFeedService {
     public void addPostToCache(Post post) {
         PostCache postCache = postMapper.toCache(post);
         redisPostRepository.save(postCache);
+    }
+
+    public void addPostToFeed(KafkaPostEventDto postEventDto, long followerId) {
+        String redisKey = newsFeedPrefix + followerId;
+        String postId = String.valueOf(postEventDto.getPostId());
+        long timestamp = System.currentTimeMillis();
+        try {
+            redisTemplate.opsForZSet().add(redisKey, postId, timestamp);
+            redisTemplate.opsForZSet().removeRange(redisKey, 0, -maxFeedSize - 1);
+            log.info("Добавлен пост {} в Ленту новостей для пользователя [{}]", postEventDto.getPostId(), followerId);
+        } catch (Exception e) {
+            log.error("Ошибка добавления поста в Ленту новостей для пользователя {}: {}", followerId, e.getMessage(), e);
+        }
+
+
+        FeedCache feedCache = feedMapper.toFeedCache(postEventDto);
+        feedCache.setUserId(followerId);
+        redisFeedRepository.save(feedCache);
     }
 
     private PostFeedReadDto getPostFeedDto(long postId) {

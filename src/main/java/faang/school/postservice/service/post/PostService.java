@@ -8,6 +8,7 @@ import faang.school.postservice.dto.post.PostCreateDto;
 import faang.school.postservice.dto.post.PostOwnerType;
 import faang.school.postservice.dto.post.PostReadDto;
 import faang.school.postservice.dto.post.PostUpdateDto;
+import faang.school.postservice.event.kafka.KafkaPostEventDto;
 import faang.school.postservice.exception.BusinessException;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
@@ -15,13 +16,10 @@ import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Hashtag;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
-import faang.school.postservice.model.cache.UserCache;
+import faang.school.postservice.publisher.kafka.KafkaPostEventPublisher;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.ResourceRepository;
-import faang.school.postservice.repository.redis.RedisUserRepository;
 import faang.school.postservice.service.HashtagService;
-import faang.school.postservice.service.UserService;
-import faang.school.postservice.service.feed.NewsFeedService;
 import faang.school.postservice.service.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +48,7 @@ public class PostService {
     private final S3Service s3Service;
     private final ResourceRepository resourceRepository;
     private final PostImageService postImageService;
-    private final NewsFeedService newsFeedService;
+    private final KafkaPostEventPublisher kafkaPostEventPublisher;
 
     @Value("${post.schedule.batch-size}")
     private int batchSize;
@@ -85,8 +83,11 @@ public class PostService {
         post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
 
-        newsFeedService.addPostToCache(post);
-        newsFeedService.addAuthorToCacheByPost(post);
+        KafkaPostEventDto postEventDto = KafkaPostEventDto.builder()
+                .postId(post.getId())
+                .authorId(post.getAuthorId())
+                .build();
+        kafkaPostEventPublisher.sendPostEvent(postEventDto);
 
         return postMapper.toDto(postRepository.save(post));
     }

@@ -27,6 +27,14 @@ spring:
         likes: likes_channel
       cache:
         ttl: 86400 #24 hour
+    kafka:
+      address: localhost:9092
+      acknowledgement: all
+      group-id: post-service-group
+      topic:
+        posts: posts
+      keys:
+        post: post
 
   cloud:
     openfeign:
@@ -131,6 +139,8 @@ task:
 
 news-feed:
   batch-size: 20
+  max-feed-size: 500
+  prefix-name: News_feed
 
 ---
 
