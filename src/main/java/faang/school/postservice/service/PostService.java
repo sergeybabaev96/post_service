@@ -7,9 +7,11 @@ import faang.school.postservice.dto.Post.PostResponseDto;
 import faang.school.postservice.dto.Post.UpdatePostDto;
 import faang.school.postservice.dto.user.AuthorCacheDto;
 import faang.school.postservice.dto.user.UserDto;
+import faang.school.postservice.kafka.PostEventPublisher;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.mapper.UserMapper;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.model.PostEvent;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.RedisAuthorRepository;
 import faang.school.postservice.repository.RedisPostRepository;
@@ -27,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
