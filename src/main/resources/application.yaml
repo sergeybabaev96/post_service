@@ -45,6 +45,8 @@ spring:
       auto-offset-reset: earliest
       properties:
         spring.json.use.type.headers: false
+    listener:
+      ack-mode: manual
 
     topics:
       like:
@@ -60,6 +62,7 @@ spring:
     groups:
       comment:
         name: "comment_group"
+
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml

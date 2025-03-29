@@ -5,7 +5,6 @@ import faang.school.postservice.dto.comment.CommentForListDto;
 import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.model.CommentEvent;
 import faang.school.postservice.repository.RedisPostRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -42,6 +41,7 @@ public class CommentConsumer {
                 comments.remove(comments.iterator().next());
             }
             comments.add(comment);
+            p.setComments(comments);
             redisPostRepository.save(p);
         });
 
