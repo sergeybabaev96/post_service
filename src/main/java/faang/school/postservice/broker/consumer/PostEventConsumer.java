@@ -17,13 +17,12 @@ import java.util.concurrent.CompletableFuture;
 public class PostEventConsumer {
 
     private final FeedService feedService;
-    //private final KafkaProperties kafkaProperties;
     private final AsyncTaskExecutor asyncTaskExecutor;
 
-    //TODO сделать на основе properties
-    @KafkaListener(topics = "posts", groupId = "newsfeed")
+    @KafkaListener(
+            topics = "${spring.kafka.topic.posts-topic}",
+            groupId = "${spring.kafka.consumer.group-id}")
     public void consume(PostPublicationEvent postPublicationEvent, Acknowledgment acknowledgment) {
-
         CompletableFuture<Void> result = CompletableFuture.runAsync(() ->
                 feedService.processNewPost(
                         postPublicationEvent.postId(),
@@ -35,13 +34,9 @@ public class PostEventConsumer {
                 log.error("Error consuming message with post id {}", postPublicationEvent.postId());
             }else {
                 feedService.processNewPost(postPublicationEvent.postId(), postPublicationEvent.followersIds());
-                log.info("### User {} is published the post {}",
-                        postPublicationEvent.userId(), postPublicationEvent.postId());
+                log.info("### User published the post {}", postPublicationEvent.postId());
                 acknowledgment.acknowledge();
             }
         });
-
-//        feedService.processNewPost(postPublicationEvent.postId(), postPublicationEvent.followersIds());
-//        log.info("### User {} is published the post {}", postPublicationEvent.userId(), postPublicationEvent.postId());
     }
 }

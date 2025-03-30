@@ -6,7 +6,7 @@ import java.util.List;
 
 @Builder
 public record PostPublicationEvent(
-        Long userId,
+        //Long userId,
 
         Long postId,
 

@@ -2,7 +2,7 @@ package faang.school.postservice.client;
 
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.dto.user.UserResponseDto;
-import faang.school.postservice.dto.user.subscription.SubscriptionUserDto;
+import faang.school.postservice.dto.subscription.SubscriptionUserDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

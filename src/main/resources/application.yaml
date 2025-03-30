@@ -9,7 +9,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -30,6 +30,12 @@ spring:
         like-event-channel: like_event
       cache:
         ttl-minutes: 10
+        user-ttl-minutes: 1440
+        post-ttl-minutes: 1440
+        comment-ttl-minutes: 1440
+        user-cache-name: user
+        post-cache-name: post
+        comment-cache-name: comment
 
   kafka:
     bootstrap-servers: localhost:9092
@@ -52,6 +58,7 @@ spring:
       default-retryable: false # Отправка в DLQ после неудачных попыток
     topic:
       posts-topic: posts
+      post-views-topic: post_views
       likes-topic: likes
       comments-topic: comments
 
@@ -84,6 +91,7 @@ post_service:
 logging:
   level:
     root: info
+    feign: debug
 
 user-service:
   host: localhost

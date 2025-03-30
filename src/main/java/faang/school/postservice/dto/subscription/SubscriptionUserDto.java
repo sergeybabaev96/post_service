@@ -1,4 +1,4 @@
-package faang.school.postservice.dto.user.subscription;
+package faang.school.postservice.dto.subscription;
 
 import lombok.Builder;
 

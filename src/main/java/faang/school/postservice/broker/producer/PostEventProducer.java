@@ -1,11 +1,10 @@
 package faang.school.postservice.broker.producer;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import faang.school.postservice.config.kafka.KafkaProperties;
+import faang.school.postservice.config.kafka.CustomKafkaProperties;
 import faang.school.postservice.dto.post.PostPublicationEvent;
+import faang.school.postservice.dto.post.PostViewEvent;
 import faang.school.postservice.mapper.user.UserDtoAdapter;
-import faang.school.postservice.model.Post;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -17,36 +16,51 @@ import java.util.List;
 @Service
 public class PostEventProducer extends KafkaProducerService{
 
-    private final KafkaProperties kafkaProperties;
+    private final CustomKafkaProperties customKafkaProperties;
 
     private final UserDtoAdapter userDtoAdapter;
 
     public PostEventProducer(KafkaTemplate<String, String> kafkaTemplate,
-                             KafkaProperties kafkaProperties,
+                             CustomKafkaProperties customKafkaProperties,
                              ObjectMapper objectMapper,
                              UserDtoAdapter userDtoAdapter) {
         super(kafkaTemplate, objectMapper);
-        this.kafkaProperties = kafkaProperties;
+        this.customKafkaProperties = customKafkaProperties;
         this.userDtoAdapter = userDtoAdapter;
     }
 
     @Async("asyncTaskExecutor")
-    public void producePublishPostEventAsync(Post post, List<Long> followersIds) {
-        producePublishPostEvent(post, followersIds);
+    public void producePublishPostEventAsync(long postId, List<Long> followersIds) {
+        producePublishPostEvent(postId, followersIds);
     }
 
-    public void producePublishPostEvent(Post post, List<Long> followersIds) {
-        Long userId = post.getAuthorId();
+    public void producePublishPostEvent(long postId, List<Long> followersIds) {
+        //Long userId = post.getAuthorId();
 
         PostPublicationEvent postPublicationEvent = PostPublicationEvent.builder()
-                .userId(userId)
-                .postId(post.getId())
+                //.userId(userId)
+                .postId(postId)
                 .followersIds(followersIds)
                 .build();
-        sendPostMessage(kafkaProperties.topic().postsTopic(), postPublicationEvent);
-        log.info("Sending PublishPostEvent to message broker. Post : {}", post.getId());
+        super.sendPostMessage(customKafkaProperties.topic().postsTopic(), postPublicationEvent);
+        log.info("Sending PublishPostEvent to message broker. Post : {}", postId);
     }
 
+    public void produceViewPostEvent(long postId, Long visitorId) {
+
+        PostViewEvent postViewEvent = PostViewEvent.builder()
+                .postId(postId)
+                .userId(visitorId)
+                .build();
+
+        super.sendPostMessage(customKafkaProperties.topic().postViewsTopic(), postViewEvent);
+        log.info("Sending PostViewEvent to message broker. Post : {}", postId);
+    }
+
+
+
+
+    /*
     private void sendPostMessage(String topic, PostPublicationEvent post) {
         try {
             sendMessage(topic, super.objectMapper.writeValueAsString(post));
@@ -54,5 +68,5 @@ public class PostEventProducer extends KafkaProducerService{
             log.error("Error serializing post message: " + e.getMessage());
             throw new RuntimeException(e);
         }
-    }
+    }*/
 }

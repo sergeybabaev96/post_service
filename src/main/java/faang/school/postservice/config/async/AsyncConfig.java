@@ -1,4 +1,4 @@
-package faang.school.postservice.async;
+package faang.school.postservice.config.async;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

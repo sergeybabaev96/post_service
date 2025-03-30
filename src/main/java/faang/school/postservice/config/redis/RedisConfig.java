@@ -6,16 +6,23 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import faang.school.postservice.dto.feed.FeedItemResponseDto;
+import faang.school.postservice.dto.post.PostResponseDto;
+import faang.school.postservice.dto.user.UserResponseDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.cache.RedisCacheManagerBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+
+import java.time.Duration;
 
 @Configuration
 @RequiredArgsConstructor
@@ -42,7 +49,30 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<String, FeedItemResponseDto> FeedItemRedisTemplate(RedisConnectionFactory connectionFactory,
+    public RedisTemplate<String, UserResponseDto> userRedisTemplate(RedisConnectionFactory connectionFactory,
+                                                                        ObjectMapper redisObjectMapper) {
+        RedisTemplate<String, UserResponseDto> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer(redisObjectMapper));
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer(redisObjectMapper));
+
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, PostResponseDto> postRedisTemplate(RedisConnectionFactory connectionFactory,
+                                                                    ObjectMapper redisObjectMapper) {
+        RedisTemplate<String, PostResponseDto> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer(redisObjectMapper));
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer(redisObjectMapper));
+
+        return template;
+    }
+    @Bean
+    public RedisTemplate<String, FeedItemResponseDto> feedItemRedisTemplate(RedisConnectionFactory connectionFactory,
                                                                             ObjectMapper redisObjectMapper) {
         RedisTemplate<String, FeedItemResponseDto> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -89,6 +119,16 @@ public class RedisConfig {
         );
 
         return mapper;
+    }
+
+    @Bean
+    public RedisCacheManagerBuilderCustomizer redisCacheManagerBuilderCustomizer() {
+        return builder -> builder
+                .withCacheConfiguration("externalUserServiceCache",
+                        RedisCacheConfiguration.defaultCacheConfig()
+                                .entryTtl(Duration.ofMinutes(redisProperties.cache().userTtlMinutes()))
+                                .serializeValuesWith(RedisSerializationContext.SerializationPair
+                                        .fromSerializer(new GenericJackson2JsonRedisSerializer())));
     }
 
 }

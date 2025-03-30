@@ -8,6 +8,13 @@ public record RedisProperties(
         String host,
         Cache cache
 ) {
-    public record Cache(int ttlMinutes) {
+    public record Cache(
+            int ttlMinutes,
+            int userTtlMinutes,
+            int postTtlMinutes,
+            int commentTtlMinutes,
+            String userCacheName,
+            String postCacheName,
+            String commentCacheName) {
     }
 }

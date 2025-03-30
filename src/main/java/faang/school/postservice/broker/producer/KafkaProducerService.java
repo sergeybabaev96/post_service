@@ -1,5 +1,6 @@
 package faang.school.postservice.broker.producer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,5 +31,14 @@ public abstract class KafkaProducerService {
                         message, topic, result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
             }
         });
+    }
+
+    protected void sendPostMessage(String topic, Object event) {
+        try {
+            sendMessage(topic, objectMapper.writeValueAsString(event));
+        } catch (JsonProcessingException e) {
+            log.error("Error serializing post message: " + e.getMessage());
+            throw new RuntimeException(e);
+        }
     }
 }

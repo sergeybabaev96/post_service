@@ -2,22 +2,26 @@ package faang.school.postservice.service.impl;
 
 import faang.school.postservice.broker.producer.PostEventProducer;
 import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.config.context.UserContext;
+import faang.school.postservice.config.redis.RedisProperties;
 import faang.school.postservice.dto.post.PostCreateRequestDto;
 import faang.school.postservice.dto.post.PostFilterDto;
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.post.PostUpdateRequestDto;
-import faang.school.postservice.dto.user.subscription.SubscriptionUserDto;
+import faang.school.postservice.dto.subscription.SubscriptionUserDto;
+import faang.school.postservice.exception.DataFetchException;
 import faang.school.postservice.filter.post.PostSpecificationFilter;
 import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.Post;
-import faang.school.postservice.repository.PostRedisRepository;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.PostService;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +30,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -35,13 +40,17 @@ public class PostServiceImpl implements PostService {
     private int postBatchSize;
 
     private final PostRepository postRepository;
-    private final PostRedisRepository postRedisRepository;
+    //private final PostRedisRepository postRedisRepository;
     private final PostServiceValidator postServiceValidator;
     private final PostMapper postMapper;
     private final List<PostSpecificationFilter> postSpecificationFilters;
     private final ExecutorService executorService;
     private final PostEventProducer postEventProducer;
     private final UserServiceClient userServiceClient;
+    private final RedisTemplate<String, PostResponseDto> postRedisTemplate;
+    private final RedisProperties redisProperties;
+    private final UserContext userContext;
+
 
     @Override
     @Transactional
@@ -63,11 +72,14 @@ public class PostServiceImpl implements PostService {
         Post publishedPost = postRepository.save(draftPostToPublish);
         log.info("Draft post is published, id = {}", publishedPost.getId());
 
-        try {
-            postRedisRepository.save(publishedPost);
-        }catch (Exception e) {
-            log.error("Error updating cache for post {}",publishedPost.getId());
-        }
+        String cacheKey = redisProperties.cache().postCacheName() + postId;
+        PostResponseDto postResponseDto = postMapper.toPostResponseDto(publishedPost);
+        postRedisTemplate.opsForValue().set(
+                cacheKey,
+                postResponseDto,
+                redisProperties.cache().postTtlMinutes(),
+                TimeUnit.MINUTES
+        );
 
         //TODO надо в асинк перевести
         List<SubscriptionUserDto> followers = userServiceClient.getFollowers(publishedPost.getAuthorId());
@@ -76,7 +88,7 @@ public class PostServiceImpl implements PostService {
                 .map(SubscriptionUserDto::id)
                 .toList();
 
-        postEventProducer.producePublishPostEventAsync(publishedPost, followersIds);
+        postEventProducer.producePublishPostEventAsync(postId, followersIds);
 
         return postMapper.toPostResponseDto(publishedPost);
     }
@@ -110,11 +122,20 @@ public class PostServiceImpl implements PostService {
         Post requestPost = postMapper.toPostEntity(postUpdateRequestDto);
         Post updatedPost = postRepository.save(copyPostData(requestPost, postToUpdate));
 
-        try {
+        String cacheKey = redisProperties.cache().postCacheName() + postId;
+        PostResponseDto postResponseDto = postMapper.toPostResponseDto(updatedPost);
+        postRedisTemplate.opsForValue().set(
+                cacheKey,
+                postResponseDto,
+                redisProperties.cache().postTtlMinutes(),
+                TimeUnit.MINUTES
+        );
+
+/*        try {
             postRedisRepository.save(updatedPost);
         }catch (Exception e) {
             log.error("Error updating cache for post {}",updatedPost.getId());
-        }
+        }*/
 
         log.info("Post is updated, id = {}", updatedPost.getId());
         return postMapper.toPostResponseDto(updatedPost);
@@ -128,16 +149,57 @@ public class PostServiceImpl implements PostService {
         log.info("Post is deleted, id = {}", postToDelete.getId());
         postRepository.save(postToDelete);
 
-        try {
+        String cacheKey = redisProperties.cache().postCacheName() + postId;
+        postRedisTemplate.delete(cacheKey);
+        log.info("Evicted cache for post id: {}", postId);
+
+/*        try {
             postRedisRepository.deleteById(postId);
         }catch (Exception e) {
             log.error("Error clearing cache for post {}", postId);
-        }
+        }*/
 
     }
 
     @Override
     public PostResponseDto getPost(Long postId) {
+
+        String cacheKey = redisProperties.cache().postCacheName() + postId;
+        PostResponseDto cachedPost = postRedisTemplate.opsForValue().get(cacheKey);
+        Long userId = userContext.getUserId();
+
+        if (cachedPost != null) {
+            log.info("Returning cached post for id: {}", postId);
+            postEventProducer.produceViewPostEvent(postId, userId);
+            return cachedPost;
+        }
+
+        // 2. Если нет в кеше - запрос через Feign
+        log.info("Cache miss for post id: {}. Fetching from external service...", postId);
+        try {
+            Optional<Post> optionalPost = postRepository.findById(postId);
+            if (optionalPost.isPresent()) {
+                PostResponseDto postResponseDto = postMapper.toPostResponseDto(optionalPost.get());
+                postRedisTemplate.opsForValue().set(
+                        cacheKey,
+                        postResponseDto,
+                        redisProperties.cache().postTtlMinutes(),
+                        TimeUnit.MINUTES
+                );
+                postEventProducer.produceViewPostEvent(postId, userId);
+                return postResponseDto;
+            }else {
+                return null;
+            }
+
+            } catch (FeignException e) {
+            log.error("Error fetching post from repository for id: {}", postId, e);
+            throw new DataFetchException("Failed to fetch post for id: " + postId);
+        }
+
+
+
+        /*
         Optional<Post> cachedPost = postRedisRepository.findById(postId);
         if (cachedPost.isPresent()) {
             log.info("Post {} get from cache", postId);
@@ -149,7 +211,7 @@ public class PostServiceImpl implements PostService {
             postRedisRepository.save(post);
             log.info("Post {} updated in cache", postId);
         }
-        return post != null ? postMapper.toPostResponseDto(post) : null;
+        return post != null ? postMapper.toPostResponseDto(post) : null;*/
     }
 
 /*    private Post getPostById(Long postId) {
