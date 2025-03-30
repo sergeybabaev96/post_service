@@ -2,20 +2,24 @@ package faang.school.postservice.service.comment;
 
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
+import faang.school.postservice.dto.comment.CommentEvent;
 import faang.school.postservice.dto.comment.CommentFiltersDto;
 import faang.school.postservice.dto.comment.CommentRequestDto;
 import faang.school.postservice.dto.comment.CommentResponseDto;
 import faang.school.postservice.dto.comment.CommentUpdateDto;
 import faang.school.postservice.dto.user.UserDto;
+import faang.school.postservice.dto.user.UsersBanEvent;
 import faang.school.postservice.exception.CommentValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.exception.UploadFileException;
-import faang.school.postservice.mapper.comment.CommentMapperImpl;
-import faang.school.postservice.mapper.comment.LikeMapperImpl;
 import faang.school.postservice.mapper.PostMapperImpl;
+import faang.school.postservice.mapper.comment.CommentMapperImpl;
+import faang.school.postservice.mapper.like.LikeMapperImpl;
+import faang.school.postservice.message.event.UsersBanPublisher;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.publisher.comment.CommentEventPublisher;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.image.ImageService;
@@ -30,7 +34,17 @@ import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+import static faang.school.postservice.service.comment.TestData.createComment;
+import static faang.school.postservice.service.comment.TestData.createCommentForBan;
+import static faang.school.postservice.service.comment.TestData.createCommentRequestDto;
 import static faang.school.postservice.service.comment.TestData.createLike;
+import static faang.school.postservice.service.comment.TestData.createPost;
+import static faang.school.postservice.service.comment.TestData.createUserDto;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -43,13 +57,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
-import static faang.school.postservice.service.comment.TestData.createComment;
-import static faang.school.postservice.service.comment.TestData.createCommentRequestDto;
-import static faang.school.postservice.service.comment.TestData.createPost;
-import static faang.school.postservice.service.comment.TestData.createUserDto;
 
 @ExtendWith(MockitoExtension.class)
 public class CommentServiceTest {
@@ -80,11 +87,17 @@ public class CommentServiceTest {
     @Mock
     private ImageService imageService;
 
+    @Mock
+    private CommentEventPublisher publisher;
+
     @InjectMocks
     private CommentServiceImpl commentService;
 
     @Captor
     private ArgumentCaptor<Comment> commentArgumentCaptor;
+
+    @Mock
+    private UsersBanPublisher usersBanPublisher;
 
     private long authorId;
     private long commentId;
@@ -100,6 +113,7 @@ public class CommentServiceTest {
     private CommentRequestDto commentRequestDto;
     private CommentUpdateDto commentUpdateDto;
     private CommentFiltersDto commentFiltersDto;
+    private CommentEvent commentEvent;
 
     @BeforeEach
     void setUp() {
@@ -125,6 +139,25 @@ public class CommentServiceTest {
         like3 = createLike(3L, 3L, post, comment);
         likes = List.of(like1, like2, like3);
         likeIds = Arrays.asList(like1.getId(), like2.getId(), like3.getId());
+        commentEvent = CommentEvent.builder()
+                .commentAuthorId(comment.getAuthorId())
+                .postAuthorId(comment.getPost().getAuthorId())
+                .postId(comment.getPost().getId())
+                .commentId(comment.getId())
+                .build();
+
+        commentService = new CommentServiceImpl(
+                commentRepository,
+                postRepository,
+                userServiceClient,
+                commentMapper,
+                userContext,
+                imageService,
+                publisher,
+                null,
+                null,
+                usersBanPublisher);
+
     }
 
     @Test
@@ -155,6 +188,7 @@ public class CommentServiceTest {
         assertEquals(likeIds.get(0), commentResponseDtoFromDb.likeDtos().get(0).id());
         assertEquals(likeIds.get(1), commentResponseDtoFromDb.likeDtos().get(1).id());
         assertEquals(likeIds.get(2), commentResponseDtoFromDb.likeDtos().get(2).id());
+        verify(publisher).publish(commentEvent);
     }
 
     @Test
@@ -296,6 +330,39 @@ public class CommentServiceTest {
         UploadFileException exception = assertThrows(UploadFileException.class,
                 () -> commentService.uploadImage(commentId, mockFile));
         assertEquals("File is empty", exception.getMessage());
+    }
+
+    @Test
+    public void testPublishUsersToBanEvent() {
+        List<Comment> comments = Arrays.asList(
+                createCommentForBan(1L, "Comment 1", true,1L),
+                createCommentForBan(2L, "Comment 2", false,1L),
+                createCommentForBan(3L, "Comment 3", false,1L)
+        );
+
+        when(commentRepository.findAllByVerifiedIsFalse()).thenReturn(comments);
+
+        commentService.setNumberOfBadComments(0);
+        commentService.publishUsersToBanEvent();
+
+        verify(commentRepository, times(1)).findAllByVerifiedIsFalse();
+        verify(usersBanPublisher, times(1)).publish(new UsersBanEvent(List.of(1L)));
+    }
+
+    @Test
+    public void testPublishUsersToBanEventNoUsersToBan() {
+        List<Comment> comments = Arrays.asList(
+                createCommentForBan(1L, "Comment 1", false,1L),
+                createCommentForBan(2L, "Comment 2", false, 2L)
+        );
+
+        when(commentRepository.findAllByVerifiedIsFalse()).thenReturn(comments);
+
+        commentService.setNumberOfBadComments(5);
+        commentService.publishUsersToBanEvent();
+
+        verify(commentRepository, times(1)).findAllByVerifiedIsFalse();
+        verify(usersBanPublisher, times(1)).publish(new UsersBanEvent(List.of()));
     }
 
     private void sleepSec(long sec) {
