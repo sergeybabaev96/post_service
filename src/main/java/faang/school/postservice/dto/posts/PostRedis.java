@@ -3,6 +3,7 @@ package faang.school.postservice.dto.posts;
 import faang.school.postservice.model.*;
 import faang.school.postservice.model.ad.Ad;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,7 @@ import java.util.List;
 
 @RedisHash(value = "post")
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor(force = true)
 public class PostRedis implements Serializable {
