@@ -6,5 +6,5 @@ import faang.school.postservice.dto.album.PostAlbumDto;
 public interface AlbumService {
     AlbumDto create(AlbumDto dto);
 
-    void addPostToAlbum(PostAlbumDto dto);
+    boolean existsById(long l);
 }

@@ -4,5 +4,5 @@ import faang.school.postservice.dto.album.PostAlbumDto;
 
 public interface PostAlbumService {
 
-    void save(PostAlbumDto dto);
+    PostAlbumDto addPostToAlbum(PostAlbumDto dto);
 }

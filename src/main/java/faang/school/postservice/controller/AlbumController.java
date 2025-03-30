@@ -1,8 +1,10 @@
 package faang.school.postservice.controller;
 
+import faang.school.postservice.dto.FavoriteAlbumDto;
 import faang.school.postservice.dto.album.AlbumDto;
 import faang.school.postservice.dto.album.PostAlbumDto;
 import faang.school.postservice.service.AlbumService;
+import faang.school.postservice.service.PostAlbumService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AlbumController {
     private final AlbumService albumService;
+    private final PostAlbumService postAlbumService;
 
     @PostMapping
     public ResponseEntity<AlbumDto> createAlbum(@RequestBody AlbumDto albumDto) {
@@ -24,8 +27,8 @@ public class AlbumController {
     }
 
     @PostMapping("/posts")
-    public ResponseEntity<Void> addPostToAlbum(@RequestBody PostAlbumDto dto) {
-        albumService.addPostToAlbum(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+    public ResponseEntity<PostAlbumDto> addPostToAlbum(@RequestBody PostAlbumDto dto) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(postAlbumService.addPostToAlbum(dto));
     }
 }
