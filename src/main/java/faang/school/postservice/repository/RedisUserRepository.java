@@ -44,7 +44,7 @@ public class RedisUserRepository {
 
         List<Object> userDtos = cacheRedisTemplate.opsForValue().multiGet(keys);
 
-        log.info("get multi userDtos for userIds: {}", userIds);
+        log.info("multiGet userDtos {} for userIds {}", userDtos, userIds);
 
         if (userDtos == null) {
             return Collections.emptyList();

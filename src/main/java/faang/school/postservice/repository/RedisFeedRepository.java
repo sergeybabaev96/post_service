@@ -23,8 +23,6 @@ public class RedisFeedRepository {
     public void addPostToSubscriber(Long subscriberId, Long postId, LocalDateTime publishedAt) {
         String key = FEED_KEY_PREFIX + subscriberId;
         double score = publishedAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-
-        //cacheRedisTemplate.opsForZSet().add(key, postId, score);
         cacheRedisTemplate.opsForZSet().add(key, Long.valueOf(postId), score);
         log.info("Post {} was added to subscriber {} published {} ", postId, subscriberId, publishedAt);
         cacheRedisTemplate.opsForZSet().removeRange(key, 0, (long) - properties.getFeedMaxSize() - 1);

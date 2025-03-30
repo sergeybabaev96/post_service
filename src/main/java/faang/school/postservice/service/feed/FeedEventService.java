@@ -12,7 +12,6 @@ import org.apache.commons.collections4.ListUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -43,7 +42,6 @@ public class FeedEventService {
             kafkaPostProducer.sendEventToTopic(new FeedPostEvent(postId, authorId, publishedAt, subscribersIds), topicName);
             log.info("Sent FeedPostEvent for postId {} with subscribers {}", postId, subscribersIds);
         } else {
-            //List<List<Long>> batches = partitionList(subscribersIds, properties.getSubscribersBatchSize());
             List<List<Long>> batches = ListUtils.partition(subscribersIds, properties.getSubscribersBatchSize());
 
             AtomicInteger batchNumber = new AtomicInteger();
@@ -54,27 +52,9 @@ public class FeedEventService {
                 log.info("Sent FeedPostEvent for postId {} batch {} with subscribers {}", postId, batchNumber, batch);
                 batchNumber.getAndIncrement();
             });
+        }
+    }
 
-            /*
-            for (List<Long> batch : batches) {
-                FeedPostEvent event = new FeedPostEvent(postId, authorId, publishedAt, batch);
-                String messageKey = postId + "-" + batchNumber;
-                kafkaPostProducer.sendEventToTopic(event, messageKey, topicName);
-                log.info("Sent FeedPostEvent for postId {} batch {} with {} subscribers", postId, batchNumber, batch.size());
-                batchNumber.getAndIncrement();
-            }*/
-        }
-    }
-/*
-    private <T> List<List<T>> partitionList(List<T> list, int batchSize) {
-        int totalSize = list.size();
-        List<List<T>> partitions = new ArrayList<>();
-        for (int i = 0; i < totalSize; i += batchSize) {
-            partitions.add(list.subList(i, Math.min(i + batchSize, totalSize)));
-        }
-        return partitions;
-    }
-*/
     //@Async("feedExecutor")
     public void createAndSendFeedPostDeletedEvent(long postId) {
         kafkaPostDeleteProducer.sendEvent(new FeedPostDeleteEvent(postId));
