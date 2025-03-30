@@ -3,6 +3,7 @@ package faang.school.postservice.service.cache;
 import faang.school.postservice.dto.posts.PostRedis;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRedisRepository;
+import faang.school.postservice.utils.PostRedisMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +18,8 @@ import static org.mockito.Mockito.verify;
 public class RedisCacheTest {
     @Mock
     private PostRedisRepository postRedisRepository;
+    @Mock
+    private PostRedisMapper mapper;
     @InjectMocks
     private RedisCache redisCache;
 
