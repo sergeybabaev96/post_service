@@ -14,9 +14,7 @@ public record PostDto(
         @Size(max = 5_000, message = "Content cannot be longer than 5,000 characters")
         String content,
 
-        @NotNull(message = "Author cannot be null")
         Long authorId,
-
         Long projectId,
         boolean published,
         LocalDateTime createdAt) {

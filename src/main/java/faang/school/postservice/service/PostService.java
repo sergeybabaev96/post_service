@@ -27,7 +27,7 @@ public class PostService {
     @Transactional
     public PostDto createDraft(PostDto postDto) {
         log.info("Creating draft post: {}", postDto);
-       // postValidator.validatePostDto(postDto);
+        postValidator.validatePostDto(postDto);
         log.debug("PostDto validated successfully");
         Post post = postMapper.toEntity(postDto);
         post.setCreatedAt(LocalDateTime.now());
