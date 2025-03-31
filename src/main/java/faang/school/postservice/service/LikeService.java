@@ -162,7 +162,7 @@ public class LikeService {
 
     private void userIsPresentedInDataBase(Long userId) {
         UserDto userDto = userServiceClient.getUser(userId);
-        if (!userDto.id().equals(userId)) {
+        if (!userDto.getId().equals(userId)) {
             log.error(ERROR_USER_IS_NOT_PRESENTED_IN_DB, userId);
             throw new DataValidationException(ERROR_USER_IS_NOT_PRESENTED_IN_DB);
         }
