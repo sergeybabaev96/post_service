@@ -22,6 +22,5 @@ public class FeedPostEvent {
     @JsonDeserialize(using = LocalDateTimeDeserializer.class)
     @JsonSerialize(using = LocalDateTimeSerializer.class)
     private LocalDateTime publishedAt;
-    //private double publishedAt;
     private List<Long> subscribersIds;
 }

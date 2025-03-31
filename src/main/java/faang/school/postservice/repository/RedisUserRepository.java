@@ -27,11 +27,6 @@ public class RedisUserRepository {
         log.info("userDto was saved. key {} userDto {}", key, userDto);
     }
 
-    public void save(List<UserResponseDto> userDtos) {
-
-        userDtos.forEach(this::save);
-    }
-
     public UserDto get(Long userId) {
         String key = USER_KEY_PREFIX + userId;
         log.info("get userDto for userId. key {} userId {}", key, userId);

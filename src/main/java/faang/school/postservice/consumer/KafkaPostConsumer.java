@@ -17,8 +17,6 @@ import org.springframework.stereotype.Component;
 public class KafkaPostConsumer {
     private final FeedService feedService;
 
-    /*@KafkaListener(topics = {"${spring.kafka.topics.post.name}"},
-            groupId = "${spring.kafka.consumer.groups.post}") */
     @KafkaListener(
             topics = "${spring.kafka.topics.post.name}",
             groupId = "${spring.kafka.consumer.groups.post}",

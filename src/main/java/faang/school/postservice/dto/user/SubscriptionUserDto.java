@@ -4,11 +4,8 @@ import lombok.Builder;
 
 @Builder
 public record SubscriptionUserDto(
-
         Long id,
-
         String username,
-
         String email
 ) {
 }
