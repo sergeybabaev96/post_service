@@ -140,3 +140,13 @@ feed:
     subscribers-batch-size: 1000
     post-topic: post
 
+feign:
+  client:
+    config:
+      default:
+        retryer:
+          enabled: true
+          period: 1000
+          maxPeriod: 2000
+          maxAttempts: 3
+

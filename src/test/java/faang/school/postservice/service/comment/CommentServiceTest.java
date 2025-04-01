@@ -17,6 +17,7 @@ import faang.school.postservice.mapper.PostMapperImpl;
 import faang.school.postservice.mapper.comment.CommentMapperImpl;
 import faang.school.postservice.mapper.like.LikeMapperImpl;
 //import faang.school.postservice.message.event.UsersBanPublisher;
+import faang.school.postservice.message.event.UsersBanPublisher;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
@@ -97,8 +98,8 @@ public class CommentServiceTest {
     @Captor
     private ArgumentCaptor<Comment> commentArgumentCaptor;
 
-    //@Mock
-    //private UsersBanPublisher usersBanPublisher;
+    @Mock
+    private UsersBanPublisher usersBanPublisher;
 
     private long authorId;
     private long commentId;
@@ -156,8 +157,8 @@ public class CommentServiceTest {
                 imageService,
                 publisher,
                 null,
-                null /*,
-                usersBanPublisher*/);
+                null,
+                usersBanPublisher);
 
     }
 

@@ -7,14 +7,13 @@ import faang.school.postservice.dto.comment.CommentFiltersDto;
 import faang.school.postservice.dto.comment.CommentRequestDto;
 import faang.school.postservice.dto.comment.CommentResponseDto;
 import faang.school.postservice.dto.comment.CommentUpdateDto;
-import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.dto.user.UserResponseDto;
 import faang.school.postservice.dto.user.UsersBanEvent;
 import faang.school.postservice.exception.CommentValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.exception.UploadFileException;
 import faang.school.postservice.mapper.comment.CommentMapper;
-//import faang.school.postservice.message.event.UsersBanPublisher;
+import faang.school.postservice.message.event.UsersBanPublisher;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.publisher.comment.CommentEventPublisher;
@@ -55,7 +54,7 @@ public class CommentServiceImpl implements CommentService {
     private final CommentEventPublisher publisher;
     private final ExecutorService moderationExecutor;
     private final ModerationDictionary moderationDictionary;
-    //private final UsersBanPublisher usersBanPublisher;
+    private final UsersBanPublisher usersBanPublisher;
 
     @Value("${comment.batchSize}")
     private int batchSize;
@@ -150,7 +149,7 @@ public class CommentServiceImpl implements CommentService {
                 .map(Map.Entry::getKey)
                 .toList();
 
-        //usersBanPublisher.publish(new UsersBanEvent(userIdsToBan));
+        usersBanPublisher.publish(new UsersBanEvent(userIdsToBan));
     }
 
     private CompletableFuture<Void> moderatePartition(List<Comment> partition) {

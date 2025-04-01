@@ -8,6 +8,7 @@ import faang.school.postservice.dto.project.ProjectResponseDto;
 import faang.school.postservice.dto.user.SubscriptionUserDto;
 import faang.school.postservice.dto.user.UserResponseDto;
 import faang.school.postservice.mapper.PostMapperImpl;
+import faang.school.postservice.message.event.UsersBanPublisher;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.RedisFeedRepository;
@@ -66,6 +67,9 @@ class PostFeedIntegrationTest {
 
     @Spy
     private PostMapperImpl postMapper;
+
+    @Autowired
+    private UsersBanPublisher usersBanPublisher;
 
     private final Long authorId = 1L;
     private final Long followerId = 2L;
