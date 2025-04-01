@@ -37,14 +37,10 @@ public class S3ServiceImpl implements S3Service {
         }
     }
 
+    @Override
     public void uploadFile(MultipartFile file, String key) {
-        ObjectMetadata objectMetadata = new ObjectMetadata();
-        objectMetadata.setContentLength(file.getSize());
-        objectMetadata.setContentType(file.getContentType());
         try {
-            PutObjectRequest putObjectRequest = new PutObjectRequest(
-                    awsProperties.getBucketName(), key, file.getInputStream(), objectMetadata);
-            s3Client.putObject(putObjectRequest);
+            uploadFile(file.getSize(), file.getContentType(), key, file.getBytes());
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new UploadFileException(String.format("Incorrect file for uploading \n%s", e.getMessage()));
@@ -56,7 +52,7 @@ public class S3ServiceImpl implements S3Service {
         try {
             S3Object s3Object = s3Client.getObject(awsProperties.getBucketName(), key);
             return s3Object.getObjectContent();
-        }catch (Exception e){
+        } catch (Exception e) {
             log.error(e.getMessage());
             throw new EntityNotFoundException("Requested file with key %s in bucket with bucketName %s not found"
                     .formatted(key, awsProperties.getBucketName()));

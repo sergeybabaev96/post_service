@@ -3,6 +3,7 @@ package faang.school.postservice.service;
 import faang.school.postservice.dto.resource.ResourceDtoRs;
 import faang.school.postservice.dto.resource.ResourceDtoRq;
 import faang.school.postservice.exception.EntityNotFoundException;
+import faang.school.postservice.exception.UploadFileException;
 import faang.school.postservice.mapper.ResourceMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
@@ -22,6 +23,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -38,33 +40,39 @@ public class ResourceService {
     @Value("${app.posts.files.image-max-height}")
     private int imageMaxHeight;
 
+    @Transactional
     public List<ResourceDtoRs> save(Post post, MultipartFile[] files) {
         List<ResourceDtoRs> savedResources = new ArrayList<>();
-        for (int i = 0; i < files.length; i++) {
-            try {
-                BufferedImage image = ImageIO.read(files[i].getInputStream());
-                int width = image.getWidth();
-                int height = image.getHeight();
-                String contentType = files[i].getContentType();
 
-                String folder = "post" + post.getId();
-                String key = String.format("%s/%d%s", folder, System.currentTimeMillis(), files[i].getOriginalFilename());
+        Arrays.stream(files)
+                .forEach(file -> {
+                    try (InputStream fileInputStream = file.getInputStream()) {
 
-                ByteArrayOutputStream byteArrayOutputStream;
-                if (width > imageMaxWidth || height > imageMaxHeight) {
-                    byteArrayOutputStream = imageService.resizeImage(files[i], imageMaxWidth);
-                } else {
-                    byteArrayOutputStream = new ByteArrayOutputStream();
-                    Thumbnails.of(files[i].getInputStream())
-                            .toOutputStream(byteArrayOutputStream);
-                }
-                ResourceDtoRq requestDto = createResourceRequest(files[i], key, post);
-                savedResources.add(saveFile(requestDto, byteArrayOutputStream, contentType, key));
+                        BufferedImage image = ImageIO.read(fileInputStream);
+                        int width = image.getWidth();
+                        int height = image.getHeight();
+                        String contentType = file.getContentType();
 
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+                        String folder = "post" + post.getId();
+                        String key = String.format("%s/%d%s", folder, System.currentTimeMillis(), file.getOriginalFilename());
+
+                        ByteArrayOutputStream byteArrayOutputStream;
+                        if (width > imageMaxWidth || height > imageMaxHeight) {
+                            byteArrayOutputStream = imageService.resizeImage(file, imageMaxWidth);
+                        } else {
+                            byteArrayOutputStream = new ByteArrayOutputStream();
+                            try (InputStream thumbInputStream = file.getInputStream()) {
+                                Thumbnails.of(thumbInputStream)
+                                        .toOutputStream(byteArrayOutputStream);
+                            }
+                        }
+                        ResourceDtoRq requestDto = createResourceRequest(file, key, post);
+                        savedResources.add(saveFile(requestDto, byteArrayOutputStream, contentType, key));
+
+                    } catch (IOException e) {
+                        throw new UploadFileException("Failed to process file: %s".formatted(file.getOriginalFilename()), e);
+                    }
+                });
         return savedResources;
     }
 
@@ -77,14 +85,13 @@ public class ResourceService {
                 .build();
     }
 
-    @Transactional
-    protected ResourceDtoRs saveFile(ResourceDtoRq requestDto, ByteArrayOutputStream byteArrayOutputStream, String contentType, String key) {
+    private ResourceDtoRs saveFile(ResourceDtoRq requestDto, ByteArrayOutputStream byteArrayOutputStream, String contentType, String key) {
         Resource savedResource = resourceRepository.save(resourceMapper.toResourceEntity(requestDto));
         s3Service.uploadFile(byteArrayOutputStream.size(), contentType, key, byteArrayOutputStream.toByteArray());
         return resourceMapper.toResourceDtoResponse(savedResource);
     }
-    
-    public InputStream downloadResource(Long resourceId){
+
+    public InputStream downloadResource(Long resourceId) {
         Resource resource = getResourceById(resourceId);
         return s3Service.downloadFile(resource.getKey());
     }

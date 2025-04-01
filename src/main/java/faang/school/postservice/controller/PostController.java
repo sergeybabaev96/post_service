@@ -5,6 +5,7 @@ import faang.school.postservice.dto.post.PostCreateRequestDto;
 import faang.school.postservice.dto.post.PostFilterDto;
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.post.PostUpdateRequestDto;
+import faang.school.postservice.exception.DownloadFileException;
 import faang.school.postservice.service.PostService;
 import faang.school.postservice.service.ResourceService;
 import lombok.RequiredArgsConstructor;
@@ -83,7 +84,7 @@ public class PostController {
             imageBytes = resourceService.downloadResource(resourceId).readAllBytes();
         }catch (IOException e) {
             log.error("Error with downloading file with id {}", resourceId);
-            // выбросить кастомное исключение со всем трейсом
+            throw new DownloadFileException("Error with downloading file with id %d".formatted(resourceId), e);
         }
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.IMAGE_JPEG);
