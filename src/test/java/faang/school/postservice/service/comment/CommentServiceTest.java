@@ -7,7 +7,6 @@ import faang.school.postservice.dto.comment.CommentFiltersDto;
 import faang.school.postservice.dto.comment.CommentRequestDto;
 import faang.school.postservice.dto.comment.CommentResponseDto;
 import faang.school.postservice.dto.comment.CommentUpdateDto;
-import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.dto.user.UserResponseDto;
 import faang.school.postservice.dto.user.UsersBanEvent;
 import faang.school.postservice.exception.CommentValidationException;
@@ -16,7 +15,6 @@ import faang.school.postservice.exception.UploadFileException;
 import faang.school.postservice.mapper.PostMapperImpl;
 import faang.school.postservice.mapper.comment.CommentMapperImpl;
 import faang.school.postservice.mapper.like.LikeMapperImpl;
-//import faang.school.postservice.message.event.UsersBanPublisher;
 import faang.school.postservice.message.event.UsersBanPublisher;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
@@ -364,7 +362,7 @@ public class CommentServiceTest {
         commentService.publishUsersToBanEvent();
 
         verify(commentRepository, times(1)).findAllByVerifiedIsFalse();
-        //verify(usersBanPublisher, times(1)).publish(new UsersBanEvent(List.of()));
+        verify(usersBanPublisher, times(1)).publish(new UsersBanEvent(List.of()));
     }
 
     private void sleepSec(long sec) {
