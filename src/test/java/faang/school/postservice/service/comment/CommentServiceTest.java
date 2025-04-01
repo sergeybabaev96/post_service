@@ -346,7 +346,7 @@ public class CommentServiceTest {
         commentService.publishUsersToBanEvent();
 
         verify(commentRepository, times(1)).findAllByVerifiedIsFalse();
-        //verify(usersBanPublisher, times(1)).publish(new UsersBanEvent(List.of(1L)));
+        verify(usersBanPublisher, times(1)).publish(new UsersBanEvent(List.of(1L)));
     }
 
     @Test
