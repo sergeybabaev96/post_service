@@ -1,6 +1,7 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.config.props.CacheTTLProperties;
+import faang.school.postservice.event.NewsFeedSubEvent;
 import faang.school.postservice.mapper.NewsFeedMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
@@ -10,9 +11,12 @@ import faang.school.postservice.model.cache.CachePost;
 import faang.school.postservice.repository.cache.CacheAuthorRepository;
 import faang.school.postservice.repository.cache.CachePostRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.ZoneOffset;
+import java.util.List;
 import java.util.function.Supplier;
 
 import static faang.school.postservice.model.cache.CacheAuthor.PROJECT_PREFIX;
@@ -23,6 +27,7 @@ import static faang.school.postservice.model.cache.CacheComment.COMMENT_PREFIX;
 @RequiredArgsConstructor
 public class NewsFeedService {
     private static final int MAX_COMMENTS = 3;
+    private static final String FEED_PREFIX = "user_feed:";
 
     private final CachePostRepository cachePostRepository;
     private final NewsFeedMapper newsFeedMapper;
@@ -31,6 +36,8 @@ public class NewsFeedService {
     private final CacheTTLProperties cacheTTLProperties;
     private final ProjectService projectService;
     private final RedisTemplate<String, Object> redisTemplate;
+
+    private int maxPostsInFeed;
 
 
     public void cacheCommentForPost(Comment comment) {
@@ -79,6 +86,17 @@ public class NewsFeedService {
                         projectService.getProjectById(projectId),
                         cacheTTLProperties.getAuthor().toMillis()
                 ));
+    }
+
+    public void addPostForNewsFeed(Post post, List<Long> followersIds) {
+        long postId = post.getId();
+        long timestamp = post.getPublishedAt().toEpochSecond(ZoneOffset.UTC);
+        followersIds.parallelStream()
+                .forEach(id -> {
+                    var cacheKey = FEED_PREFIX + id;
+                    redisTemplate.opsForZSet().add(cacheKey, postId, timestamp);
+                    redisTemplate.opsForZSet().removeRange(cacheKey, 0, -maxPostsInFeed - 1);
+                });
     }
 
     private CacheAuthor cacheAuthor(String cacheAuthorId, Supplier<CacheAuthor> cacheAuthorSupplier) {
