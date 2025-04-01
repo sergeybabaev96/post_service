@@ -8,6 +8,7 @@ import faang.school.postservice.exceptions.PostWasNotFoundException;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.service.cache.RedisCache;
 import faang.school.postservice.service.moderation.ModerationDictionary;
 import faang.school.postservice.utils.PostUtil;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ import java.util.function.Predicate;
 public class PostService {
     private final PostMapper postMapper;
     private final PostRepository postRepository;
+    private final RedisCache redisCache;
     private final PostUtil postUtil;
     private final KafkaFeedPostProducer kafkaFeedPostProducer;
     private final RewriterService rewriterService;
@@ -63,7 +65,10 @@ public class PostService {
         log.info("Success validation for post : {}", post.getId());
 
         post = postRepository.save(post);
-        log.info("Saved post with id : {}", post.getId());
+        log.info("Saved post in DB with id : {}", post.getId());
+
+        redisCache.cachePost(post);
+        log.info("Cached post with id : {}", post.getId());
 
         kafkaFeedPostProducer.sendCreatePostEvent(post);
         log.info("Sent CreatePostEvent with id : {}", post.getId());
