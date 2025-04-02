@@ -3,6 +3,7 @@ package faang.school.postservice.service.cache;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import faang.school.postservice.dto.post.PostResponseDto;
+import faang.school.postservice.utils.JsonUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -35,13 +36,7 @@ public class PostCacheServiceImpl implements PostCacheService {
     private long postTtl;
 
     public void cachePost(PostResponseDto post) {
-        String json;
-        try {
-            json = objectMapper.writeValueAsString(post);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-        redisTemplate.opsForValue().set(POST_CACHE_PREFIX + post.id(), json, postTtl);
+        redisTemplate.opsForValue().set(POST_CACHE_PREFIX + post.id(), JsonUtils.mapObjectToJson(post), postTtl);
     }
 
     public Optional<PostResponseDto> getCachedPost(long postId) {
@@ -116,5 +111,4 @@ public class PostCacheServiceImpl implements PostCacheService {
                 .viewsCount(Integer.parseInt((String) map.get("viewsCount")))
                 .build();
     }
-
 }

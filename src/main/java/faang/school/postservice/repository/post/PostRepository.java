@@ -6,7 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.Instant;
 import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
@@ -33,11 +32,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             SELECT p.* FROM post p
             JOIN subscription s ON p.author_id = s.followee_id
             WHERE s.follower_id = :userId
-            AND (:after IS NULL OR p.created_at < :after)
             ORDER BY p.created_at DESC
             LIMIT :limit
             """)
-    List<Post> findForUserFeed(long userId, Instant after, int limit);
+    List<Post> findForUserFeed(long userId, int limit);
 
     @Query("SELECT p FROM Post p WHERE p.authorId IN :authorIds ORDER BY p.createdAt DESC")
     List<Post> findLatestByAuthorIds(List<String> authorIds, Pageable pageable);

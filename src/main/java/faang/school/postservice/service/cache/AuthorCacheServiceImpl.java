@@ -3,6 +3,7 @@ package faang.school.postservice.service.cache;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import faang.school.postservice.dto.user.UserDto;
+import faang.school.postservice.utils.JsonUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,9 +27,9 @@ public class AuthorCacheServiceImpl implements AuthorCacheService {
     private long authorTtl;
 
     public void cacheAuthor(long postId, UserDto author) {
-        String authorJson = mapObjectToString(author);
+        String authorJson = JsonUtils.mapObjectToJson(author);
         redisTemplate.opsForHash().put(AUTHOR_CACHE_KEY, postId, authorJson);
-        redisTemplate.expire(AUTHOR_CACHE_KEY, authorTtl, TimeUnit.SECONDS);
+        redisTemplate.expire(AUTHOR_CACHE_KEY, authorTtl, TimeUnit.DAYS);
     }
 
     public Optional<UserDto> getCachedAuthor(Long authorId) {
@@ -37,15 +38,6 @@ public class AuthorCacheServiceImpl implements AuthorCacheService {
             return Optional.empty();
         }
         return Optional.ofNullable(mapObjectToUser(authorJson));
-    }
-
-    private String mapObjectToString(UserDto author) {
-        try {
-            return objectMapper.writeValueAsString(author);
-        } catch (JsonProcessingException e) {
-            log.error("Failed to serialize for caching", e);
-            throw new RuntimeException(e);
-        }
     }
 
     private UserDto mapObjectToUser(Object json) {

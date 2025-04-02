@@ -1,22 +1,20 @@
 package faang.school.postservice.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-@Slf4j
 public class JsonUtils {
 
-    public static String getFieldFromJson(String jsonString, String fieldName) {
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode rootNode;
+    public static <T> String mapObjectToJson(T object) {
+        ObjectMapper objectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         try {
-            rootNode = mapper.readTree(jsonString);
+            return objectMapper.writeValueAsString(object);
         } catch (JsonProcessingException e) {
-            log.error("Invalid format json");
-            return "";
+            throw new RuntimeException(e);
         }
-        return rootNode.get(fieldName).asText();
     }
 }

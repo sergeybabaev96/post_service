@@ -40,30 +40,29 @@ public class FeedServiceImpl implements FeedService {
     private int pageSize;
 
     @Override
-    public FeedResponse getNewsFeed(long userId, long after) {
+    public FeedResponse getNewsFeed(Long userId) {
         long currentUserId = userContext.getUserId();
         String feedKey = "user:feed:" + currentUserId;
-        List<String> postIds = getPostIdsFromRedis(feedKey, String.valueOf(after));
+        List<String> postIds = getPostIdsFromRedis(feedKey);
         if (postIds.size() < pageSize) {
             List<String> additionalPostIds = loadMoreFromDatabase(
-                    String.valueOf(currentUserId), String.valueOf(after), pageSize - postIds.size());
+                    String.valueOf(currentUserId), pageSize - postIds.size());
             postIds.addAll(additionalPostIds);
         }
         List<PostResponseDto> posts = enrichPostsData(postIds);
         return buildResponse(posts);
     }
 
-    private List<String> getPostIdsFromRedis(String feedKey, String after) {
-        Range<String> range = createRange(after);
+    private List<String> getPostIdsFromRedis(String feedKey) {
+        Range<String> range = Range.unbounded();
         Set<String> postIds = redisTemplate.opsForZSet().reverseRangeByLex(feedKey, range, Limit.limit().count(pageSize));
         return postIds != null ?
                 postIds.stream().map(Object::toString).collect(Collectors.toList()) :
                 Collections.emptyList();
     }
 
-    private List<String> loadMoreFromDatabase(String userId, String after, int limit) {
-        List<PostResponseDto> posts = postRepository.findForUserFeed(Long.parseLong(userId),
-                        after != null ? Instant.ofEpochMilli(Long.parseLong(after)) : null, limit).stream()
+    private List<String> loadMoreFromDatabase(String userId, int limit) {
+        List<PostResponseDto> posts = postRepository.findForUserFeed(Long.parseLong(userId), limit).stream()
                 .map(postMapper::toDto)
                 .toList();
         cachePosts(posts);
@@ -135,9 +134,7 @@ public class FeedServiceImpl implements FeedService {
         ));
         redisTemplate.expire(postKey, 1, TimeUnit.DAYS);
         String authorKey = "user:" + author.getId();
-        redisTemplate.opsForHash().putAll(authorKey, Map.of(
-                "username", author.getUsername()
-        ));
+        redisTemplate.opsForHash().putAll(authorKey, Map.of("username", author.getUsername()));
         redisTemplate.expire(authorKey, 1, TimeUnit.DAYS);
     }
 
@@ -151,11 +148,5 @@ public class FeedServiceImpl implements FeedService {
             response.setHasMore(false);
         }
         return response;
-    }
-
-    private Range<String> createRange(String after) {
-        return after != null ?
-                Range.from(Range.Bound.inclusive(after)).to(Range.Bound.unbounded()) :
-                Range.unbounded();
     }
 }

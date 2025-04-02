@@ -1,12 +1,11 @@
 package faang.school.postservice.service.feed;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.feed.HeatTask;
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.service.post.PostService;
+import faang.school.postservice.utils.JsonUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +26,6 @@ public class FeedHeaterServiceImpl implements FeedHeaterService {
 
     private final UserServiceClient userServiceClient;
     private final KafkaTemplate<String, String> kafkaTemplate;
-    private final ObjectMapper objectMapper;
     private final PostService postService;
     private final RedisTemplate<String, String> redisTemplate;
 
@@ -47,7 +45,7 @@ public class FeedHeaterServiceImpl implements FeedHeaterService {
         for (int i = 0; i < allUserIds.size(); i += batchSize) {
             List<Long> batch = allUserIds.subList(i, Math.min(i + batchSize, allUserIds.size()));
             HeatTask task = new HeatTask(batch, taskId + "-" + batchCount++);
-            String json = mapObjectToJson(task);
+            String json = JsonUtils.mapObjectToJson(task);
             kafkaTemplate.send(heatTasksTopic, json);
         }
     }
@@ -94,13 +92,5 @@ public class FeedHeaterServiceImpl implements FeedHeaterService {
                 ));
             }
         });
-    }
-
-    private String mapObjectToJson(HeatTask task) {
-        try {
-            return objectMapper.writeValueAsString(task);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

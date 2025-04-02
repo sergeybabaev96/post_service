@@ -4,6 +4,6 @@ import faang.school.postservice.dto.feed.FeedResponse;
 
 public interface FeedService {
 
-    FeedResponse getNewsFeed(long userId, long after);
+    FeedResponse getNewsFeed(Long userId);
 
 }
