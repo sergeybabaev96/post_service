@@ -14,8 +14,8 @@ public interface LikeMapper {
     @Mapping(source = "commentId", target = "comment.id")
     Like toEntity(LikeDto dto);
 
-    @Mapping(source = "post.id", target = "postId")
-    @Mapping(source = "comment.id", target = "commentId")
+    @Mapping(target = "postId", ignore = true)
+    @Mapping(target = "userId", ignore = true)
     LikeDto toDto(Like like);
 
     @Mapping(target = "authorId", source = "post.authorId")

@@ -18,7 +18,6 @@ public class CachePost {
     private Long id;
     private String content;
     private String authorId;
-    private Integer likes;
 
     @TimeToLive
     private Long timeToLive;

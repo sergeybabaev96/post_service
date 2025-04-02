@@ -24,12 +24,12 @@ import java.util.function.Supplier;
 import static faang.school.postservice.model.cache.CacheAuthor.PROJECT_PREFIX;
 import static faang.school.postservice.model.cache.CacheAuthor.USER_PREFIX;
 import static faang.school.postservice.model.cache.CacheComment.COMMENT_PREFIX;
-import static faang.school.postservice.model.cache.CachePost.POST_PREFIX;
 
 @Service
 @RequiredArgsConstructor
 public class NewsFeedService {
     private static final String FEED_PREFIX = "user_feed:";
+    private static final String LIKE_PREFIX = "post_likes:";
 
     private final CachePostRepository cachePostRepository;
     private final NewsFeedMapper newsFeedMapper;
@@ -115,16 +115,8 @@ public class NewsFeedService {
     }
 
     public void addLikeToPost(long postId) {
-        var optionalPost = cachePostRepository.findById(postId);
-        if (optionalPost.isEmpty()) {
-            return;
-        }
-        CachePost cachePost = optionalPost.get();
-        redisTemplate.opsForHash().increment(
-                POST_PREFIX + cachePost.getId(),
-                CachePost.getLikesFieldName(),
-                1
-        );
+        redisTemplate.opsForValue()
+                .increment(LIKE_PREFIX + postId, 1);
     }
 
     private CacheAuthor cacheAuthor(String cacheAuthorId, Supplier<CacheAuthor> cacheAuthorSupplier) {

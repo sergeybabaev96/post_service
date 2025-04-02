@@ -15,7 +15,6 @@ import static org.mapstruct.ReportingPolicy.IGNORE;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = IGNORE)
 public interface NewsFeedMapper {
 
-    @Mapping(target = "likes", source = "post.likesCount")
     @Mapping(target = "authorId", ignore = true)
     @Mapping(target = "timeToLive", source = "ttl")
     CachePost toCache(Post post, Long ttl);
