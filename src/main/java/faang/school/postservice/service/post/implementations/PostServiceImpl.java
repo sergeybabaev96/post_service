@@ -3,8 +3,6 @@ package faang.school.postservice.service.post.implementations;
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.post.PostDto;
-import faang.school.postservice.dto.project.ProjectDto;
-import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.PostDtoValidationException;
 import faang.school.postservice.exception.PostNotFoundException;
 import faang.school.postservice.mapper.post.PostMapper;
@@ -12,22 +10,57 @@ import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.post.interfaces.PostService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
-
     private final ProjectServiceClient projectServiceClient;
     private final UserServiceClient userServiceClient;
     private final PostRepository postRepository;
     private final PostMapper postMapper;
+    private final ExecutorService postPublishPool;
+
+    private static final int SCHEDULED_POSTS_CHUNK_SIZE = 10;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
+
+    @Override
+    @Transactional
+    public void publishScheduledPosts() {
+        if (isRunning.compareAndSet(false, true)) {
+            try {
+                List<Post> posts = postRepository.findReadyToPublish();
+                List<List<Post>> chunks = splitIntoChunks(posts, SCHEDULED_POSTS_CHUNK_SIZE);
+                chunks.forEach(chunk -> postPublishPool.submit(() -> {
+                    System.out.println("Task executed in thread: " + Thread.currentThread().getName());
+                }));
+            } finally {
+                isRunning.set(false);
+            }
+        } else {
+            log.warn("Previous task still running, skipping...");
+        }
+
+        postPublishPool.shutdown();
+    }
+
+    public List<List<Post>> splitIntoChunks(List<Post> list, int chunkSize) {
+        return IntStream.range(0, (list.size() + chunkSize - 1) / chunkSize)
+                .mapToObj(i -> list.subList(i * chunkSize, Math.min((i + 1) * chunkSize, list.size())))
+                .toList();
+    }
 
     @Override
     public Post getPostById(Long postId) {
@@ -136,7 +169,7 @@ public class PostServiceImpl implements PostService {
             throw new PostDtoValidationException("The author can be either a user or a project!");
         }
 
-        if (postDto.getAuthorId() != 0) {
+        /*if (postDto.getAuthorId() != 0) {
             UserDto userDto = userServiceClient.getUser(postDto.getAuthorId());
             if (userDto.id() == 0) {
                 throw new PostDtoValidationException(String.format(
@@ -148,7 +181,7 @@ public class PostServiceImpl implements PostService {
                 throw new PostDtoValidationException(String.format(
                         "Project with ID %d not found!", postDto.getProjectId()));
             }
-        }
+        }*/
     }
 
     private Post validateDataForPublication(PostDto postDto) {
