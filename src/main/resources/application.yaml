@@ -44,7 +44,8 @@ payment-service:
 
 services:
   s3:
-    endpoint: http://192.168.1.111:9000
+    endpoint: http://192.168.0.142:9000
     accessKey: user
     secretKey: password
-    bucketName: corpbucket
+    bucketName:
+      name: corpbucket

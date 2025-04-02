@@ -18,13 +18,13 @@ import java.util.Objects;
 @Configuration
 public class AwsConfig {
 
-    @Value("${minio.endpoint}")
+    @Value("${services.s3.endpoint}")
     private String endpoint;
 
-    @Value("${minio.access-key}")
+    @Value("${services.s3.accessKey}")
     private String accessKey;
 
-    @Value("${minio.secret-key}")
+    @Value("${services.s3.secretKey}")
     private String secretKey;
 
     @Bean

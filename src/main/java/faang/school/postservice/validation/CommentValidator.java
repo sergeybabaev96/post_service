@@ -27,16 +27,15 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class CommentValidator {
     private final UserServiceClient userServiceClient;
-    private final PostRepository postRepository;;
+    private final PostRepository postRepository;
 
     /**
      * Проверяет принадлежность комментария указанному посту.
      *
-     * @param comment проверяемый комментарий
-     * @param postId ожидаемый ID поста
+     * @param comment   проверяемый комментарий
+     * @param postId    ожидаемый ID поста
      * @param commentId ID комментария для сообщения об ошибке
      * @throws DataValidationException если комментарий не принадлежит указанному посту
-     *
      */
     public void validateCommentBelongsToPost(Comment comment, Long postId, Long commentId) {
         if (comment == null || !comment.belongsToPost(postId)) {
@@ -46,11 +45,28 @@ public class CommentValidator {
     }
 
     /**
+     * Проверяет, принадлежит ли указанный комментарий заданному посту.
+     *
+     * @param comment проверяемый комментарий
+     * @param postId  ID поста для проверки принадлежности
+     * @throws DataValidationException если комментарий не принадлежит указанному посту
+     * @see CommentService#getCommentById(Long)
+     * @see DataValidationException
+     */
+    public void validateCommentBelongsToPost(Comment comment, Long postId) {
+        if (!comment.getPost().getId().equals(postId)) {
+            throw new DataValidationException(
+                    String.format("Comment with ID %d does not belong to post with ID %d",
+                            comment.getId(), postId)
+            );
+        }
+    }
+
+    /**
      * Проверяет существование пользователя в системе.
      *
      * @param authorId ID пользователя для проверки
      * @throws EntityNotFoundException если пользователь с указанным ID не найден
-     *
      */
     public void validateUserById(Long authorId) {
         UserDto userDto = userServiceClient.getUser(authorId);
@@ -63,7 +79,7 @@ public class CommentValidator {
      * Проверяет существование поста с указанным идентификатором.
      *
      * @param postId идентификатор поста для проверки
-     * @throws EntityNotFoundException если пост с указанным ID не найден
+     * @throws EntityNotFoundException  если пост с указанным ID не найден
      * @throws IllegalArgumentException если переданный postId равен null
      */
     public void validatePostExists(Long postId) {
@@ -72,25 +88,6 @@ public class CommentValidator {
         }
         if (!postRepository.existsById(postId)) {
             throw new EntityNotFoundException("Post with ID " + postId + " not found");
-        }
-    }
-
-    /**
-     * Проверяет, принадлежит ли указанный комментарий заданному посту.
-     *
-     * @param comment проверяемый комментарий
-     * @param postId ID поста для проверки принадлежности
-     * @throws DataValidationException если комментарий не принадлежит указанному посту
-     *
-     * @see CommentService#getCommentById(Long)
-     * @see DataValidationException
-     */
-    public void validateCommentBelongsToPost(Comment comment, Long postId) {
-        if (!comment.getPost().getId().equals(postId)) {
-            throw new DataValidationException(
-                    String.format("Comment with ID %d does not belong to post with ID %d",
-                            comment.getId(), postId)
-            );
         }
     }
 }

@@ -24,7 +24,6 @@ public class ImageResizer {
         int originalWidth = originalImage.getWidth();
         int originalHeight = originalImage.getHeight();
 
-        // Вычисляем новые размеры с сохранением пропорций
         int newWidth;
         int newHeight;
         if (originalWidth > originalHeight) {
@@ -35,7 +34,6 @@ public class ImageResizer {
             newWidth = (int) ((double) originalWidth / originalHeight * maxSize);
         }
 
-        // Создаем новое изображение
         BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, originalImage.getType());
         Graphics2D g = resizedImage.createGraphics();
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);

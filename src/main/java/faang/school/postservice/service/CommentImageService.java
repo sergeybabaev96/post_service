@@ -53,9 +53,8 @@ public class CommentImageService {
     private final ImageResizer imageResizer;
     private final CommentValidator commentValidator;
     private final ValidateImage validateImage;
-    ;
 
-    @Value("${minio.bucket.name}")
+    @Value("${services.s3.bucketName.name}")
     private String bucketName;
 
     /**
@@ -164,6 +163,7 @@ public class CommentImageService {
      *
      * @param comment комментарий с изображениями
      */
+    //todo: позволяет удалять два и более раз, добавить проверку на существование файла
     private void deleteImagesFromStorage(Comment comment) {
         try {
             if (comment.getLargeImageFileKey() != null) {
