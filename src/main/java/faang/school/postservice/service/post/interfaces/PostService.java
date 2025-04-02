@@ -6,6 +6,9 @@ import java.util.List;
 import faang.school.postservice.model.Post;
 
 public interface PostService {
+
+    void publishScheduledPosts();
+
     PostDto createPostDraft(PostDto postDto);
 
     PostDto publishPost(PostDto postDto);
