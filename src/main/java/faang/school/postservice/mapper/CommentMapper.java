@@ -12,5 +12,5 @@ public interface CommentMapper {
 
     ItemToVerifyDto toItemToVerifyDto(Comment comment);
 
-    Stream<ItemToVerifyDto> toItemToVerifyDtoStream(Stream<Comment> comments);
+    Stream<ItemToVerifyDto> toItemToVerifyDtosStream(Stream<Comment> comments);
 }

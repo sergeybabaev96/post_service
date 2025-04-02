@@ -45,22 +45,28 @@ public class CommentServiceImpl implements CommentService {
         var totalCommentsToVerify = commentRepository.countAllByVerifiedDateIsNull();
 
         for (int i = 0; i < totalCommentsToVerify; i += pageSize) {
-            var pageRequest = PageRequest.of(i, pageSize, JpaSort.of(Sort.Direction.ASC, Comment_.id));
+            var pageRequest = createPageRequest(i, pageSize);
 
-            Supplier<Stream<ItemToVerifyDto>> pageItemsFetcher = () -> commentMapper.toItemToVerifyDtoStream(
+            Supplier<Stream<ItemToVerifyDto>> pageItemsFetcher = () -> commentMapper.toItemToVerifyDtosStream(
                     commentRepository.findByVerifiedDateIsNull(pageRequest).stream());
-            moderationService.moderateItems(pageItemsFetcher)
-                    .thenAcceptAsync(moderationResults ->
+            moderationService.moderateItems(pageItemsFetcher).thenAcceptAsync(
+                    moderationResults ->
                     {
-                        var verifiedItems = moderationResults.stream().filter(ItemModerationResultDto::isVerified);
+                        var verifiedItems = moderationResults.stream().filter(
+                                ItemModerationResultDto::isVerified);
                         CompletableFuture.runAsync(() -> updateComments(verifiedItems, true),
                                 asyncConfig.getAsyncExecutor());
 
                         var unverifiedItems = moderationResults.stream().filter(dto -> !dto.isVerified());
                         CompletableFuture.runAsync(() -> updateComments(unverifiedItems, false),
                                 asyncConfig.getAsyncExecutor());
-                    });
+                    },
+                    asyncConfig.getAsyncExecutor());
         }
+    }
+
+    protected PageRequest createPageRequest(int page, int pageSize) {
+        return PageRequest.of(page, pageSize, JpaSort.of(Sort.Direction.ASC, Comment_.id));
     }
 
     private void updateComments(Stream<ItemModerationResultDto> moderationResults, boolean verified) {
