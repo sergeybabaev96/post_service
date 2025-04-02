@@ -17,8 +17,8 @@ import java.time.Duration;
 public class CommentAuthorCacheService {
 
     private final RedisTemplate<String, Long> redisTemplate;
-    final String authorsKey;
-    final Duration ttl;
+    private final String authorsKey;
+    private final Duration ttl;
 
     public CommentAuthorCacheService(RedisTemplate<String, Long> redisTemplate,
                                      @Value("${cache.authors.collection}") String authorsKey,

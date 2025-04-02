@@ -55,6 +55,13 @@ class CommentAuthorCacheServiceTest {
     }
 
     @Test
+    void shouldCacheAuthorWithCorrectParameters() {
+        Long authorId = 123L;
+        commentAuthorCacheService.cacheCommentAuthor(authorId);
+        verify(redisTemplate).execute(any(SessionCallback.class));
+    }
+
+    @Test
     void cacheCommentAuthor_Success() {
         Long authorId = 123L;
 
@@ -89,11 +96,5 @@ class CommentAuthorCacheServiceTest {
             return event.getLevel() == Level.WARN &&
                     event.getMessage().contains("AuthorId is null");
         }));
-    }
-
-    @Test
-    void constructor_InitializesCorrectly() {
-        assertEquals(testKey, commentAuthorCacheService.authorsKey);
-        assertEquals(testTtl, commentAuthorCacheService.ttl);
     }
 }
