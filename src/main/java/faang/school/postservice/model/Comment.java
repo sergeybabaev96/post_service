@@ -65,7 +65,7 @@ public class Comment {
     private String smallImageFileKey;
 
     @Column(name = "verified")
-    private boolean verified;
+    private Boolean verified;
 
     @Column(name = "verified_at")
     private LocalDateTime verifiedAt;
