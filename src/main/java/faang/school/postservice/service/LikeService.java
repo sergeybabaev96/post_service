@@ -30,6 +30,7 @@ public class LikeService {
     private static final String COMMENT_ENTITY_NAME = "comment";
     private static final String NOT_FOUND_ENTITY_MESSAGE = "%s with id: %d not found";
     private static final String NOT_FOUND_SUB_ENTITY_MESSAGE = "%s on %s with id: %d not found";
+    private static final String EXISTS_ENTITY_MESSAGE = "%s already exists on %s with id %d";
 
     private final Map<Long, ReentrantLock> locksUsers = new ConcurrentHashMap<>();
     private final LikeRepository likeRepository;
@@ -47,8 +48,8 @@ public class LikeService {
             Post post = postRepository.findById(postId).orElseThrow(() ->
                     new EntityNotFoundException(NOT_FOUND_ENTITY_MESSAGE, POST_ENTITY_NAME, postId));
 
-            if (likeRepository.findByPostIdAndUserId(postId, userId).isPresent()) {
-                throw new DuplicateEntityException("%s already exists on %s with id %d",
+            if (!isLikeOnPostEmpty(postId, userId)) {
+                throw new DuplicateEntityException(EXISTS_ENTITY_MESSAGE,
                         LIKE_ENTITY_NAME, POST_ENTITY_NAME, postId);
             }
             boolean isUserNotPutLike = post.getComments().stream()
@@ -70,7 +71,7 @@ public class LikeService {
         try {
             validateEntityId(postId);
 
-            if (likeRepository.findByPostIdAndUserId(postId, userId).isEmpty()) {
+            if (isLikeOnPostEmpty(postId, userId)) {
                 throw new EntityNotFoundException(NOT_FOUND_SUB_ENTITY_MESSAGE,
                         LIKE_ENTITY_NAME, POST_ENTITY_NAME, postId);
             }
@@ -90,8 +91,8 @@ public class LikeService {
             Comment comment = commentRepository.findById(commentId).orElseThrow(() ->
                     new EntityNotFoundException(NOT_FOUND_ENTITY_MESSAGE, COMMENT_ENTITY_NAME, commentId));
 
-            if (likeRepository.findByCommentIdAndUserId(commentId, userId).isPresent()) {
-                throw new DuplicateEntityException("%s already exists on %s with id %d",
+            if (!isLikeOnCommentEmpty(commentId, userId)) {
+                throw new DuplicateEntityException(EXISTS_ENTITY_MESSAGE,
                         LIKE_ENTITY_NAME, COMMENT_ENTITY_NAME, commentId);
             }
             boolean isUserNotPutLike = comment.getPost().getLikes().stream()
@@ -112,7 +113,7 @@ public class LikeService {
         try {
             validateEntityId(commentId);
 
-            if (likeRepository.findByCommentIdAndUserId(commentId, userId).isEmpty()) {
+            if (isLikeOnCommentEmpty(commentId, userId)) {
                 throw new EntityNotFoundException(NOT_FOUND_SUB_ENTITY_MESSAGE,
                         LIKE_ENTITY_NAME, COMMENT_ENTITY_NAME, commentId);
             }
@@ -157,5 +158,13 @@ public class LikeService {
 
     private Long getContextUser() {
         return userClient.getUser(userContext.getUserId()).id();
+    }
+
+    private boolean isLikeOnPostEmpty(Long postId, Long userId) {
+        return likeRepository.findByPostIdAndUserId(postId, userId).isEmpty();
+    }
+
+    private boolean isLikeOnCommentEmpty(Long commentId, Long userId) {
+        return likeRepository.findByCommentIdAndUserId(commentId, userId).isEmpty();
     }
 }
