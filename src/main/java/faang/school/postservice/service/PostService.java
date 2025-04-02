@@ -10,7 +10,6 @@ import faang.school.postservice.dto.event.PostViewEvent;
 import faang.school.postservice.kafka.PostEventPublisher;
 import faang.school.postservice.dto.user.AuthorCacheDto;
 import faang.school.postservice.dto.user.UserDto;
-import faang.school.postservice.kafka.PostEventPublisher;
 import faang.school.postservice.kafka.producer.KafkaPostViewEventProducer;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.mapper.UserMapper;
