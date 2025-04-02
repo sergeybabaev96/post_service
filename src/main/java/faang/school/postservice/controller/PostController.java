@@ -20,6 +20,11 @@ import java.util.List;
 public class PostController {
     private final PostService postService;
 
+    @GetMapping(value = "/feed")
+    public List<PostDto> getFeed(@RequestBody PostDto postDto) {
+        return List.of();
+    }
+
     @PostMapping(value = "/create-draft")
     @Operation(summary = "Создать пост", description = "Создает новый пост")
     public PostDto createDraft(@Valid @RequestBody PostDto postDto) {

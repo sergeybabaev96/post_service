@@ -1,13 +1,19 @@
 package faang.school.postservice.service.impl;
 
+import faang.school.postservice.config.redis.RedisKey;
 import faang.school.postservice.dto.post.PostDto;
 import faang.school.postservice.exception.ExternalServiceValidationException;
 import faang.school.postservice.exception.PostNotFoundException;
 import faang.school.postservice.gateway.ProjectServiceGateway;
 import faang.school.postservice.gateway.UserServiceGateway;
+import faang.school.postservice.kafka.KafkaPostProducer;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.model.event.PostBySubscribersEvent;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.repository.UserRepository;
+import faang.school.postservice.repository.cache.AuthorCacheRepository;
+import faang.school.postservice.repository.cache.PostCacheRepository;
 import faang.school.postservice.service.AIService;
 import faang.school.postservice.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import static faang.school.postservice.controller.ControllerExceptionHandler.DEFAULT_SERVICE_NAME;
 import static java.util.Comparator.naturalOrder;
@@ -37,6 +44,10 @@ public class PostServiceImpl implements PostService {
     private final UserServiceGateway userServiceGateway;
     private final PostMapper postMapper;
     private final AIService aiService;
+    private final PostCacheRepository postCacheRepository;
+    private final AuthorCacheRepository authorCacheRepository;
+    private final KafkaPostProducer kafkaPostProducer;
+    private final UserRepository userRepository;
 
     @Override
     public PostDto createDraft(PostDto postDto) {
@@ -49,7 +60,16 @@ public class PostServiceImpl implements PostService {
         } else if (postDto.getProjectId() != null) {
             projectServiceGateway.getProject(postDto.getProjectId());
         }
+
+        cache(postDto, post);
         return savePostAndMapToDto(post);
+    }
+
+    private void cache(PostDto postDto, Post post) {
+        postCacheRepository.cachePost(RedisKey.POST.name(), postMapper.toEvent(post));
+        authorCacheRepository.cacheAuthor(postDto.getAuthorId());
+        Set<Long> ids = userRepository.findAllSubscribersById(postDto.getAuthorId());
+        kafkaPostProducer.sendMessage(new PostBySubscribersEvent(postDto.getAuthorId(), ids));
     }
 
     @Override
