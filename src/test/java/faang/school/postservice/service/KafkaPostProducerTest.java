@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,16 +50,15 @@ public class KafkaPostProducerTest {
         post.setId(postId);
         post.setAuthorId(authorId);
         kafkaPostProducer.setTopic("publish_post_topic");
+        kafkaPostProducer.setBatchSize(2);
         List<Long> subscriberIds = List.of(3L, 4L, 5L);
         when(postRepository.findAllAuthorSubscribers(authorId)).thenReturn(subscriberIds);
-
-        PostCreatedEvent event = new PostCreatedEvent(postId, authorId, subscriberIds);
         when(objectMapper.writeValueAsString(any(PostCreatedEvent.class))).thenReturn("{\"json\":\"content\"}");
 
         kafkaPostProducer.publishPostCreationEvent(post);
 
-        verify(kafkaTemplate).send(eq("publish_post_topic"), messageCaptor.capture());
-        verify(objectMapper).writeValueAsString(any(PostCreatedEvent.class));
+        verify(kafkaTemplate, times(2)).send(eq("publish_post_topic"), messageCaptor.capture());
+        verify(objectMapper, times(2)).writeValueAsString(any(PostCreatedEvent.class));
         verify(postRepository).findAllAuthorSubscribers(authorId);
     }
 

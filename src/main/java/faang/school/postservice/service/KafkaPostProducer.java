@@ -26,23 +26,38 @@ public class KafkaPostProducer {
     @Value("${spring.kafka.topics.publish-post-topic.name}")
     private String topic;
 
+    @Value("${spring.kafka.topics.publish-post-topic.subscribers-batch-size:1000}")
+    private int batchSize;
+
     public void publishPostCreationEvent(Post post) {
-        List<Long> subscribers = postRepository.findAllAuthorSubscribers(post.getAuthorId());
+        List<Long> allSubscribers = postRepository.findAllAuthorSubscribers(post.getAuthorId());
+        int totalBatches = (int) Math.ceil((double) allSubscribers.size() / batchSize);
 
-        PostCreatedEvent event = new PostCreatedEvent(
-                post.getId(),
-                post.getAuthorId(),
-                subscribers
-        );
+        for (int i = 0; i < allSubscribers.size(); i += batchSize) {
+            List<Long> subscriberBatch = allSubscribers.subList(
+                    i, Math.min(i + batchSize, allSubscribers.size()));
 
-        try {
-            String eventJson = objectMapper.writeValueAsString(event);
-            kafkaTemplate.send(topic, eventJson);
-            log.info("Published post creation event: postId={}, authorId={}, subscribersCount={}",
-                    post.getId(), post.getAuthorId(), subscribers.size());
-        } catch (JsonProcessingException e) {
-            log.error("Failed to serialize post event: {}", e.getMessage());
-            throw new RuntimeException("Failed to publish post creation event", e);
+            int currentBatch = (i / batchSize) + 1;
+            boolean isLastBatch = currentBatch == totalBatches;
+
+            PostCreatedEvent event = new PostCreatedEvent(
+                    post.getId(),
+                    post.getAuthorId(),
+                    subscriberBatch,
+                    currentBatch,
+                    totalBatches,
+                    isLastBatch
+            );
+
+            try {
+                String eventJson = objectMapper.writeValueAsString(event);
+                kafkaTemplate.send(topic, eventJson);
+                log.info("Published post creation batch: postId={}, authorId={}, batchSize={}, offset={}",
+                        post.getId(), post.getAuthorId(), subscriberBatch.size(), i);
+            } catch (JsonProcessingException e) {
+                log.error("Failed to serialize post event batch: {}", e.getMessage());
+                throw new RuntimeException("Failed to publish post creation event batch", e);
+            }
         }
     }
 }
