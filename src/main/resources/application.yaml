@@ -46,6 +46,8 @@ spring:
       post:
         name: "posts"
         followers-batch-size: 10000
+      comment:
+        name: "comment-create"
 
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml

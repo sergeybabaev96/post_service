@@ -3,11 +3,13 @@ package faang.school.postservice;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.comment.CreateCommentRequest;
 import faang.school.postservice.dto.comment.UpdateCommentRequest;
+import faang.school.postservice.kafka.CommentEventPublisher;
 import faang.school.postservice.dto.user.AuthorCacheDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.mapper.UserMapper;
 import faang.school.postservice.model.Comment;
+import faang.school.postservice.model.CommentEvent;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.RedisAuthorRepository;
@@ -52,6 +54,9 @@ public class CommentServiceTest {
 
     @Mock
     private CommentValidator commentValidator;
+
+    @Mock
+    private CommentEventPublisher commentEventPublisher;
 
     @Mock
     private RedisAuthorRepository redisAuthorRepository;
@@ -119,6 +124,7 @@ public class CommentServiceTest {
         commentService.createComment(request);
 
         verify(commentRepository, times(1)).save(commentCaptor.capture());
+        verify(commentEventPublisher, times(1)).publish(any(CommentEvent.class));
 
     }
 

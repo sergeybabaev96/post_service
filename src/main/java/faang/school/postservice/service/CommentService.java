@@ -6,11 +6,13 @@ import faang.school.postservice.dto.comment.CreateCommentRequest;
 import faang.school.postservice.dto.comment.CreateCommentResponse;
 import faang.school.postservice.dto.comment.UpdateCommentRequest;
 import faang.school.postservice.dto.comment.UpdatedCommentResponse;
+import faang.school.postservice.kafka.CommentEventPublisher;
 import faang.school.postservice.dto.user.AuthorCacheDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.mapper.UserMapper;
 import faang.school.postservice.model.Comment;
+import faang.school.postservice.model.CommentEvent;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.RedisAuthorRepository;
@@ -35,13 +37,15 @@ public class CommentService {
     private final RedisAuthorRepository redisAuthorRepository;
     private final UserServiceClient userServiceClient;
     private final UserMapper userMapper;
+    private final CommentEventPublisher commentEventPublisher;
 
     @Value("${spring.data.redis.properties.author-collection.hours-to-expire}")
     private int timeToLive;
 
     @Transactional
     public CreateCommentResponse createComment(CreateCommentRequest createCommentRequest) {
-        Post post = postService.getPost(createCommentRequest.getPostId());
+        Long postId = createCommentRequest.getPostId();
+        Post post = postService.getPost(postId);
         Comment comment = commentMapper.toEntity(createCommentRequest);
         commentValidator.verificationCreatingData(comment);
 
@@ -52,6 +56,14 @@ public class CommentService {
         AuthorCacheDto authorCacheDto = userMapper.toAuthorCacheDto(authorDto);
         authorCacheDto.setHoursToExpire(timeToLive);
         redisAuthorRepository.save(authorCacheDto);
+
+        commentEventPublisher.publish(new CommentEvent(
+                savedComment.getId(),
+                postId,
+                savedComment.getAuthorId(),
+                savedComment.getContent(),
+                savedComment.getCreatedAt())
+        );
 
         return commentMapper.toCreateResponse(savedComment);
     }

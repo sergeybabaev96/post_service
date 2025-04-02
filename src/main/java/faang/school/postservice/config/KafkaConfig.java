@@ -1,5 +1,6 @@
 package faang.school.postservice.config;
 
+import faang.school.postservice.model.CommentEvent;
 import faang.school.postservice.dto.event.PostViewEvent;
 import faang.school.postservice.model.LikeEvent;
 import faang.school.postservice.model.PostEvent;
@@ -48,6 +49,11 @@ public class KafkaConfig {
 
     @Bean
     public KafkaTemplate<String, LikeEvent> likeEventKafkaTemplate(KafkaProperties kafkaProperties) {
+        return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(kafkaProperties.buildProducerProperties()));
+    }
+
+    @Bean
+    public KafkaTemplate<String, CommentEvent> commentEventKafkaTemplate(KafkaProperties kafkaProperties) {
         return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(kafkaProperties.buildProducerProperties()));
     }
 }
