@@ -1,5 +1,6 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.cache.CommentAuthorCacheService;
 import faang.school.postservice.config.kafka.KafkaProducer;
 import faang.school.postservice.dto.comment.CommentCreateEventDto;
 import faang.school.postservice.dto.comment.CommentResponse;
@@ -17,6 +18,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.RedisConnectionFailureException;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,6 +45,7 @@ public class CommentService {
     private final KafkaService kafkaService;
     private final PostService postService;
     private final KafkaProducer kafkaProducer;
+    private final CommentAuthorCacheService commentAuthorCacheService;
 
     @Transactional
     public CommentResponse create(@Valid CreateCommentRequest createCommentRequest) {
@@ -55,7 +61,28 @@ public class CommentService {
                 .date(LocalDateTime.now())
                 .build();
         kafkaService.sendCommentCreateMessage(eventDto);
-        return commentMapper.toCommentResponse(commentRepository.save(comment));
+        Comment savedComment = commentRepository.save(comment);
+        try {
+            retryableCacheCommentAuthor(savedComment.getAuthorId());
+        } catch (Exception e) {
+            log.error("Failed to cache comment author after retries", e);
+        }
+        return commentMapper.toCommentResponse(savedComment);
+    }
+
+    @Async
+    @Retryable(
+            value = {RedisConnectionFailureException.class},
+            maxAttempts = 3,
+            backoff = @Backoff(delay = 1000, multiplier = 2)
+    )
+    public void retryableCacheCommentAuthor(Long authorId) {
+        try {
+            commentAuthorCacheService.cacheCommentAuthor(authorId);
+        } catch (RedisConnectionFailureException e) {
+            log.warn("Attempt to cache comment author failed, retrying");
+            throw e;
+        }
     }
 
     @Transactional
