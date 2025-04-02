@@ -40,7 +40,7 @@ public class PostController {
         return postService.getPost(postId);
     }
 
-    @PatchMapping("/{postId}/publish")
+    @PutMapping("/{postId}/publish")
     public PostDto publishPost(@PathVariable long postId) {
         return postService.publishPost(postId);
     }
@@ -75,5 +75,4 @@ public class PostController {
     public List<PostDto> getAllPostsByProjectId(@RequestParam long projectId) {
         return postService.getAllPostsByProjectId(projectId);
     }
-
 }

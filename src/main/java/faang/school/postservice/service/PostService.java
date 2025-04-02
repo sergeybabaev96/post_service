@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -23,16 +24,14 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
     private final PostValidator postValidator;
+    private final Clock clock;
 
     @Transactional
     public PostDto createDraft(PostDto postDto) {
         log.info("Creating draft post: {}", postDto);
         postValidator.validatePostDto(postDto);
-        log.debug("PostDto validated successfully");
         Post post = postMapper.toEntity(postDto);
-        post.setCreatedAt(LocalDateTime.now());
-
-        log.debug("Mapped Post entity: {}", post);
+        post.setCreatedAt(LocalDateTime.now(clock));
         Post savedPost = postRepository.save(post);
         log.info("Post saved with ID: {}", savedPost.getId());
         return postMapper.toDto(post);
@@ -49,7 +48,6 @@ public class PostService {
 
         Post post = getPostById(postId);
         post.setPublished(true);
-       // post.setCreatedAt(LocalDateTime.now());
         postRepository.save(post);
         return postMapper.toDto(post);
     }

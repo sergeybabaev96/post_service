@@ -15,8 +15,8 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class PostValidator {
-    private UserServiceClient userServiceClient;
-    private ProjectServiceClient projectServiceClient;
+    private final UserServiceClient userServiceClient;
+    private final ProjectServiceClient projectServiceClient;
 
     public void validatePostDto(PostDto postDto) {
         if (postDto == null) {
