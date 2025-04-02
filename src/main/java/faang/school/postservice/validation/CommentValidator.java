@@ -6,6 +6,7 @@ import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -71,6 +72,25 @@ public class CommentValidator {
         }
         if (!postRepository.existsById(postId)) {
             throw new EntityNotFoundException("Post with ID " + postId + " not found");
+        }
+    }
+
+    /**
+     * Проверяет, принадлежит ли указанный комментарий заданному посту.
+     *
+     * @param comment проверяемый комментарий
+     * @param postId ID поста для проверки принадлежности
+     * @throws DataValidationException если комментарий не принадлежит указанному посту
+     *
+     * @see CommentService#getCommentById(Long)
+     * @see DataValidationException
+     */
+    public void validateCommentBelongsToPost(Comment comment, Long postId) {
+        if (!comment.getPost().getId().equals(postId)) {
+            throw new DataValidationException(
+                    String.format("Comment with ID %d does not belong to post with ID %d",
+                            comment.getId(), postId)
+            );
         }
     }
 }

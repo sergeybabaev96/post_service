@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-
 /**
  * Контроллер для обработки запросов, связанных с комментариями.
  * Предоставляет REST-эндпоинты для управления комментариями к постам.

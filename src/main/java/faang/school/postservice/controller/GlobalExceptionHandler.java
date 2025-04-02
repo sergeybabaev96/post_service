@@ -2,6 +2,7 @@ package faang.school.postservice.controller;
 
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
+import faang.school.postservice.exception.ImageProcessingException;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -52,18 +53,17 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Обрабатывает все остальные исключения, которые не были перехвачены другими обработчиками.
-     * Возвращает HTTP-ответ со статусом 500 (Internal Server Error) и сообщением об ошибке.
+     * Обрабатывает исключения типа {@link ImageProcessingException} (ошибки обработки изображений).
+     * Возникают при проблемах с чтением, изменением размера или сохранением изображений.
      *
-     * @param exception исключение, которое было выброшено
-     * @return ResponseEntity с сообщением об ошибке и статусом 500
+     * @param ex перехваченное исключение, содержащее информацию об ошибке
+     * @return ответ с сообщением об ошибке (HTTP 422 Unprocessable Entity)
      */
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception exception) {
-        log.error("Internal server error: {}", exception.getMessage(), exception);
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(String.format("Произошла внутренняя ошибка: %s", exception.getMessage()));
+    @ExceptionHandler(ImageProcessingException.class)
+    public ResponseEntity<String> handleImageProcessingException(ImageProcessingException ex) {
+        log.error("Image processing failed: {}", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body("Image processing error: " + ex.getMessage());
     }
 
     /**
@@ -122,5 +122,20 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(exception.status())
                 .body(String.format("Ошибка внешнего сервиса: %s", exception.getMessage()));
+    }
+
+    /**
+     * Обрабатывает все остальные исключения, которые не были перехвачены другими обработчиками.
+     * Возвращает HTTP-ответ со статусом 500 (Internal Server Error) и сообщением об ошибке.
+     *
+     * @param exception исключение, которое было выброшено
+     * @return ResponseEntity с сообщением об ошибке и статусом 500
+     */
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception exception) {
+        log.error("Internal server error: {}", exception.getMessage(), exception);
+
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(String.format("Произошла внутренняя ошибка: %s", exception.getMessage()));
     }
 }
