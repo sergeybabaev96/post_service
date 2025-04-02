@@ -6,8 +6,21 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Getter
 @Setter
-@ConfigurationProperties(prefix = "spring.kafka.topics.post")
+@ConfigurationProperties(prefix = "spring.kafka.topics")
 public class FeedProperties {
-    private int subscribersBatchSize;
-    private String name;
+    Post post;
+    PostDelete postDelete;
+
+    @Getter
+    @Setter
+    public static class Post {
+        private String name;
+        private int subscribersBatchSize;
+    }
+
+    @Getter
+    @Setter
+    public static class PostDelete {
+        private String name;
+    }
 }

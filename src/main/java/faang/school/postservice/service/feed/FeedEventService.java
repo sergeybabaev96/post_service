@@ -26,7 +26,7 @@ public class FeedEventService {
 
     @Async("taskExecutor")
     public void createAndSendFeedPostEventForNewPost(Long postId, Long authorId, LocalDateTime publishedAt) {
-        createAndSendFeedPostEvent(postId, authorId, publishedAt, properties.getName());
+        createAndSendFeedPostEvent(postId, authorId, publishedAt, properties.getPost().getName());
     }
 
     private void createAndSendFeedPostEvent(Long postId, Long authorId, LocalDateTime publishedAt, String topicName) {
@@ -40,7 +40,7 @@ public class FeedEventService {
         if (subscribersIds.isEmpty()) {
             log.info("Author {} has no subscribers or failed to retrieve subscribers. No events will be sent.", authorId);
         } else {
-            List<List<Long>> batches = ListUtils.partition(subscribersIds, properties.getSubscribersBatchSize());
+            List<List<Long>> batches = ListUtils.partition(subscribersIds, properties.getPost().getSubscribersBatchSize());
             int batchNumber = 0;
             for (List<Long> batch : batches) {
                 FeedPostEvent event = new FeedPostEvent(postId, authorId, publishedAt, batch);
@@ -55,6 +55,6 @@ public class FeedEventService {
 
     @Async("taskExecutor")
     public void createAndSendFeedPostDeletedEvent(long postId) {
-        kafkaPostDeleteProducer.sendEvent(new FeedPostDeleteEvent(postId));
+        kafkaPostDeleteProducer.sendEventToTopic(new FeedPostDeleteEvent(postId), properties.getPostDelete().getName());
     }
 }
