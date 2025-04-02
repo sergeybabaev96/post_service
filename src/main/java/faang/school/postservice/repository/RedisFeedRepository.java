@@ -3,7 +3,10 @@ package faang.school.postservice.repository;
 import faang.school.postservice.config.redis.CacheProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataAccessException;
+import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -23,9 +26,19 @@ public class RedisFeedRepository {
     public void addPostToSubscriber(Long subscriberId, Long postId, LocalDateTime publishedAt) {
         String key = FEED_KEY_PREFIX + subscriberId;
         double score = publishedAt.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
-        cacheRedisTemplate.opsForZSet().add(key, postId, score);
-        log.info("Post {} was added to subscriber {} published {} ", postId, subscriberId, publishedAt);
-        cacheRedisTemplate.opsForZSet().removeRange(key, 0, (long) - properties.getFeedMaxSize() - 1);
+
+        cacheRedisTemplate.execute(new SessionCallback<>() {
+            @Override
+            public Object execute(RedisOperations operations) throws DataAccessException {
+                operations.multi();
+                operations.opsForZSet().add(key, postId, score);
+                operations.opsForZSet().removeRange(key, 0, (long) - properties.getFeedMaxSize() - 1);
+                operations.exec();
+                return null;
+            }
+        });
+
+        log.info("Post {} was added to subscriber {} published {}", postId, subscriberId, publishedAt);
     }
 
     public void addPost(List<Long> subscribersIds, Long postId, LocalDateTime publishedAt) {
