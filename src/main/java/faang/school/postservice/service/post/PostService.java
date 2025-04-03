@@ -49,7 +49,6 @@ public class PostService {
     private final S3Service s3Service;
     private final ResourceRepository resourceRepository;
     private final PostImageService postImageService;
-    private final NewsFeedService newsFeedService;
     private final PostPublishingProducer postPublishingProducer;
 
     @Value("${post.schedule.batch-size}")
@@ -86,7 +85,6 @@ public class PostService {
         post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
         Post savedPost = postRepository.save(post);
-        newsFeedService.cachePost(savedPost);
         postPublishingProducer.publish(postMapper.toEvent(post));
         return postMapper.toDto(savedPost);
     }
