@@ -128,3 +128,8 @@ kafka:
     group-id: "post-group"
     retry-interval-ms: 5000
     max-attempts: 5
+
+feed:
+  key: feed
+  post:
+    max-size: 500
