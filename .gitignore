@@ -1,5 +1,3 @@
-.run/*
-*.log
 .gradle
 **/build/
 !src/**/build/
