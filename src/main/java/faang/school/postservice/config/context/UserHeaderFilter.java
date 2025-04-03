@@ -5,7 +5,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -14,7 +13,6 @@ import java.io.IOException;
 
 @Component
 @RequiredArgsConstructor
-@WebFilter("/api/*")
 public class UserHeaderFilter implements Filter {
 
     private final UserContext userContext;
@@ -26,8 +24,6 @@ public class UserHeaderFilter implements Filter {
         String userId = req.getHeader("x-user-id");
         if (userId != null) {
             userContext.setUserId(Long.parseLong(userId));
-        } else {
-            userContext.setUserId(12345678);
         }
         try {
             chain.doFilter(request, response);
