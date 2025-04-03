@@ -9,6 +9,8 @@ import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.PostService;
+import faang.school.postservice.service.feed.CacheService;
+import faang.school.postservice.service.feed.FeedEventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
@@ -34,6 +36,8 @@ public class PostServiceImpl implements PostService {
     private final PostMapper postMapper;
     private final List<PostSpecificationFilter> postSpecificationFilters;
     private final ExecutorService executorService;
+    private final FeedEventService feedEventService;
+    private final CacheService cacheService;
 
     @Override
     public PostResponseDto createPostDraft(PostCreateRequestDto postCreateRequestDto) {
@@ -52,7 +56,12 @@ public class PostServiceImpl implements PostService {
         postToPublish.setPublishedAt(LocalDateTime.now());
         Post publishedPost = postRepository.save(postToPublish);
         log.info("Draft post is published, id = {}", publishedPost.getId());
-        return postMapper.toPostResponseDto(publishedPost);
+        PostResponseDto postResponseDto = postMapper.toPostResponseDto(publishedPost);
+        cacheService.savePost(postResponseDto);
+        cacheService.addUserToCache(postResponseDto.authorId());
+        feedEventService.createAndSendFeedPostEventForNewPost(postId, postResponseDto.authorId(),
+                postResponseDto.publishedAt());
+        return postResponseDto;
     }
 
     @Override
@@ -89,6 +98,7 @@ public class PostServiceImpl implements PostService {
         Post postToDelete = getPostById(postId);
         postToDelete.setDeleted(true);
         log.info("Post is deleted, id = {}", postToDelete.getId());
+        feedEventService.createAndSendFeedPostDeletedEvent(postToDelete.getId());
         postRepository.save(postToDelete);
     }
 

@@ -49,6 +49,7 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.26")
     implementation("org.mapstruct:mapstruct:1.5.3.Final")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.5.3.Final")
+    implementation ("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0")
 
     /**
      * Swagger for Spring Boot 3
@@ -63,12 +64,24 @@ dependencies {
     testImplementation("org.testcontainers:postgresql")
     testImplementation("com.redis.testcontainers:testcontainers-redis-junit-jupiter:1.4.6")
 
+    testImplementation ("org.springframework.boot:spring-boot-starter-test")
+    testImplementation ("org.springframework.kafka:spring-kafka-test")
+    testImplementation ("org.testcontainers:testcontainers:1.17.6")
+    testImplementation ("org.testcontainers:junit-jupiter:1.17.6")
+    testImplementation ("org.testcontainers:kafka:1.17.6")
+
     /**
      * Tests
      */
     testImplementation("org.junit.jupiter:junit-jupiter-params:5.9.2")
     testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+
+    /**
+     * kafka
+     */
+    implementation("org.springframework.kafka:spring-kafka")
+
 }
 
 tasks.test {
