@@ -11,7 +11,6 @@ import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Comparator;
@@ -84,7 +83,6 @@ public class CommentService {
             throw new DataValidationException(
                     "Максимальная длина комментария %d символов, вы ввели %d", MAX_LENGTH, contentLength);
         }
-        System.out.println("contentLength: " + contentLength);
         System.out.println("maxLength: " + MAX_LENGTH);
     }
 

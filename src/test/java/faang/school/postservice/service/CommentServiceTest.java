@@ -57,14 +57,6 @@ public class CommentServiceTest {
     @InjectMocks
     private CommentService service;
 
-    @BeforeEach
-    public void setUp() {
-        user = new UserDto(1L, "name", "@");
-        commentDto = CommentDto.builder().build();
-        post = new Post();
-        comment = new Comment();
-    }
-
     @Test
     public void positiveCreateComment() {
         Comment successComment = Comment.builder().content("Ха=ха").build();
