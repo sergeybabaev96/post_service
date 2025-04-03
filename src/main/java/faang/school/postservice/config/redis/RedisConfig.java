@@ -48,6 +48,17 @@ public class RedisConfig {
     }
 
     @Bean
+    public RedisTemplate<String, Long> redisTemplateLong(
+            RedisConnectionFactory redisConnectionFactory,
+            ObjectMapper objectMapper) {
+        RedisTemplate<String, Long> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
+        return template;
+    }
+
+    @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
         RedisCacheConfiguration cacheConfiguration = RedisCacheConfiguration.defaultCacheConfig()
                 .disableCachingNullValues()

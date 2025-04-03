@@ -44,9 +44,9 @@ spring:
         num-partitions: 6
         replication-factor: 3
       LikeEvent:
-          name: likes
-          num-partitions: 6
-          replication-factor: 3
+        name: likes
+        num-partitions: 6
+        replication-factor: 3
 
   cache:
     type: redis
@@ -58,10 +58,11 @@ spring:
       host: localhost
 
       feed-cache:
-       batch-size: 20
-       max-feed-size: 500
-       key: "feed:"
-       number-of-users-on-page: 3
+        batch-size: 20
+        max-feed-size: 500
+        key: "feed:"
+        number-of-users-on-page: 3
+        default-post-id: 1
 
       post-cache:
         comments-in-post: 3
@@ -76,6 +77,16 @@ spring:
         key-for-version: versionedKey
         start-num-for-version: 1
         lock-cache-post: "lock:cachePost:"
+
+      zset:
+        range:
+          remove:
+           start:
+            index: 0
+           end:
+            index: 0
+          offset:
+            index: 1
 
   cloud:
     openfeign:

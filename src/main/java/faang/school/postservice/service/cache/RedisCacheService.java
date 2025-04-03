@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -89,6 +90,18 @@ public class RedisCacheService {
             comments.add(comment);
             postCache.setComments(comments);
         });
+    }
+
+    public List<PostReadDto> getPostCacheByIds(List<Long> postsId) {
+        return redisPostRepository.findAllById(postsId).stream()
+                .map(postMapper::toPostReadDto)
+                .toList();
+    }
+
+    public void initVersion(PostCache postCache) {
+        RMap<String, Integer> versionMap = redissonClient.getMap(version);
+        versionMap.putIfAbsent(versionedKey, startNumForKey);
+        postCache.setVersion(versionMap);
     }
 
     private void saveAuthor(long authorId) {

@@ -29,6 +29,7 @@ import faang.school.postservice.service.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -157,6 +158,16 @@ public class PostService {
                 .toList();
     }
 
+    public List<PostReadDto> getPostsByAuthorIds(List<Long> authorIds,
+                                                 long startPostId,
+                                                 int batchSize) {
+        List<Post> posts = postRepository
+                .findPostsByAuthorIds(authorIds, startPostId, PageRequest.of(0, batchSize));
+        return posts.stream()
+                .map(postMapper::toDto)
+                .toList();
+    }
+
     public PostReadDto uploadImages(long postId, List<MultipartFile> images) {
         Post post = getPostById(postId);
         validateImageUpload(images, post.getResources().size());
@@ -202,7 +213,7 @@ public class PostService {
         PostEvent event = PostEvent.builder()
                 .postId(postReadDto.getId())
                 .authorId(postReadDto.getAuthorId())
-                .subscribersId(author.subscribers())
+                .subscribersId(author.subscribersId())
                 .build();
         postEventPublisher.publish(event);
     }

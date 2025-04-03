@@ -92,4 +92,28 @@ public interface PostMapper {
                         .map(Comment::getContent)
                         .collect(Collectors.toCollection(LinkedHashSet::new));
     }
+
+    @Mapping(source = "postId", target = "id")
+    @Mapping(target = "published", ignore = true)
+    @Mapping(target = "deleted", ignore = true)
+    @Mapping(target = "publishedAt", ignore = true)
+    @Mapping(target = "scheduledAt", ignore = true)
+    @Mapping(target = "hashtagIds", ignore = true)
+    @Mapping(target = "fileKeys", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(source = "likesId", target = "likesCount", qualifiedByName = "likesSize")
+    PostReadDto toPostReadDto(PostCache postCache);
+
+    @Named("likesSize")
+    default Integer likesSize(List<Long> likes) {
+        return (likes != null) ? likes.size() : 0;
+    }
+
+    @Mapping(source = "id", target = "postId")
+    @Mapping(source = "likesCount", target = "numLikes")
+    @Mapping(target = "likesId", ignore = true)
+    @Mapping(target = "comments", ignore = true)
+    @Mapping(target = "numViews", ignore = true)
+    @Mapping(target = "version", ignore = true)
+    PostCache toPostCache(PostReadDto postReadDto);
 }
