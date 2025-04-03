@@ -21,4 +21,12 @@ public interface PostRepository extends CrudRepository<Post, Long> {
     @Query("SELECT p FROM Post p WHERE p.published = false AND p.deleted = false AND p.scheduledAt <= CURRENT_TIMESTAMP")
     List<Post> findReadyToPublish();
 
+    @Query(value = """
+            SELECT p.authorId
+            FROM Post p JOIN Comment c ON c.post = p
+            WHERE c.verifiedDate IS NOT NULL AND c.verified = false
+            GROUP BY p.authorId
+            HAVING COUNT(DISTINCT p.id) > :postCountThreshold
+            """)
+    List<Long> findAuthorIdsByUnverifiedPostsThreshold(int postCountThreshold);
 }
