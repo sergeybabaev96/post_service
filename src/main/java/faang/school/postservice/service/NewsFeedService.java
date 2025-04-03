@@ -26,6 +26,8 @@ import static faang.school.postservice.model.cache.CacheComment.COMMENT_PREFIX;
 @RequiredArgsConstructor
 public class NewsFeedService {
     private static final String FEED_PREFIX = "user_feed:";
+    private static final int NEWS_FEED_RANGE_START = 0;
+    private static final int FEED_END_INDEX = 1;
 
     private final CachePostRepository cachePostRepository;
     private final NewsFeedMapper newsFeedMapper;
@@ -99,7 +101,9 @@ public class NewsFeedService {
                 .forEach(id -> {
                     var cacheKey = FEED_PREFIX + id;
                     redisTemplate.opsForZSet().add(cacheKey, postId, timestamp);
-                    redisTemplate.opsForZSet().removeRange(cacheKey, 0, -maxPostsInFeed - 1);
+                    redisTemplate.opsForZSet().removeRange(
+                            cacheKey, NEWS_FEED_RANGE_START, -maxPostsInFeed - FEED_END_INDEX
+                    );
                 });
     }
 
