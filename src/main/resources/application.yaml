@@ -43,6 +43,8 @@ spring:
         properties:
           retries: 5
           retry.backoff.ms: 1000
+      consumer:
+        trusted-packages: faang.school.postservice.event
 
   servlet:
     multipart:
@@ -55,11 +57,6 @@ server:
 logging:
   level:
     root: info
-
-kafka:
-  bootstrap-servers: localhost:9092
-  consumer:
-    trusted-packages: faang.school.postservice.event
 
 post:
   ad-remover:

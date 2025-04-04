@@ -25,10 +25,10 @@ public class KafkaConsumerConfig {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    @Value("${kafka.bootstrap-servers}")
+    @Value("${spring.data.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Value("${kafka.consumer.trusted-packages}")
+    @Value("${spring.data.kafka.consumer.trusted-packages}")
     private String trustedPackages;
 
     @Bean
