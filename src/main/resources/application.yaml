@@ -133,3 +133,10 @@ feed:
   key: feed
   post:
     max-size: 500
+
+news-feed:
+  keys:
+    user: user
+    feed: feed
+    post: posts
+  ttl: 600
