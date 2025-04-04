@@ -1,6 +1,6 @@
 package faang.school.postservice.service.like;
 
-import faang.school.postservice.broker.producer.PostEventProducer;
+import faang.school.postservice.broker.producer.PostLikeProducer;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.mapper.like.LikeMapperImpl;
@@ -47,7 +47,7 @@ class LikeServiceImplTest {
     @Mock
     private UserServiceClient userServiceClient;
     @Mock
-    private PostEventProducer postEventProducer;
+    private PostLikeProducer postLikeProducer;
 
     @InjectMocks
     private LikeServiceImpl likeService;
@@ -63,8 +63,16 @@ class LikeServiceImplTest {
     void setUp() {
         when(userContext.getUserId()).thenReturn(userId);
 
-        likeService = new LikeServiceImpl(userContext, likeRepository, postRepository, commentRepository,
-                likeServiceValidator, userServiceClient, postEventProducer, likeEventPublisher, likeMapper);
+        likeService = new LikeServiceImpl(
+                userContext,
+                likeRepository,
+                postRepository,
+                commentRepository,
+                likeServiceValidator,
+                userServiceClient,
+                postLikeProducer,
+                likeEventPublisher,
+                likeMapper);
     }
 
     @Test

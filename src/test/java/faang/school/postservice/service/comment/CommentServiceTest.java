@@ -1,5 +1,6 @@
 package faang.school.postservice.service.comment;
 
+import faang.school.postservice.broker.producer.PostCommentProducer;
 import faang.school.postservice.broker.producer.PostEventProducer;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
@@ -16,7 +17,7 @@ import faang.school.postservice.exception.UploadFileException;
 import faang.school.postservice.mapper.comment.CommentMapperImpl;
 import faang.school.postservice.mapper.like.LikeMapperImpl;
 import faang.school.postservice.mapper.post.PostMapperImpl;
-import faang.school.postservice.mapper.user.UserDtoAdapter;
+import faang.school.postservice.mapper.user.UserMapper;
 import faang.school.postservice.message.event.UsersBanPublisher;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
@@ -88,12 +89,14 @@ public class CommentServiceTest {
     @Mock
     private UsersBanPublisher usersBanPublisher;
     @Spy
-    private UserDtoAdapter userDtoAdapterImpl;
+    private UserMapper userMapperImpl;
 
     @Mock
     private PostEventProducer postEventProducer;
     @Mock
     private UserService userService;
+    @Mock
+    private PostCommentProducer postCommentProducer;
 
     private long authorId;
     private long commentId;
@@ -154,8 +157,8 @@ public class CommentServiceTest {
                 null,
                 null,
                 usersBanPublisher,
-                userDtoAdapterImpl,
-                postEventProducer,
+                userMapperImpl,
+                postCommentProducer,
                 userService);
 
     }

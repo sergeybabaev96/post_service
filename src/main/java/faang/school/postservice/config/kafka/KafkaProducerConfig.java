@@ -25,7 +25,6 @@ public class KafkaProducerConfig {
 
     private final KafkaProperties kafkaProperties;
 
-
     private Map<String, Object> producerConfigs() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaProperties.getBootstrapServers());
@@ -36,26 +35,21 @@ public class KafkaProducerConfig {
         return configProps;
     }
 
-
-    // ProducerFactory для PostViewEvent
     @Bean
     public ProducerFactory<String, PostViewEvent> postViewEventProducerFactory() {
         return new DefaultKafkaProducerFactory<>(producerConfigs());
     }
 
-    // ProducerFactory для PostLikeEvent
     @Bean
     public ProducerFactory<String, PostLikeEvent> postLikeEventProducerFactory() {
         return new DefaultKafkaProducerFactory<>(producerConfigs());
     }
 
-    // ProducerFactory для PostCommentEvent
     @Bean
     public ProducerFactory<String, PostCommentEvent> postCommentEventProducerFactory() {
         return new DefaultKafkaProducerFactory<>(producerConfigs());
     }
 
-    // ProducerFactory для PostPublicationEvent
     @Bean
     public ProducerFactory<String, PostPublicationEvent> postPublishEventProducerFactory() {
         return new DefaultKafkaProducerFactory<>(producerConfigs());
@@ -65,11 +59,6 @@ public class KafkaProducerConfig {
     public ProducerFactory<String, PostProcessEvent> postProcessEventProducerFactory() {
         return new DefaultKafkaProducerFactory<>(producerConfigs());
     }
-
-/*    @Bean
-    public KafkaTemplate<String, String> kafkaTemplate() {
-        return new KafkaTemplate<>(producerFactory());
-    }*/
 
     @Bean
     public KafkaTemplate<String, PostViewEvent> postViewEventKafkaTemplate(

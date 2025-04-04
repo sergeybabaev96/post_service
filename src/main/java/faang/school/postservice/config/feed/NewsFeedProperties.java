@@ -7,6 +7,7 @@ public record NewsFeedProperties(
         String prefix,
         Integer maxPosts,
         Integer pageSize,
-        Integer batchSize
+        Integer batchSize,
+        Integer commentsNumber
 ) {
 }

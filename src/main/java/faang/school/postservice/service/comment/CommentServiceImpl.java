@@ -14,7 +14,7 @@ import faang.school.postservice.exception.CommentValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.exception.UploadFileException;
 import faang.school.postservice.mapper.comment.CommentMapper;
-import faang.school.postservice.mapper.user.UserDtoAdapter;
+import faang.school.postservice.mapper.user.UserMapper;
 import faang.school.postservice.message.event.UsersBanPublisher;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
@@ -58,7 +58,7 @@ public class CommentServiceImpl implements CommentService {
     private final ExecutorService moderationExecutor;
     private final ModerationDictionary moderationDictionary;
     private final UsersBanPublisher usersBanPublisher;
-    private final UserDtoAdapter userDtoAdapter;
+    private final UserMapper userMapper;
     private final PostCommentProducer postCommentProducer;
     private final UserService userService;
 

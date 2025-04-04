@@ -6,16 +6,12 @@ import org.springframework.boot.context.properties.NestedConfigurationProperty;
 @ConfigurationProperties(prefix = "spring.kafka")
 public record CustomKafkaProperties(
         String bootstrapServers,
-
         @NestedConfigurationProperty
         Consumer consumer,
-
         @NestedConfigurationProperty
         Producer producer,
-
         @NestedConfigurationProperty
         Topic topic
-
 ) {
     public record Consumer(
             String groupId,

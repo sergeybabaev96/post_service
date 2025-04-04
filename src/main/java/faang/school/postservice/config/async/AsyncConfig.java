@@ -12,6 +12,7 @@ import java.util.concurrent.Executor;
 @RequiredArgsConstructor
 @EnableAsync
 public class AsyncConfig {
+
     private final AsyncProperties asyncProperties;
 
     @Bean(name = "asyncTaskExecutor")

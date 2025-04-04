@@ -1,5 +1,7 @@
 package faang.school.postservice.controller;
 
+import faang.school.postservice.broker.producer.PostViewProducer;
+import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.controller.post.PostController;
 import faang.school.postservice.dto.post.PostCreateRequestDto;
 import faang.school.postservice.dto.post.PostUpdateRequestDto;
@@ -17,6 +19,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class PostControllerTest {
     @Mock
     private PostService postServiceMock;
+    @Mock
+    private PostViewProducer postViewProducer;
+    @Mock
+    private UserContext userContext;
     @InjectMocks
     private PostController postController;
     private PostCreateRequestDto validPostCreateRequestDto;
@@ -24,7 +30,7 @@ class PostControllerTest {
 
     @BeforeEach
     void setUp() {
-        postController = new PostController(postServiceMock);
+        postController = new PostController(postServiceMock, postViewProducer, userContext);
         validPostCreateRequestDto = PostCreateRequestDto.builder()
                 .content("test content")
                 .authorId(111L)

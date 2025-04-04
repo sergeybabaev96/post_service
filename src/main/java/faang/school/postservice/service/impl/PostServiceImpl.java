@@ -2,6 +2,7 @@ package faang.school.postservice.service.impl;
 
 import faang.school.postservice.broker.producer.PostEventProducer;
 import faang.school.postservice.config.context.UserContext;
+import faang.school.postservice.config.feed.NewsFeedProperties;
 import faang.school.postservice.config.redis.RedisProperties;
 import faang.school.postservice.dto.feed.FeedItemCommentDto;
 import faang.school.postservice.dto.post.PostCommentEvent;
@@ -16,9 +17,6 @@ import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.PostService;
-import faang.school.postservice.service.comment.CommentService;
-import faang.school.postservice.service.like.LikeService;
-import faang.school.postservice.service.user.UserService;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,20 +44,16 @@ public class PostServiceImpl implements PostService {
     private int postBatchSize;
 
     private final PostRepository postRepository;
-    //private final PostRedisRepository postRedisRepository;
     private final PostServiceValidator postServiceValidator;
     private final PostMapper postMapper;
     private final List<PostSpecificationFilter> postSpecificationFilters;
     private final ExecutorService executorService;
     private final PostEventProducer postEventProducer;
-    private final UserService userService;
     private final RedisTemplate<String, PostResponseDto> postRedisTemplate;
     private final RedisProperties redisProperties;
     private final UserContext userContext;
-    private final CommentService commentService;
     private final CommentMapper commentMapper;
-    private final LikeService likeService;
-
+    private final NewsFeedProperties newsFeedProperties;
 
     @Override
     @Transactional
@@ -113,7 +107,7 @@ public class PostServiceImpl implements PostService {
                     log.error("Error processing scheduled posts", error);
                     throw new RuntimeException("Failed to process scheduled posts", error);
                 })).forEach(CompletableFuture::join);
-        // TODO обновить кеш, подумать, надо ли
+        // TODO наверное тоже стоит отослать сообщение в кафку о новом посте
     }
 
     @Override
@@ -194,30 +188,20 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public void addCommentToHash(long postId, PostCommentEvent postCommentEvent) {
-        /*
-        1. по post id найти пост
-        2. считать комментарии
-        3. добавить в начало новый коммент
-        4. удалить старый коммент
-        5 записать в кеш
-         */
-        final int maxComments = 3; // TODO вынести в yaml
-        //FeedItemPostDto feedItemPostDto = getPostForFeed(postId);
-        PostResponseDto postResponseDto = getPostWithCache(postId);
 
+        final int maxComments = newsFeedProperties.commentsNumber();
+        PostResponseDto postResponseDto = getPostWithCache(postId);
         LinkedHashSet<FeedItemCommentDto> comments = postResponseDto.comments();
 
         if (comments.size() >= maxComments) {
-            // Удаляем самый старый элемент (первый в LinkedHashSet)
             Iterator<FeedItemCommentDto> iterator = comments.iterator();
             if (iterator.hasNext()) {
-                iterator.next(); // Получаем первый элемент
-                iterator.remove(); // Удаляем его
+                iterator.next();
+                iterator.remove();
             }
         }
-        comments.add(commentMapper.toFeedItemCommentDto(postCommentEvent)); // Добавляем новый комментарий
+        comments.add(commentMapper.toFeedItemCommentDto(postCommentEvent));
 
-        //FeedItemPostDto updatedFeedItemPostDto = postMapper.toFeedItemPostDto(feedItemPostDto, comments);
         PostResponseDto updatedPostResponseDto = postMapper.toPostResponseDto(postResponseDto, comments);
         String cacheKey = redisProperties.cache().postCacheName() + postId;
 
@@ -232,7 +216,6 @@ public class PostServiceImpl implements PostService {
 
     private void updatePostLikesCounter(long postId, long delta) {
         String cacheKey = redisProperties.cache().postCacheName() + postId;
-        //PostResponseDto postResponseDto = getPostWithCache(postId);
         PostResponseDto postResponseDto = postRedisTemplate.opsForValue().get(cacheKey);
 
         if (postResponseDto != null) {
@@ -242,7 +225,7 @@ public class PostServiceImpl implements PostService {
             if (likesCounter < 0) {
                 likesCounter = 0;
             }
-            //TODO переписать через маппер
+            //TODO хорошо бы переписать через маппер
             PostResponseDto incrementedPostResponseDto = PostResponseDto.builder()
                     .postLikesCounter(likesCounter)
                     .id(postResponseDto.id())
@@ -261,7 +244,6 @@ public class PostServiceImpl implements PostService {
             log.info("For post {} updated likes counter to {}", postId, likesCounter);
         }
     }
-
 
     private Post getPostById(Long postId) {
         Optional<Post> optionalPost = postRepository.findById(postId);

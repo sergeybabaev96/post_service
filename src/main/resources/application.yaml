@@ -146,3 +146,4 @@ newsfeed:
   max-posts: 10 # Max posts per feed
   page-size: 5  # posts for feed page
   batch-size: 2 # followers batch size for processing
+  comments-number: 3 # Number of comments in feed post

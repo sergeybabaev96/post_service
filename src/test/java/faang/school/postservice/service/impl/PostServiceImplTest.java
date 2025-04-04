@@ -1,8 +1,8 @@
 package faang.school.postservice.service.impl;
 
 import faang.school.postservice.broker.producer.PostEventProducer;
-import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
+import faang.school.postservice.config.feed.NewsFeedProperties;
 import faang.school.postservice.config.redis.RedisProperties;
 import faang.school.postservice.dto.post.PostCreateRequestDto;
 import faang.school.postservice.dto.post.PostFilterDto;
@@ -12,6 +12,7 @@ import faang.school.postservice.filter.post.PostAuthorSpecification;
 import faang.school.postservice.filter.post.PostProjectSpecification;
 import faang.school.postservice.filter.post.PostPublishedSpecification;
 import faang.school.postservice.filter.post.PostSpecificationFilter;
+import faang.school.postservice.mapper.comment.CommentMapper;
 import faang.school.postservice.mapper.post.PostMapperImpl;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
@@ -48,13 +49,15 @@ class PostServiceImplTest {
     @Mock
     private PostEventProducer postEventProducer;
     @Mock
-    private UserServiceClient userServiceClient;
-    @Mock
     private RedisProperties redisProperties;
     @Mock
     private UserContext userContext;
     @Mock
     private RedisTemplate<String, PostResponseDto> postRedisTemplate;
+    @Mock
+    private CommentMapper commentMapper;
+    @Mock
+    private NewsFeedProperties newsFeedProperties;
 
     private PostCreateRequestDto postCreateRequestDto;
     private PostUpdateRequestDto postUpdateRequestDto;
@@ -79,10 +82,11 @@ class PostServiceImplTest {
                 postSpecificationFilters,
                 executorService,
                 postEventProducer,
-                userServiceClient,
                 postRedisTemplate,
                 redisProperties,
-                userContext
+                userContext,
+                commentMapper,
+                newsFeedProperties
         );
 
         postCreateRequestDto = PostCreateRequestDto.builder()

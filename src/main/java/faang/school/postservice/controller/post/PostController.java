@@ -54,16 +54,16 @@ public class PostController {
 
     @GetMapping("/{id}")
     public PostResponseDto getPost(@PathVariable("id") Long postId) {
-        Long userId = userContext.getUserId();
+        Long visitorId = userContext.getUserId();
         PostResponseDto postResponseDto = postService.getPostWithCache(postId);
-        postViewProducer.produceViewPostEventAsync(postId, userId);
+        postViewProducer.produceViewPostEventAsync(postId, visitorId);
         return postResponseDto;
     }
 
     @GetMapping("/")
     public List<PostResponseDto> getFilteredPosts(@RequestParam Boolean isPublished,
-                                             @RequestParam(required = false) Long projectId,
-                                             @RequestParam(required = false) Long authorId) {
+                                                  @RequestParam(required = false) Long projectId,
+                                                  @RequestParam(required = false) Long authorId) {
 
         PostFilterDto postFilter = PostFilterDto.builder()
                 .authorId(authorId)

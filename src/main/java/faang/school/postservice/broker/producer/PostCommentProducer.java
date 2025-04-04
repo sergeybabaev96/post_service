@@ -12,21 +12,20 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-public class PostCommentProducer extends KafkaProducerService{
-    private final CustomKafkaProperties customKafkaProperties;
+public class PostCommentProducer extends KafkaProducerService {
 
     public PostCommentProducer(KafkaTemplate<String, PostCommentEvent> kafkaTemplate,
                                ObjectMapper objectMapper,
                                CustomKafkaProperties customKafkaProperties,
                                @Value("${spring.kafka.topic.post-comments-topic}") String topic) {
         super(kafkaTemplate, objectMapper, topic);
-        this.customKafkaProperties = customKafkaProperties;
     }
 
     @Async("asyncTaskExecutor")
     public void produceCommentPostEventAsync(Comment comment) {
         produceCommentPostEvent(comment);
     }
+
     public void produceCommentPostEvent(Comment comment) {
 
         long postId = comment.getPost().getId();

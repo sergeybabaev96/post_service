@@ -5,7 +5,6 @@ import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.config.kafka.CustomKafkaProperties;
 import faang.school.postservice.dto.post.PostPublicationEvent;
 import faang.school.postservice.dto.subscription.SubscriptionUserDto;
-import faang.school.postservice.mapper.user.UserDtoAdapter;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.service.user.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -20,22 +19,17 @@ import java.util.List;
 @Service
 public class PostEventProducer extends KafkaProducerService {
 
-    private final CustomKafkaProperties customKafkaProperties;
     private final UserService userService;
-    private final UserDtoAdapter userDtoAdapter;
     private final UserContext userContext;
 
     public PostEventProducer(KafkaTemplate<String, PostPublicationEvent> kafkaTemplate,
                              CustomKafkaProperties customKafkaProperties,
                              ObjectMapper objectMapper,
                              UserService userService,
-                             UserDtoAdapter userDtoAdapter,
                              UserContext userContext,
                              @Value("${spring.kafka.topic.posts-topic}") String topic) {
         super(kafkaTemplate, objectMapper, topic);
-        this.customKafkaProperties = customKafkaProperties;
         this.userService = userService;
-        this.userDtoAdapter = userDtoAdapter;
         this.userContext = userContext;
     }
 

@@ -42,20 +42,14 @@ public class FeedRepository {
     }
 
     public void addPostToFollowersFeeds(List<Long> followersIds, PostResponseDto post) {
-        /*FeedItemDto feedItem = FeedItemDto.builder()
-                //.postLikesCounter(0)
-                .postId(post.id())
-                .build();*/
         followersIds.forEach(userId -> addPostToFollowerFeed(userId, post));
     }
 
     private void addPostToFollowerFeed(long userId, PostResponseDto post) {
         long postId = post.id();
         log.info("Adding feed item for user {}, post {}", userId, postId);
-        //log.info("Adding feed item for user {}, post {}", userId, feedItemResponseDto.postId());
         int setSize = newsFeedProperties.maxPosts();
         double score = post.publishedAt().toInstant(ZoneOffset.UTC).toEpochMilli();
-        //double score = feedItemResponseDto.publishedAt().toInstant(ZoneOffset.UTC).toEpochMilli();
         FeedItemDto feedItemDto = FeedItemDto.builder()
                 .postId(postId)
                 .build();
@@ -81,29 +75,7 @@ public class FeedRepository {
                  return !results.isEmpty();
              }
         });
-
-
-
-
-        /*Set<FeedItemDto> result = FeedItemRedisTemplate.opsForZSet()
-                .range(zsetKey, 0, -1);
-
-        FeedItemRedisTemplate.opsForZSet().removeRange(
-                zsetKey,
-                0,
-                -newsFeedProperties.maxPosts() - 1);
-        result = FeedItemRedisTemplate.opsForZSet()
-                .range(zsetKey, 0, -1);*/
-
-
-        //return true;
-
-        //log.info("Post {} saved to newsfeed for user {}", feedItemResponseDto.postId(), userId);
     }
-
-    /*public getFeedItem(String key) {
-
-    }*/
 
     private String getFeedItemHashKey(long userId) {
         String prefix = newsFeedProperties.prefix();

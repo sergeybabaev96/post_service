@@ -6,7 +6,7 @@ import faang.school.postservice.dto.subscription.SubscriptionUserDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.dto.user.UserResponseDto;
 import faang.school.postservice.exception.DataFetchException;
-import faang.school.postservice.mapper.user.UserDtoAdapter;
+import faang.school.postservice.mapper.user.UserMapper;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 public class UserServiceImpl implements UserService {
 
     private final UserServiceClient userServiceClient;
-    private final UserDtoAdapter userMapper;
+    private final UserMapper userMapper;
     private final RedisTemplate <String, UserResponseDto> userRedisTemplate;
     private final RedisProperties redisProperties;
 

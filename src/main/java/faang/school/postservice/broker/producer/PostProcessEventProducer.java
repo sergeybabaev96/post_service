@@ -6,7 +6,7 @@ import faang.school.postservice.config.kafka.CustomKafkaProperties;
 import faang.school.postservice.dto.post.PostProcessEvent;
 import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.subscription.SubscriptionUserDto;
-import faang.school.postservice.mapper.user.UserDtoAdapter;
+import faang.school.postservice.mapper.user.UserMapper;
 import faang.school.postservice.service.user.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,25 +15,22 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
 @Slf4j
 @Service
-public class PostProcessEventProducer extends KafkaProducerService{
-    private final CustomKafkaProperties customKafkaProperties;
+public class PostProcessEventProducer extends KafkaProducerService {
     private final UserService userService;
-    private final UserDtoAdapter userDtoAdapter;
     private final UserContext userContext;
 
     public PostProcessEventProducer(KafkaTemplate<String, PostProcessEvent> kafkaTemplate,
                                     CustomKafkaProperties customKafkaProperties,
                                     ObjectMapper objectMapper,
-                                    UserDtoAdapter userDtoAdapter,
+                                    UserMapper userMapper,
                                     UserContext userContext,
                                     UserService userService,
                                     @Value("${spring.kafka.topic.posts-process-topic}") String topic) {
         super(kafkaTemplate, objectMapper, topic);
-        this.customKafkaProperties = customKafkaProperties;
         this.userService = userService;
-        this.userDtoAdapter = userDtoAdapter;
         this.userContext = userContext;
     }
 

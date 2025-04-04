@@ -22,10 +22,11 @@ import java.util.Set;
 public class FeedController {
 
     private final FeedService feedService;
+
     @GetMapping("/{userId}")
     public ResponseEntity<?> getUserFeed(@PathVariable("userId") Integer userId,
-                                      @RequestParam(required = false) Integer pageNum) {
-        try{
+                                         @RequestParam(required = false) Integer pageNum) {
+        try {
             if (pageNum == null) {
                 pageNum = 0;
             }
@@ -33,7 +34,7 @@ public class FeedController {
             Set<PostResponseDto> feed = feedService.getFeed(userId, pageNum);
             return ResponseEntity.ok(feed);
 
-        }catch(Exception e) {
+        } catch (Exception e) {
             log.error("Failed to get feed for user {}", userId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of(
@@ -41,7 +42,5 @@ public class FeedController {
                             "message", e.getMessage()
                     ));
         }
-
     }
-
 }

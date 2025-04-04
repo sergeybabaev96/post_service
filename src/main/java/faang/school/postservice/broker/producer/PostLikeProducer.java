@@ -12,15 +12,12 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class PostLikeProducer extends KafkaProducerService{
-    private final CustomKafkaProperties customKafkaProperties;
-
 
     public PostLikeProducer(KafkaTemplate<String, PostLikeEvent> kafkaTemplate,
                             ObjectMapper objectMapper,
                             CustomKafkaProperties customKafkaProperties,
                             @Value("${spring.kafka.topic.post-likes-topic}") String topic) {
         super(kafkaTemplate, objectMapper, topic);
-        this.customKafkaProperties = customKafkaProperties;
     }
 
     @Async("asyncTaskExecutor")

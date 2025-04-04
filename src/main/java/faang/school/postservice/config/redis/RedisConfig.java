@@ -50,7 +50,7 @@ public class RedisConfig {
 
     @Bean
     public RedisTemplate<String, UserResponseDto> userRedisTemplate(RedisConnectionFactory connectionFactory,
-                                                                        ObjectMapper redisObjectMapper) {
+                                                                    ObjectMapper redisObjectMapper) {
         RedisTemplate<String, UserResponseDto> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
@@ -71,17 +71,6 @@ public class RedisConfig {
 
         return template;
     }
-/*    @Bean
-    public RedisTemplate<String, FeedItemResponseDto> feedItemRedisTemplate(RedisConnectionFactory connectionFactory,
-                                                                            ObjectMapper redisObjectMapper) {
-        RedisTemplate<String, FeedItemResponseDto> template = new RedisTemplate<>();
-        template.setConnectionFactory(connectionFactory);
-        template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJackson2JsonRedisSerializer(redisObjectMapper));
-        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer(redisObjectMapper));
-
-        return template;
-    }*/
 
     @Bean
     public RedisTemplate<String, FeedItemDto> feedItemRedisTemplate(RedisConnectionFactory connectionFactory,
@@ -103,31 +92,17 @@ public class RedisConfig {
         return container;
     }
 
-/*    @Bean
-    public ObjectMapper redisObjectMapper() {
-        return new ObjectMapper()
-                .registerModule(new JavaTimeModule())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }*/
-
-
     @Bean
     public ObjectMapper redisObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
 
-        // Регистрируем модули для работы с Java 8 датами и Optional
         mapper.registerModule(new JavaTimeModule());
         mapper.registerModule(new Jdk8Module());
-
-        // Отключаем запись дат как timestamp
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-        // Настройка информации о типах для корректной десериализации
         mapper.activateDefaultTyping(
-                mapper.getPolymorphicTypeValidator(), // Используем стандартный валидатор
-                ObjectMapper.DefaultTyping.EVERYTHING, // Включаем для всех типов
-                JsonTypeInfo.As.PROPERTY // Сохраняем информацию о типе как свойство
+                mapper.getPolymorphicTypeValidator(),
+                ObjectMapper.DefaultTyping.EVERYTHING,
+                JsonTypeInfo.As.PROPERTY
         );
 
         return mapper;

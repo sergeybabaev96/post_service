@@ -1,6 +1,5 @@
 package faang.school.postservice.broker.consumer;
 
-import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.post.PostPublicationEvent;
 import faang.school.postservice.service.feed.FeedService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,6 @@ public class PostEventConsumer {
 
     private final FeedService feedService;
     private final AsyncTaskExecutor asyncTaskExecutor;
-    private final UserContext userContext;
 
     @KafkaListener(
             topics = "${spring.kafka.topic.posts-topic}",
@@ -40,16 +38,5 @@ public class PostEventConsumer {
                             postPublicationEvent.postId(), exception.getMessage());
                     return null;
                 });
-/*
-        result.whenComplete((res, exception) -> {
-            if (exception != null) {
-                log.error("Error consuming message with post id {}. Error: {}",
-                        postPublicationEvent.postId(), exception.getMessage());
-            }else {
-                feedService.processNewPost(postPublicationEvent.postId(), postPublicationEvent.followersIds());
-                log.info("### User published the post {}", postPublicationEvent.postId());
-                acknowledgment.acknowledge();
-            }
-        });*/
     }
 }
