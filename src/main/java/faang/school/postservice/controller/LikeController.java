@@ -15,22 +15,22 @@ public class LikeController {
 
     private final LikeService likeService;
 
-    @PostMapping("/post-{postId}")
+    @PostMapping("/posts/{postId}")
     public void putLikeOnPost(@PathVariable Long postId) {
         likeService.putLikeOnPost(postId);
     }
 
-    @DeleteMapping("/post-{postId}")
+    @DeleteMapping("/posts/{postId}")
     public void removeLikeAtPost(@PathVariable Long postId) {
         likeService.removeLikeAtPost(postId);
     }
 
-    @PostMapping("/comment-{commentId}")
+    @PostMapping("/comments/{commentId}")
     public void putLikeOnComment(@PathVariable Long commentId) {
         likeService.putLikeOnComment(commentId);
     }
 
-    @DeleteMapping("/comment-{commentId}")
+    @DeleteMapping("/comments/{commentId}")
     public void removeLikeAtComment(@PathVariable Long commentId) {
         likeService.removeLikeAtComment(commentId);
     }

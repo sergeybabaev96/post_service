@@ -29,7 +29,7 @@ public class LikeControllerTest {
     public void testPositivePutLikeOnPost() throws Exception {
         doNothing().when(likeService).putLikeOnPost(firstId);
 
-        mockMvc.perform(post("/likes/post-{postId}", firstId)
+        mockMvc.perform(post("/likes/posts/{postId}", firstId)
                 .param("userId", firstId.toString()))
                 .andExpect(status().isOk());
     }
@@ -38,7 +38,7 @@ public class LikeControllerTest {
     public void testPositiveRemoveLikeOnPost() throws Exception {
         doNothing().when(likeService).removeLikeAtPost(firstId);
 
-        mockMvc.perform(delete("/likes/post-{postId}", firstId)
+        mockMvc.perform(delete("/likes/posts/{postId}", firstId)
                         .param("userId", firstId.toString()))
                 .andExpect(status().isOk());
     }
@@ -47,7 +47,7 @@ public class LikeControllerTest {
     public void testPositivePutLikeOnComment() throws Exception {
         doNothing().when(likeService).putLikeOnComment(firstId);
 
-        mockMvc.perform(post("/likes/comment-{commentId}", firstId)
+        mockMvc.perform(post("/likes/comments/{commentId}", firstId)
                         .param("userId", firstId.toString()))
                 .andExpect(status().isOk());
     }
@@ -56,7 +56,7 @@ public class LikeControllerTest {
     public void testPositiveRemoveLikeOnComment() throws Exception {
         doNothing().when(likeService).removeLikeAtComment(firstId);
 
-        mockMvc.perform(delete("/likes/comment-{commentId}", firstId)
+        mockMvc.perform(delete("/likes/comments/{commentId}", firstId)
                         .param("userId", firstId.toString()))
                 .andExpect(status().isOk());
     }
