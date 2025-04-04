@@ -17,7 +17,7 @@ public class ModerationScheduler {
     private final ExecutorService moderationExecutor;
 
 
-    @Scheduled(cron = "${moderation.job.cron}") // "0 0 2 * * ?"
+    @Scheduled(cron = "${moderation.job.cron}")
     public void runModerationJob() {
         postService.moderatePosts();
     }
