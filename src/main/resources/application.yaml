@@ -26,6 +26,7 @@ spring:
           name: calculations_channel
           post-channel:
             name: post_channel_topic
+
     kafka:
       bootstrap-servers: localhost:9092
       producer:
@@ -42,6 +43,8 @@ spring:
         properties:
           retries: 5
           retry.backoff.ms: 1000
+      consumer:
+        trusted-packages: faang.school.postservice.event
 
   servlet:
     multipart:
@@ -60,6 +63,9 @@ post:
     scheduler:
       cron: "0 0 0 * * ?"
     max-list-size: 50
+
+feed:
+  max-size: 500
 
 services:
   s3:
