@@ -1,6 +1,7 @@
 package faang.school.postservice.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
@@ -21,11 +22,16 @@ public class ThreadPoolConfig implements AsyncConfigurer {
 
     @Override
     public Executor getAsyncExecutor() {
+        return threadPoolTaskExecutor();
+    }
+
+    @Bean(name = "caching")
+    public ThreadPoolTaskExecutor threadPoolTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
         executor.setCorePoolSize(corePoolSize);
         executor.setMaxPoolSize(maxPoolSize);
         executor.setKeepAliveSeconds(keepAliveSeconds);
-        executor.setThreadGroupName("caching");
+        executor.setThreadNamePrefix("caching-thread-");
         executor.initialize();
         return executor;
     }

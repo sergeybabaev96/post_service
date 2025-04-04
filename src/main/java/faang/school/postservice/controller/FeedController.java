@@ -26,4 +26,9 @@ public class FeedController {
         long userId = userContext.getUserId();
         return feedService.getUserFeed(userId, postId);
     }
+
+    @GetMapping("/heat")
+    public void initFeedHeater() {
+        feedService.initFeedHeater();
+    }
 }

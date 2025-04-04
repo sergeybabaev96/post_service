@@ -30,9 +30,9 @@ public class RedisCacheService {
 
     private final RedisUserRepository redisUserRepository;
     private final RedisPostRepository redisPostRepository;
+    private final PostRepository postRepository;
     private final UserServiceClient userServiceClient;
     private final RedissonClient redissonClient;
-    private final PostRepository postRepository;
     private final PostMapper postMapper;
 
     @Value("${spring.data.redis.post-cache.comments-in-post:3}")

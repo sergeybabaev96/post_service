@@ -47,6 +47,10 @@ spring:
         name: likes
         num-partitions: 6
         replication-factor: 3
+      FeedEvent:
+        name: feed_heater
+        num-partitions: 6
+        replication-factor: 3
 
   cache:
     type: redis

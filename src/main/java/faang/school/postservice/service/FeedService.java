@@ -2,16 +2,21 @@ package faang.school.postservice.service;
 
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.post.PostReadDto;
+import faang.school.postservice.dto.user.UserDto;
+import faang.school.postservice.event.feed.FeedEvent;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.mapper.UserMapper;
 import faang.school.postservice.model.cache.UserCache;
+import faang.school.postservice.publisher.kafka.feed.FeedHeaterEventPublisher;
 import faang.school.postservice.repository.cache.RedisFeedRepository;
 import faang.school.postservice.repository.cache.RedisPostRepository;
 import faang.school.postservice.repository.cache.RedisUserRepository;
 import faang.school.postservice.service.cache.RedisCacheService;
 import faang.school.postservice.service.post.PostService;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections4.ListUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -31,12 +36,33 @@ public class FeedService {
     private final RedisUserRepository redisUserRepository;
     private final RedisPostRepository redisPostRepository;
     private final PostService postService;
+    private final FeedHeaterEventPublisher feedHeaterEventPublisher;
 
     @Value("${spring.data.redis.feed-cache.batch-size}")
     private int FEED_BATCH_SIZE;
 
     @Value("${spring.data.redis.feed-cache.default-post-id}")
     private long DEFAULT_POST_ID;
+
+    @Value("${spring.data.redis.feed-cache.number-of-users-on-page:3}")
+    private int NUM_USERS_PAGE;
+
+    @Value("${spring.data.redis.feed-cache.batch-size:20}")
+    private int BATCH_SIZE;
+
+    public void initFeedHeater() {
+        Long allUsersCount = userServiceClient.getAllUsersCount();
+
+        for (int i = 0; i < allUsersCount / NUM_USERS_PAGE + 1; i++) {
+            Page<UserDto> users = userServiceClient.getUsers(i, NUM_USERS_PAGE);
+            redisUserRepository.saveAll(users.map(userMapper::toUserCache));
+            List<Long> usersId = users.map(UserDto::id).toList();
+
+            ListUtils.partition(usersId, BATCH_SIZE).stream()
+                    .map(FeedEvent::new)
+                    .forEach(feedHeaterEventPublisher::publish);
+        }
+    }
 
     public void addPostToAuthorSubscribers(long postId, List<Long> subscribersId) {
         subscribersId.forEach(subscriberId -> addPostToSubscriberFeed(postId, subscriberId));
@@ -67,7 +93,7 @@ public class FeedService {
         List<PostReadDto> postsByAuthorIds = postService
                 .getPostsByAuthorIds(userCache.getSubscribersId(), postId, FEED_BATCH_SIZE);
 
-        redisFeedRepository.saveAll(userCache.getUserId(), postsByAuthorIds);//метод не дописан
+        redisFeedRepository.saveAll(userCache.getUserId(), postsByAuthorIds);
 
         redisPostRepository.saveAll(postsByAuthorIds.stream()
                 .map(postMapper::toPostCache)

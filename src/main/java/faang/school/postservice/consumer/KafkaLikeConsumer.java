@@ -16,7 +16,7 @@ public class KafkaLikeConsumer extends AbstractKafkaConsumer<LikeEvent> {
     @KafkaListener(
             topics = "${spring.kafka.topics.LikeEvent.name}",
             groupId = "${spring.kafka.consumer.group-id}")
-    public void processEvent(LikeEvent event) {
+    protected void processEvent(LikeEvent event) {
         redisCacheService.addLikeToPost(event.postId(),
                 event.likeId());
     }
