@@ -45,4 +45,7 @@ public interface PostRepository extends CrudRepository<Post, Long> {
 
     @Query(value = "SELECT s.follower_id FROM subscription s WHERE s.followee_id = :followeeId", nativeQuery = true)
     List<Long> findAllAuthorSubscribers(@Param("followeeId") Long authorId);
+
+    @Query(value = "SELECT s.follower_id FROM subscription s WHERE s.followee_id = :followeeId", nativeQuery = true)
+    List<Long> findAuthorSubscribers(@Param("followeeId") Long authorId, Pageable pageable);
 }

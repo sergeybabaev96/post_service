@@ -1,6 +1,7 @@
 package faang.school.postservice.model.event;
 
 import lombok.Builder;
+import lombok.Getter;
 
 import java.util.List;
 
