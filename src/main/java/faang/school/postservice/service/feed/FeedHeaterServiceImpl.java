@@ -35,7 +35,6 @@ public class FeedHeaterServiceImpl implements FeedHeaterService {
     @Value("${heat.batch-size}")
     private int batchSize;
 
-    @Async("cacheFixedThreadPool")
     @Override
     public void startHeat() {
         List<Long> allUserIds = userServiceClient.getUserIds();

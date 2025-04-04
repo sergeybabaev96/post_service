@@ -21,10 +21,13 @@ public class KafkaLikeEventListener implements KafkaEventListener {
             containerFactory = "kafkaManualAckListenerContainerFactory")
     @Override
     public void listen(String message, Acknowledgment ack) {
+        LikeEvent likeEvent = eventMapper.mapMessageToEvent(message, LikeEvent.class);
         try {
-            LikeEvent postViewEvent = eventMapper.mapMessageToEvent(message, LikeEvent.class);
-            log.info("Received post event: {}", postViewEvent);
-            likeEventService.addLikeToPost(postViewEvent);
+            log.info("Received post event: {}", likeEvent);
+            likeEventService.addLikeToPost(likeEvent);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(String.format("Failed add like with id = %d to post with id = %d",
+                    likeEvent.id(), likeEvent.postId()));
         } finally {
             ack.acknowledge();
         }

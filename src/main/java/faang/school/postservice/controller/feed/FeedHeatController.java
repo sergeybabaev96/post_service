@@ -14,8 +14,7 @@ public class FeedHeatController {
     private final FeedHeaterService feedHeaterService;
 
     @PostMapping("/heat")
-    public String startHeat() {
+    public void startHeat() {
         feedHeaterService.startHeat();
-        return "Feed cache heating process started";
     }
 }

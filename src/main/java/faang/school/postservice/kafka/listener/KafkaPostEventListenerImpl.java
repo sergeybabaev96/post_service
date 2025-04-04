@@ -26,10 +26,12 @@ public class KafkaPostEventListenerImpl implements KafkaEventListener {
             containerFactory = "kafkaManualAckListenerContainerFactory")
     @Override
     public void listen(@Payload String message, Acknowledgment ack) {
+        PostEvent postEvent = eventMapper.mapMessageToEvent(message, PostEvent.class);
         try {
-            PostEvent postEvent = eventMapper.mapMessageToEvent(message, PostEvent.class);
             log.info("Received post event: {}", postEvent);
             postEventService.addPostsToFeed(postEvent);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(String.format("Failed add post with id = %d to feed", postEvent.postId()));
         } finally {
             ack.acknowledge();
         }

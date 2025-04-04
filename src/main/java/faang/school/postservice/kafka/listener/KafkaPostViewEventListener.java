@@ -21,10 +21,12 @@ public class KafkaPostViewEventListener implements KafkaEventListener {
             containerFactory = "kafkaManualAckListenerContainerFactory")
     @Override
     public void listen(String message, Acknowledgment ack) {
+        PostViewsEvent postViewEvent = eventMapper.mapMessageToEvent(message, PostViewsEvent.class);
         try {
-            PostViewsEvent postViewEvent = eventMapper.mapMessageToEvent(message, PostViewsEvent.class);
             log.info("Received post event: {}", postViewEvent);
             postViewService.addViewToPost(postViewEvent);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(String.format("Failed add view to post with id = %d", postViewEvent.postId()));
         } finally {
             ack.acknowledge();
         }

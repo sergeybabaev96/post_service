@@ -1,20 +1,11 @@
 package faang.school.postservice.service.event;
 
 import faang.school.postservice.dto.kafka.LikeEvent;
-import faang.school.postservice.dto.kafka.LikeInfo;
-import faang.school.postservice.dto.post.LikeDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -48,26 +39,6 @@ public class LikeEventServiceImpl implements LikeEventService {
                 redisTemplate.delete(lockKey);
             }
         }
-    }
-
-    public LikeInfo getPostLikesInfo(String postId) {
-        String postLikesKey = LIKE_KEY_PREFIX + postId;
-        Set<String> likeIds = redisTemplate.opsForSet().members(postLikesKey);
-        if (likeIds == null || likeIds.isEmpty()) {
-            return new LikeInfo(postId, 0, Collections.emptyList());
-        }
-        List<LikeDto> likes = likeIds.stream()
-                .map(likeId -> {
-                    String likeDataKey = LIKE_DATA_KEY_PREFIX + likeId;
-                    Map<Object, Object> data = redisTemplate.opsForHash().entries(likeDataKey);
-                    return new LikeDto(
-                            Long.parseLong(likeId),
-                            Long.parseLong((String) data.get("userId")),
-                            LocalDateTime.ofInstant(Instant.parse((String) data.get("createdAt")), ZoneId.systemDefault())
-                    );
-                })
-                .toList();
-        return new LikeInfo(postId, likes.size(), likes);
     }
 
     private void addLikeToPost(String postLikesKey, String likeDataKey, LikeEvent event) {

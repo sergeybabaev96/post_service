@@ -22,10 +22,13 @@ public class KafkaCommentEventListener implements KafkaEventListener {
             containerFactory = "kafkaManualAckListenerContainerFactory")
     @Override
     public void listen(@Payload String message, Acknowledgment ack) {
+        CommentEvent commentEvent = eventMapper.mapMessageToEvent(message, CommentEvent.class);
         try {
-            CommentEvent commentEvent = eventMapper.mapMessageToEvent(message, CommentEvent.class);
             log.info("Received post event: {}", commentEvent);
             commentEventService.addCommentToPostToFeed(commentEvent);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(String.format("Failed add comment with id = %d to post with id = %d",
+                    commentEvent.commentId(), commentEvent.postId()));
         } finally {
             ack.acknowledge();
         }

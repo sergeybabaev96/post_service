@@ -15,4 +15,5 @@ public interface PostCacheService {
 
     void cachePosts(List<PostResponseDto> posts);
 
+    List<String> getPostIdsFromRedis(String feedKey, Long afterPostId);
 }

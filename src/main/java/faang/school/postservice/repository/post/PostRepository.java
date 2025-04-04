@@ -32,10 +32,11 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             SELECT p.* FROM post p
             JOIN subscription s ON p.author_id = s.followee_id
             WHERE s.follower_id = :userId
+            AND (:afterId IS NULL OR p.createdAt < (SELECT p2.createdAt FROM Post p2 WHERE p2.id = :afterId))
             ORDER BY p.created_at DESC
             LIMIT :limit
             """)
-    List<Post> findForUserFeed(long userId, int limit);
+    List<Post> findForUserFeed(long userId, long afterPostId, int limit);
 
     @Query("SELECT p FROM Post p WHERE p.authorId IN :authorIds ORDER BY p.createdAt DESC")
     List<Post> findLatestByAuthorIds(List<String> authorIds, Pageable pageable);

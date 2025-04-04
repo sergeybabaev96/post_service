@@ -7,68 +7,55 @@ import faang.school.postservice.dto.post.PostResponseDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.repository.post.PostRepository;
+import faang.school.postservice.service.cache.PostCacheService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Range;
-import org.springframework.data.redis.connection.Limit;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FeedServiceImpl implements FeedService {
 
+    public static final String USER_FEED_PREFIX = "user:feed:";
     private final UserServiceClient userServiceClient;
     private final RedisTemplate<String, String> redisTemplate;
     private final PostRepository postRepository;
     private final UserContext userContext;
     private final PostMapper postMapper;
+    private final PostCacheService postCacheService;
 
     @Value("${feed.page-size:20}")
     private int pageSize;
 
     @Override
-    public FeedResponse getNewsFeed(Long userId) {
+    public FeedResponse getNewsFeed(Long afterPostId) {
         long currentUserId = userContext.getUserId();
-        String feedKey = "user:feed:" + currentUserId;
-        List<String> postIds = getPostIdsFromRedis(feedKey);
+        String feedKey = USER_FEED_PREFIX + currentUserId;
+        List<String> postIds = postCacheService.getPostIdsFromRedis(feedKey, afterPostId);
         if (postIds.size() < pageSize) {
-            List<String> additionalPostIds = loadMoreFromDatabase(
-                    String.valueOf(currentUserId), pageSize - postIds.size());
+            List<String> additionalPostIds = retrieveRemainingPostsFromDb(
+                    String.valueOf(currentUserId), afterPostId, pageSize - postIds.size());
             postIds.addAll(additionalPostIds);
         }
         List<PostResponseDto> posts = enrichPostsData(postIds);
         return buildResponse(posts);
     }
 
-    private List<String> getPostIdsFromRedis(String feedKey) {
-        Range<String> range = Range.unbounded();
-        Set<String> postIds = redisTemplate.opsForZSet().reverseRangeByLex(feedKey, range, Limit.limit().count(pageSize));
-        return postIds != null ?
-                postIds.stream().map(Object::toString).collect(Collectors.toList()) :
-                Collections.emptyList();
-    }
-
-    private List<String> loadMoreFromDatabase(String userId, int limit) {
-        List<PostResponseDto> posts = postRepository.findForUserFeed(Long.parseLong(userId), limit).stream()
+    private List<String> retrieveRemainingPostsFromDb(String userId, long afterPostId, int limit) {
+        List<PostResponseDto> posts = postRepository.findForUserFeed(Long.parseLong(userId), afterPostId, limit).stream()
                 .map(postMapper::toDto)
                 .toList();
         cachePosts(posts);
         return posts.stream()
-                .map(PostResponseDto::id)
-                .map(String::valueOf)
+                .map(post -> String.valueOf(post.id()))
                 .toList();
     }
 
@@ -144,8 +131,6 @@ public class FeedServiceImpl implements FeedService {
         if (!posts.isEmpty()) {
             response.setLastPostId(String.valueOf(posts.get(posts.size() - 1).id()));
             response.setHasMore(posts.size() >= pageSize);
-        } else {
-            response.setHasMore(false);
         }
         return response;
     }

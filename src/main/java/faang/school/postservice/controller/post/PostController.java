@@ -26,7 +26,7 @@ public class PostController {
 
     private final PostService postService;
 
-    @Operation
+    @Operation(summary = "Получить пост по ID")
     @GetMapping("/{postId}")
     public PostResponseDto getPostById(@PathVariable long postId) {
         return postService.getPostById(postId);
@@ -38,13 +38,12 @@ public class PostController {
         return postService.createPost(dto);
     }
 
-    @Operation(summary = "Опубликовать пост")
+    @Operation(summary = "Опубликовать пост по ID")
     @PutMapping("/publish/{postId}")
     public PostResponseDto publishPost(@PathVariable @NotNull @Min(1) long postId) {
         return postService.publishPost(postId);
     }
 
-    @PutMapping
     @Operation(summary = "Получить посты по хэштегу")
     @GetMapping("{hashtag}")
     public List<PostResponseDto> getPostsByHashtag(@PathVariable("hashtag") @NotBlank String hashtag) {

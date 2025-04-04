@@ -7,6 +7,8 @@ import faang.school.postservice.utils.JsonUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Range;
+import org.springframework.data.redis.connection.Limit;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -14,12 +16,14 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -34,6 +38,9 @@ public class PostCacheServiceImpl implements PostCacheService {
 
     @Value("${redis.cache.post-ttl}")
     private long postTtl;
+
+    @Value("${feed.page-size:20}")
+    private int pageSize;
 
     public void cachePost(PostResponseDto post) {
         redisTemplate.opsForValue().set(POST_CACHE_PREFIX + post.id(), JsonUtils.mapObjectToJson(post), postTtl);
@@ -88,6 +95,18 @@ public class PostCacheServiceImpl implements PostCacheService {
         });
     }
 
+    @Override
+    public List<String> getPostIdsFromRedis(String feedKey, Long afterPostId) {
+        Range<String> range = getRange(afterPostId);
+        Set<String> postIds = redisTemplate.opsForZSet().reverseRangeByLex(feedKey, range, Limit.limit().count(pageSize));
+        if (postIds == null) {
+            return Collections.emptyList();
+        }
+        return postIds.stream()
+                .map(Object::toString)
+                .collect(Collectors.toList());
+    }
+
     private Map<String, Object> postToMap(PostResponseDto post) {
         Map<String, Object> map = new HashMap<>();
         map.put("id", post.id());
@@ -110,5 +129,11 @@ public class PostCacheServiceImpl implements PostCacheService {
                 .commentsCount(Integer.parseInt((String) map.get("commentsCount")))
                 .viewsCount(Integer.parseInt((String) map.get("viewsCount")))
                 .build();
+    }
+
+    private Range<String> getRange(Long afterPostId) {
+        return afterPostId != null ?
+                Range.from(Range.Bound.inclusive(String.valueOf(afterPostId))).to(Range.Bound.unbounded()) :
+                Range.unbounded();
     }
 }
