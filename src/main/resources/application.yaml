@@ -46,6 +46,8 @@ payment-service:
 moderation:
   cron:
     expression: 0 0 0 * * ?
+    #expression: "*/10 * * * * *" для теста(каждые 10 сек)
   dictionary:
     path: "moderation-dictionary.txt"
-    batch.size: 1000
+    batch:
+      size: 1000

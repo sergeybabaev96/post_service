@@ -28,7 +28,7 @@ public class ModerationScheduler {
      * @see PostService#moderateUnverifiedPost()
      */
     @Scheduled(cron = "${moderation.cron.expression}")
-    public void moderatePost(){
+    public void moderatePost() {
         postService.moderateUnverifiedPost();
     }
 }

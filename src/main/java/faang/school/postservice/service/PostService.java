@@ -56,7 +56,7 @@ public class PostService {
     private final PostValidator postValidator;
     private final ModerationDictionary moderationDictionary;
 
-    @Value("${moderation. dictionary. batch. size}")
+    @Value("${moderation.dictionary.batch.size}")
     private int batchSize;
 
     /**
