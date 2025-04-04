@@ -124,3 +124,10 @@ kafka:
   topic:
     comment: user-comment-post
     post: user-create-post
+
+news-feed:
+  keys:
+    user: user
+    feed: feed
+    post: posts
+  ttl: 600
