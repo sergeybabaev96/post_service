@@ -27,7 +27,7 @@ import java.nio.file.Path;
 @RequiredArgsConstructor
 public class FileController {
 
-    @Value("${file.upload.max-size")
+    @Value("${file.upload.max-size}")
     private int maxSize;
 
     private final FileService fileService;
