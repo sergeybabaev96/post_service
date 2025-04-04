@@ -67,6 +67,7 @@ spring:
         key: "feed:"
         number-of-users-on-page: 3
         default-post-id: 1
+        partition-size: 30
 
       post-cache:
         comments-in-post: 3

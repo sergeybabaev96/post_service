@@ -19,5 +19,5 @@ public class UserCache implements Serializable {
     @Id
     private long userId;
     private String userName;
-    private List<Long> subscribersId;
+    private List<Long> subscriberIds;
 }

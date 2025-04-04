@@ -47,8 +47,8 @@ public class FeedService {
     @Value("${spring.data.redis.feed-cache.number-of-users-on-page:3}")
     private int NUM_USERS_PAGE;
 
-    @Value("${spring.data.redis.feed-cache.batch-size:20}")
-    private int BATCH_SIZE;
+    @Value("${spring.data.redis.feed-cache.partition-size:30}")
+    private int PARTITION_SIZE;
 
     public void initFeedHeater() {
         Long allUsersCount = userServiceClient.getAllUsersCount();
@@ -56,16 +56,16 @@ public class FeedService {
         for (int i = 0; i < allUsersCount / NUM_USERS_PAGE + 1; i++) {
             Page<UserDto> users = userServiceClient.getUsers(i, NUM_USERS_PAGE);
             redisUserRepository.saveAll(users.map(userMapper::toUserCache));
-            List<Long> usersId = users.map(UserDto::id).toList();
+            List<Long> userIds = users.map(UserDto::id).toList();
 
-            ListUtils.partition(usersId, BATCH_SIZE).stream()
+            ListUtils.partition(userIds, PARTITION_SIZE).stream()
                     .map(FeedEvent::new)
                     .forEach(feedHeaterEventPublisher::publish);
         }
     }
 
-    public void addPostToAuthorSubscribers(long postId, List<Long> subscribersId) {
-        subscribersId.forEach(subscriberId -> addPostToSubscriberFeed(postId, subscriberId));
+    public void addPostToAuthorSubscribers(long postId, List<Long> subscriberIds) {
+        subscriberIds.forEach(subscriberId -> addPostToSubscriberFeed(postId, subscriberId));
     }
 
     public List<PostReadDto> getUserFeed(long userId, Long postId) {
@@ -84,14 +84,14 @@ public class FeedService {
         return postsDto;
     }
 
-    private List<PostReadDto> getPosts(List<Long> postsId) {
-        return redisCacheService.getPostCacheByIds(postsId);
+    private List<PostReadDto> getPosts(List<Long> postIds) {
+        return redisCacheService.getPostCacheByIds(postIds);
     }
 
     private List<PostReadDto> getPostsIfFollowerPostsIdEmpty(long userId, long postId) {
         UserCache userCache = getUserCache(userId);
         List<PostReadDto> postsByAuthorIds = postService
-                .getPostsByAuthorIds(userCache.getSubscribersId(), postId, FEED_BATCH_SIZE);
+                .getPostsByAuthorIds(userCache.getSubscriberIds(), postId, FEED_BATCH_SIZE);
 
         redisFeedRepository.saveAll(userCache.getUserId(), postsByAuthorIds);
 
@@ -122,10 +122,10 @@ public class FeedService {
             posts = redisFeedRepository.getRange(userId, 0, FEED_BATCH_SIZE - 1);
         }
 
-        return convertObjectsToLongs(posts);
+        return convertToLongs(posts);
     }
 
-    private List<Long> convertObjectsToLongs(Set<Object> posts) {
+    private List<Long> convertToLongs(Set<Object> posts) {
         return posts.stream()
                 .map(Object::toString)
                 .map(Long::valueOf)

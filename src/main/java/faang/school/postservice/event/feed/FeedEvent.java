@@ -10,5 +10,5 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FeedEvent {
-    private List<Long> usersId;
+    private List<Long> userIds;
 }

@@ -4,9 +4,9 @@ import faang.school.postservice.event.post.PostViewEvent;
 import faang.school.postservice.service.cache.RedisCacheService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
-@Repository
+@Component
 @RequiredArgsConstructor
 public class KafkaPostViewConsumer extends AbstractKafkaConsumer<PostViewEvent> {
 

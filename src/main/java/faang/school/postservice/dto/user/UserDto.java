@@ -9,6 +9,6 @@ public record UserDto(
         Long id,
         String username,
         String email,
-        List<Long> subscribersId
+        List<Long> subscriberIds
 ) {
 }

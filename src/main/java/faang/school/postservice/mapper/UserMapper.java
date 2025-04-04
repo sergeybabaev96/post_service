@@ -1,6 +1,5 @@
 package faang.school.postservice.mapper;
 
-
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.model.cache.UserCache;
 import org.mapstruct.Mapper;

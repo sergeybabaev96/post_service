@@ -71,7 +71,7 @@ public class RedisCacheService {
 
     public void addLikeToPost(long postId, long likeId) {
         updatePostWithLock(postId, postCache -> {
-            postCache.getLikesId().add(likeId);
+            postCache.getLikeIds().add(likeId);
             postCache.incrementLikes();
         });
     }

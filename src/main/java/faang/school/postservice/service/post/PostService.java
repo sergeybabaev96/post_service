@@ -213,7 +213,7 @@ public class PostService {
         PostEvent event = PostEvent.builder()
                 .postId(postReadDto.getId())
                 .authorId(postReadDto.getAuthorId())
-                .subscribersId(author.subscribersId())
+                .subscriberIds(author.subscriberIds())
                 .build();
         postEventPublisher.publish(event);
     }

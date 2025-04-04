@@ -5,11 +5,10 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.redis.core.RedisHash;
 import org.springframework.data.redis.support.collections.RedisZSet;
 
-
 @Builder
 @RedisHash("feed")
 public class FeedCache {
     @Id
     private long followerId;
-    private RedisZSet<Long> postsId;
+    private RedisZSet<Long> postIds;
 }

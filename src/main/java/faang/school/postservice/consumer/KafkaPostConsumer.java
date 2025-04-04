@@ -18,6 +18,6 @@ public class KafkaPostConsumer extends AbstractKafkaConsumer<PostEvent> {
             groupId = "${spring.kafka.consumer.group-id}")
     protected void processEvent(PostEvent event) {
         feedService.addPostToAuthorSubscribers(event.getPostId(),
-                event.getSubscribersId());
+                event.getSubscriberIds());
     }
 }

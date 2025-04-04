@@ -65,7 +65,7 @@ public interface PostMapper {
     @Mapping(source = "id", target = "postId")
     @Mapping(source = "authorId", target = "authorId")
     @Mapping(source = "content", target = "content")
-    @Mapping(source = "likes", target = "likesId", qualifiedByName = "mapLikesToLikeIds")
+    @Mapping(source = "likes", target = "likeIds", qualifiedByName = "mapLikesToLikeIds")
     @Mapping(source = "likes", target = "numLikes", qualifiedByName = "mapLikesToNumLikes")
     @Mapping(source = "comments", target = "comments", qualifiedByName = "mapComments")
     @Mapping(target = "numViews", ignore = true)
@@ -101,7 +101,7 @@ public interface PostMapper {
     @Mapping(target = "hashtagIds", ignore = true)
     @Mapping(target = "fileKeys", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
-    @Mapping(source = "likesId", target = "likesCount", qualifiedByName = "likesSize")
+    @Mapping(source = "likeIds", target = "likesCount", qualifiedByName = "likesSize")
     PostReadDto toPostReadDto(PostCache postCache);
 
     @Named("likesSize")
@@ -111,7 +111,7 @@ public interface PostMapper {
 
     @Mapping(source = "id", target = "postId")
     @Mapping(source = "likesCount", target = "numLikes")
-    @Mapping(target = "likesId", ignore = true)
+    @Mapping(target = "likeIds", ignore = true)
     @Mapping(target = "comments", ignore = true)
     @Mapping(target = "numViews", ignore = true)
     @Mapping(target = "version", ignore = true)

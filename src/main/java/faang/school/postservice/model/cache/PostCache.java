@@ -22,7 +22,7 @@ public class PostCache implements Serializable {
     private long postId;
     private long authorId;
     private String content;
-    private List<Long> likesId;
+    private List<Long> likeIds;
     private LinkedHashSet<String> comments;
     private long numLikes;
     private long numViews;
