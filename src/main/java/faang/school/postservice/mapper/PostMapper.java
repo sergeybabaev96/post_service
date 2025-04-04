@@ -1,5 +1,6 @@
 package faang.school.postservice.mapper;
 
+import faang.school.postservice.dto.post.PostRedisDto;
 import faang.school.postservice.dto.post.RequestPostDto;
 import faang.school.postservice.dto.post.ResponsePostDto;
 import faang.school.postservice.model.Post;
@@ -17,4 +18,8 @@ public interface PostMapper {
     ResponsePostDto toDto(Post post);
 
     List<ResponsePostDto> toDto(List<Post> list);
+
+    PostRedisDto toRedisDto(Post post);
+
+    Post toEntityFromRedis(PostRedisDto postRedisDto);
 }

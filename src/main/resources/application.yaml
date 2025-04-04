@@ -22,9 +22,6 @@ spring:
       port: 6379
       host: localhost
       post-ttl-hours: 24
-      clear-cache:
-        cron: 0 0 * * * *
-      post-ttl-key: "post-id-ttl"
       post-id-key: "post-id"
       channels:
         calculations_channel:
