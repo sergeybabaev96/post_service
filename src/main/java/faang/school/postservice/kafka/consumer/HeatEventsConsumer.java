@@ -11,16 +11,23 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 @Component
 public class HeatEventsConsumer {
+
     private final PostCacheService postCacheService;
     private final FeedCacheService feedCacheService;
 
-    @KafkaListener(topics = "${spring.kafka.topic-name.heat-posts:heat_posts}")
-    void listener(PostDto event) {
+    @KafkaListener(
+            topics = "${spring.kafka.topic-name.heat-posts:heat_posts}",
+            containerFactory = "postDtoKafkaListenerContainerFactory"
+    )
+    public void listenPost(PostDto event) {
         postCacheService.savePostCache(event);
     }
 
-    @KafkaListener(topics = "${spring.kafka.topic-name.heat-feed:heat_feed}")
-    void listener(FeedDto event) {
+    @KafkaListener(
+            topics = "${spring.kafka.topic-name.heat-feed:heat_feed}",
+            containerFactory = "feedDtoKafkaListenerContainerFactory"
+    )
+    public void listenFeed(FeedDto event) {
         feedCacheService.saveUserFeedHeat(event);
     }
 }

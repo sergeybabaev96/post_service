@@ -7,13 +7,16 @@ import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.kafka.producer.KafkaEventProducer;
 import faang.school.postservice.service.PostService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
+@Slf4j
 @Service
 public class FeedHeatService {
 
@@ -27,7 +30,7 @@ public class FeedHeatService {
 
     public void sendHeatEvents() {
         List<UserDto> allUsers = userServiceClient.getAllUsers();
-        authorCacheService.saveAllAuthorsInCache(allUsers);
+        authorCacheService.saveAllAuthorsInCache(allUsers).join();
 
         List<FeedDto> feedEvents = generateFeedsForAllUserFollowers(allUsers);
         sendFeedHeatEvents(feedEvents);
@@ -37,22 +40,38 @@ public class FeedHeatService {
     }
 
     private void sendPostHeatEvents(List<PostDto> postEvents) {
-        for (PostDto post : postEvents) {
-            kafkaEventProducer.sendPostHeatEvent(post);
-        }
+
+        CompletableFuture.allOf(postEvents.stream()
+                .map(postDto -> kafkaEventProducer.sendPostHeatEvent(postDto)
+                        .exceptionally(ex -> {
+                            log.error("Failed to send PostHeatEvent for postId={}", postDto.getId(), ex);
+                            return null;
+                        })).toArray(CompletableFuture[]::new)).join();
+        log.info("All PostHeatEvents sent.");
     }
 
     private void sendFeedHeatEvents(List<FeedDto> feedEvents) {
-        for (FeedDto feed : feedEvents) {
-            kafkaEventProducer.sendFeedHeatEvent(feed);
-        }
+
+        CompletableFuture.allOf(feedEvents.stream()
+                .map(feedDto -> kafkaEventProducer.sendFeedHeatEvent(feedDto)
+                        .exceptionally(ex -> {
+                            log.error("Failed to send FeedHeatEvent for followerId={}", feedDto.getFollowerId(), ex);
+                            return null;
+                        })).toArray(CompletableFuture[]::new)).join();
+        log.info("All FeedHeatEvents sent.");
     }
 
     private List<FeedDto> generateFeedsForAllUserFollowers(List<UserDto> allUsersInOurSystem) {
-        return allUsersInOurSystem.parallelStream()
+        return allUsersInOurSystem.stream()
                 .map(follower -> {
                     Long followerId = follower.getId();
-                    List<UserDto> bloggers = userServiceClient.getUsersByIds(follower.getFollowees());
+                    List<Long> followees = follower.getFollowees() != null ? follower.getFollowees() : List.of();
+
+                    if (followees.isEmpty()) {
+                        log.info("User {} has no followees. Empty feed will be generated.", followerId);
+                    }
+
+                    List<UserDto> bloggers = userServiceClient.getUsersByIds(followees);
 
                     List<Long> allBloggersPostIds = bloggers.stream()
                             .flatMap(blogger -> blogger.getPosts().stream())
@@ -68,7 +87,7 @@ public class FeedHeatService {
 
     private List<PostDto> generatePostEvents(List<FeedDto> feedDtos) {
         return feedDtos.stream()
-                .flatMap(feedDto -> feedDto.posts().stream())
+                .flatMap(feedDto -> feedDto.getPosts().stream())
                 .distinct()
                 .collect(Collectors.toList());
     }

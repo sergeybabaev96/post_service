@@ -1,9 +1,14 @@
 package faang.school.postservice.kafka.events;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public record PostViewEvent(
-        Long postId
-) {
+public class PostViewEvent {
+    private Long postId;
 }

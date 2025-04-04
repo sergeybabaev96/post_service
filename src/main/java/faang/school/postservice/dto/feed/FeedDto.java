@@ -1,11 +1,18 @@
 package faang.school.postservice.dto.feed;
 
 import faang.school.postservice.dto.post.PostDto;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
-public record FeedDto(
-        Long followerId,
-        List<PostDto> posts
-) {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class FeedDto {
+    private Long followerId;
+    private List<PostDto> posts;
 }

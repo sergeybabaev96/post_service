@@ -10,12 +10,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.CompletableFuture;
+
 @RequiredArgsConstructor
 @Service
 public class KafkaEventProducer {
 
-    @Value("${spring.kafka.topics.heat.name}")
-    private String heatTopic;
+    @Value("${spring.kafka.topic-name.heat-feed}")
+    private String heatFeedTopic;
+
+    @Value("${spring.kafka.topic-name.heat-posts}")
+    private String heatPostsTopic;
 
     @Value("${spring.kafka.topic-name.posts}")
     private String postTopic;
@@ -28,20 +33,14 @@ public class KafkaEventProducer {
 
     private final KafkaTemplate<Long, Object> kafkaTemplate;
 
-    public void sendFeedHeatEvent(FeedDto event) {
-        kafkaTemplate.send(heatTopic, event)
-                .thenRun(() -> {})
-                .exceptionally(ex -> {
-                    throw new RuntimeException("Failed to send feed heat event", ex);
-                });
+    public CompletableFuture<Void> sendFeedHeatEvent(FeedDto event) {
+        return kafkaTemplate.send(heatFeedTopic, event)
+                .thenApply(sendResult -> null);
     }
 
-    public void sendPostHeatEvent(PostDto event) {
-        kafkaTemplate.send(heatTopic, event)
-                .thenRun(() -> {})
-                .exceptionally(ex -> {
-                    throw new RuntimeException("Failed to send post heat event", ex);
-                });
+    public CompletableFuture<Void> sendPostHeatEvent(PostDto event) {
+        return kafkaTemplate.send(heatPostsTopic, event)
+                .thenApply(sendResult -> null);
     }
 
     public void sendPostFollowersEvent(PostFollowersEvent event) {

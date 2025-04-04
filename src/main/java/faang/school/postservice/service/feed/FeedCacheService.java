@@ -55,9 +55,9 @@ public class FeedCacheService {
     }
 
     public void saveUserFeedHeat(FeedDto feedDto) {
-        String feedCacheKey = generateFeedCacheKey(feedDto.followerId());
+        String feedCacheKey = generateFeedCacheKey(feedDto.getFollowerId());
 
-        for (PostDto post : feedDto.posts()) {
+        for (PostDto post : feedDto.getPosts()) {
             double score = post.getPublishedAt().toInstant(ZoneOffset.UTC).toEpochMilli();
             redisTemplate.opsForZSet().add(feedCacheKey, post, score);
         }

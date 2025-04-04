@@ -18,10 +18,10 @@ public interface UserServiceClient {
     @GetMapping("/api/v1/users/{userId}")
     UserDto getUser(@PathVariable long userId);
 
-    @PostMapping("/users")
+    @PostMapping("/api/v1/users/list-by-ids")
     List<UserDto> getUsersByIds(@RequestBody List<Long> ids);
 
-    @PostMapping("/users/page")
+    @PostMapping("/api/v1/users/page")
     Page<UserDto> getUsersByIds(
             @RequestParam("ids") List<Long> ids,
             Pageable pageable

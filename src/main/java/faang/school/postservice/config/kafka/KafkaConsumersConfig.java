@@ -1,5 +1,8 @@
+// KafkaConsumersConfig.java
 package faang.school.postservice.config.kafka;
 
+import faang.school.postservice.dto.feed.FeedDto;
+import faang.school.postservice.dto.post.PostDto;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
@@ -35,26 +38,55 @@ public class KafkaConsumersConfig {
     @Value("${spring.kafka.consumer.backoff.max-attempts}")
     private long maxAttempts;
 
-    @Bean(name = "postConsumerFactory")
-    public ConsumerFactory<String, Object> consumerFactory() {
+    @Bean
+    public ConsumerFactory<String, FeedDto> feedDtoConsumerFactory() {
         Map<String, Object> configs = new HashMap<>();
         configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
         configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
         configs.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
         configs.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
-        return new DefaultKafkaConsumerFactory<>(configs);
+
+        return new DefaultKafkaConsumerFactory<>(
+                configs,
+                new StringDeserializer(),
+                new JsonDeserializer<>(FeedDto.class)
+        );
     }
 
-    @Bean(name = "postKafkaListenerContainerFactory")
-    public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory() {
-        var factory = new ConcurrentKafkaListenerContainerFactory<String, Object>();
-        factory.setConsumerFactory(consumerFactory());
+    @Bean
+    public ConsumerFactory<String, PostDto> postDtoConsumerFactory() {
+        Map<String, Object> configs = new HashMap<>();
+        configs.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        configs.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        configs.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
+        configs.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        configs.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+
+        return new DefaultKafkaConsumerFactory<>(
+                configs,
+                new StringDeserializer(),
+                new JsonDeserializer<>(PostDto.class)
+        );
+    }
+
+    @Bean(name = "feedDtoKafkaListenerContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory<String, FeedDto> feedDtoKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, FeedDto> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(feedDtoConsumerFactory());
         factory.setCommonErrorHandler(errorHandler());
         return factory;
     }
 
-    @Bean(name = "postKafkaErrorHandler")
+    @Bean(name = "postDtoKafkaListenerContainerFactory")
+    public ConcurrentKafkaListenerContainerFactory<String, PostDto> postDtoKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, PostDto> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(postDtoConsumerFactory());
+        factory.setCommonErrorHandler(errorHandler());
+        return factory;
+    }
+
+    @Bean
     public DefaultErrorHandler errorHandler() {
         FixedBackOff backOff = new FixedBackOff(backoffDelay, maxAttempts);
         DefaultErrorHandler handler = new DefaultErrorHandler(backOff);

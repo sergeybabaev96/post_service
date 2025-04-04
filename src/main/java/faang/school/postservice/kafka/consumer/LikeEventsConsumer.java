@@ -17,11 +17,11 @@ public class LikeEventsConsumer {
     @KafkaListener(topics = "${spring.kafka.topic-name.likes:likes}")
     void listener(PostLikeEvent event, Acknowledgment acknowledgment) {
         try {
-            postCacheService.incrementConcurrentPostLikes(event.id());
+            postCacheService.incrementConcurrentPostLikes(event.getId());
             acknowledgment.acknowledge();
-            log.info("Like is added to post with id: " + event.id());
+            log.info("Like is added to post with id: " + event.getId());
         } catch (Exception e) {
-            log.error("Like is not added to post with id: " + event.id());
+            log.error("Like is not added to post with id: " + event.getId());
             throw e;
         }
     }
