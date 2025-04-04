@@ -15,13 +15,11 @@ public class UserRedisDtoDataService {
         long authorId = comment.getAuthorId();
         String username = userServiceClient.getUser(authorId).username();
         String email = userServiceClient.getUser(authorId).email();
-        String content = comment.getContent();
 
         return UserRedisDto.builder()
                 .id(authorId)
                 .username(username)
                 .email(email)
-                .content(content)
                 .build();
     }
 }
