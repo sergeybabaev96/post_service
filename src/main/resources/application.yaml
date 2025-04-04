@@ -50,6 +50,10 @@ logging:
   level:
     root: info
 
+file:
+  upload:
+    max-size: 5242880
+
 user-service:
   host: localhost
   port: 8080
