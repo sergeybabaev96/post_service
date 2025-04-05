@@ -1,6 +1,7 @@
 package faang.school.postservice.config.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import faang.school.postservice.model.event.LikeEvent;
 import faang.school.postservice.model.event.PostEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -44,4 +45,21 @@ public class RedisConfig {
         return template;
     }
 
+    @Bean
+    public RedisTemplate<Long, Long> redisFeedTemplate(ObjectMapper objectMapper) {
+        RedisTemplate<Long, Long> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory());
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, LikeEvent> redisLikeTemplate(ObjectMapper objectMapper) {
+        RedisTemplate<String, LikeEvent> template = new RedisTemplate<>();
+        template.setConnectionFactory(redisConnectionFactory());
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer(objectMapper));
+        return template;
+    }
 }

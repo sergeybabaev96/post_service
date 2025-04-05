@@ -4,10 +4,9 @@ import faang.school.postservice.config.redis.RedisKey;
 import faang.school.postservice.model.event.PostEvent;
 import faang.school.postservice.properties.CacheProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
-
-import java.util.Set;
 
 @Repository
 @RequiredArgsConstructor
@@ -16,18 +15,16 @@ public class PostRedisRepository implements PostCacheRepository {
     private final CacheProperties cacheProperties;
 
     @Override
-    public void cachePost(String key, PostEvent value) {
-        redisTemplate.opsForSet().add(key, value);
-        redisTemplate.expire(key, cacheProperties.getPostTtl());
+    public void cachePost(PostEvent value) {
+        redisTemplate.opsForHash().put(RedisKey.POST.name(), value.getId(), value);
+        redisTemplate.expire(RedisKey.POST.name(), cacheProperties.getPostTtl());
     }
 
     @Override
-    public Set<PostEvent> getMembers(String key) {
-        return redisTemplate.opsForSet().members(key);
-    }
+    public PostEvent getPost(Long id) {
+        HashOperations<String, Long, PostEvent> hashOps =
+                redisTemplate.opsForHash();
 
-    @Override
-    public void removeFromSet(String key, PostEvent value) {
-        redisTemplate.opsForSet().remove(key, value);
+        return hashOps.get(RedisKey.POST.name(), id);
     }
 }

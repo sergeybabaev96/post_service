@@ -10,4 +10,6 @@ import java.time.Duration;
 public class CacheProperties {
     private Duration postTtl;
     private Duration authorTtl;
+    private Duration feedTtl;
+    private int cacheFeedSize;
 }

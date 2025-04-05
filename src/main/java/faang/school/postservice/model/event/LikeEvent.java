@@ -5,12 +5,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.util.List;
 
 @AllArgsConstructor
 @NoArgsConstructor
 @Data
-public class PostBySubscribersEvent implements Serializable {
+public class LikeEvent implements Serializable {
+    private Long id;
+    private Long userId;
     private Long postId;
-    private List<Long> subscriberIds;
 }

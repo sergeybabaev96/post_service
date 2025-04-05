@@ -36,6 +36,7 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
+      enable-auto-commit: false
       group-id: feed
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
@@ -63,10 +64,14 @@ domain:
 post-service:
   kafka:
     post-topic: posts
+    post-view-topic: post_views
+    like-topic: likes
     partitions: 3
   cache:
     post-ttl: 1d
     author-ttl: 1d
+    feed-ttl: 1d
+    cache-feed-size: 500
   ai:
     grammar-prompt: "Проверь текст на орфографию, если есть ошибка или ошибки верни только исправленный текст."
     api-key: ${GPT_API_KEY}
