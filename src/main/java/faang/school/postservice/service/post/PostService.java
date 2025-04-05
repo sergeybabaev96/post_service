@@ -18,6 +18,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -30,6 +32,7 @@ public class PostService {
     private final UserServiceClient userServiceClient;
     private final PostRepository postRepository;
     private final PostMapper postMapper;
+    private final ExecutorService postPublishingExecutor;
 
 
     public PostDto createDraftPost(PostDto postDto) {
@@ -108,6 +111,37 @@ public class PostService {
     public List<PostDto> getAllProjectPosts(long projectId) {
         validateExistsProject(projectId);
         return getAllFilterAndSortedPosts(postRepository.findByProjectId(projectId), Post::isPublished);
+    }
+
+    public void publishScheduledPosts(){
+        List<Post> posts = postRepository.findReadyToPublish();
+        if(posts.isEmpty()){
+            log.info("Нет постов для публикации");
+            return;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        int chunkSize = 1000;
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        for (int i = 0; i < posts.size(); i+=chunkSize) {
+            List<Post> chunk = posts.subList(i,Math.min(i+chunkSize, posts.size()));
+
+            int chunkNumber = i / chunkSize +1;
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+                log.info("Начинаем обработку чанка {} ({} постов) в потоке: {}",
+                        chunkNumber, chunk.size(), Thread.currentThread().getName());
+                chunk.forEach(post -> {
+                    post.setPublished(true);
+                    post.setPublishedAt(now);
+                });
+                postRepository.saveAll(chunk);
+            }, postPublishingExecutor);
+            futures.add(future);
+        }
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        log.info("Все посты успешно опубликованы!");
     }
 
     public List<PostDto> getAllDraftPosts() {

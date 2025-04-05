@@ -21,14 +21,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-
 class PostServiceTest {
 
     @InjectMocks
@@ -42,6 +40,9 @@ class PostServiceTest {
 
     @Mock
     private PostRepository postRepository;
+
+    @Mock
+    private ExecutorService postPublishingExecutor;
 
     @Spy
     private PostMapperImpl postMapper;
@@ -327,6 +328,38 @@ class PostServiceTest {
     void getAllProjectPosts_ShouldNotWhenProjectNotExists() {
         when(projectServiceClient.getProject(projectId)).thenThrow(FeignException.class);
         assertThrows(EntityNotFoundException.class, () -> postService.getAllProjectPosts(projectId));
+    }
+
+    @Test
+    void publishScheduledPosts_shouldUpdateAndSavePosts(){
+        Post post1 = Post.builder().published(false).build();
+        Post post2 = Post.builder().published(false).build();
+        List<Post> posts = List.of(post1, post2);
+
+        when(postRepository.findReadyToPublish()).thenReturn(posts);
+        doAnswer(invocation -> {
+            Runnable task = invocation.getArgument(0);
+            task.run();
+            return null;
+        }).when(postPublishingExecutor).execute(any(Runnable.class));
+
+        postService.publishScheduledPosts();
+
+        assertTrue(post1.isPublished());
+        assertTrue(post2.isPublished());
+        assertNotNull(post1.getPublishedAt());
+        assertNotNull(post2.getPublishedAt());
+
+        verify(postRepository, times(1)).saveAll(posts);
+    }
+    @Test
+    void publishScheduledPosts_shouldDoNothing_whenNoPosts(){
+        when(postRepository.findReadyToPublish()).thenReturn(List.of());
+
+        postService.publishScheduledPosts();
+
+        verify(postRepository, never()).saveAll(any());
+        verify(postPublishingExecutor, never()).execute(any());
     }
 
     @Test
