@@ -1,17 +1,21 @@
 package faang.school.postservice.config;
 
-import faang.school.postservice.model.CommentEvent;
+import faang.school.postservice.dto.Post.PostEvent;
 import faang.school.postservice.dto.event.PostViewEvent;
+import faang.school.postservice.model.CommentEvent;
 import faang.school.postservice.model.LikeEvent;
-import faang.school.postservice.model.PostEvent;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
+import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.ContainerProperties;
 
 @Configuration
 public class KafkaConfig {
@@ -55,5 +59,17 @@ public class KafkaConfig {
     @Bean
     public KafkaTemplate<String, CommentEvent> commentEventKafkaTemplate(KafkaProperties kafkaProperties) {
         return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(kafkaProperties.buildProducerProperties()));
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, PostEvent> postEventFactory(
+            KafkaProperties kafkaProperties) {
+        ConsumerFactory<String, PostEvent> kafkaProjectCreateConsumerFactory =
+                new DefaultKafkaConsumerFactory<>(kafkaProperties.buildConsumerProperties());
+        ConcurrentKafkaListenerContainerFactory<String, PostEvent> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(kafkaProjectCreateConsumerFactory);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
+        return factory;
     }
 }

@@ -1,6 +1,6 @@
 package faang.school.postservice.kafka;
 
-import faang.school.postservice.model.PostEvent;
+import faang.school.postservice.dto.Post.PostEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

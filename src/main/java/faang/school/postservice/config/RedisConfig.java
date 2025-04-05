@@ -13,9 +13,10 @@ public class RedisConfig {
     }
 
     @Bean
-    public RedisTemplate<Long, Object> redisTemplate() {
-        RedisTemplate<Long, Object> template = new RedisTemplate<>();
+    public RedisTemplate<String, Object> redisTemplate() {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(jedisConnectionFactory());
+        template.setEnableTransactionSupport(true);
         return template;
     }
 }
