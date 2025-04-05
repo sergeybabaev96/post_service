@@ -8,6 +8,7 @@ import faang.school.postservice.mapper.CommentMapperImpl;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.publisher.comment.CommentCreateMessagePublisher;
+import faang.school.postservice.publisher.comment.CommentEventPublisher;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.service.comment.CommentService;
 import faang.school.postservice.service.post.PostService;
@@ -43,6 +44,9 @@ public class CommentServiceTest {
     private CommentCreateMessagePublisher commentCreateMessagePublisher;
 
     @Mock
+    private CommentEventPublisher commentEventPublisher;
+
+    @Mock
     private UserService userService;
 
     @Mock
@@ -54,19 +58,28 @@ public class CommentServiceTest {
     @Test
     public void testCreateSuccessfully() {
         CommentCreateDto createDto = CommentCreateDto.builder()
-                .authorId(AUTHOR_ID).postId(POST_ID)
+                .authorId(AUTHOR_ID)
+                .postId(POST_ID)
+                .content("Test content")  // Добавляем обязательное поле
                 .build();
+
         Post post = Post.builder()
+                .id(POST_ID)
                 .published(true)
                 .deleted(false)
                 .build();
 
         Mockito.when(postService.getPostById(POST_ID)).thenReturn(post);
+        Mockito.when(commentRepository.save(Mockito.any(Comment.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        commentService.create(createDto);
+        CommentReadDto result = commentService.create(createDto);
+
         Mockito.verify(commentRepository, Mockito.times(1)).save(Mockito.any());
         Mockito.verify(commentCreateMessagePublisher, Mockito.times(1))
                 .publish(Mockito.any());
+        Mockito.verify(commentEventPublisher, Mockito.times(1))
+                .publishCommentEvent(Mockito.any());
     }
 
     @Test

@@ -3,6 +3,7 @@ package faang.school.postservice.service.comment;
 import faang.school.postservice.dto.comment.CommentCreateDto;
 import faang.school.postservice.dto.comment.CommentReadDto;
 import faang.school.postservice.dto.comment.CommentUpdateDto;
+import faang.school.postservice.event.comment.CommentEvent;
 import faang.school.postservice.event.comment.CommentEventType;
 import faang.school.postservice.exception.BusinessException;
 import faang.school.postservice.exception.DataValidationException;
@@ -12,6 +13,7 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.File;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.publisher.comment.CommentCreateMessagePublisher;
+import faang.school.postservice.publisher.comment.CommentEventPublisher;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.FileRepository;
 import faang.school.postservice.service.UserService;
@@ -36,6 +38,7 @@ public class CommentService {
     private final S3Service s3Service;
     private final FileRepository fileRepository;
     private final CommentCreateMessagePublisher commentCreateMessagePublisher;
+    private final CommentEventPublisher commentEventPublisher;
     @Value("${services.s3.max_image_size}")
     private int maxImageSize;
 
@@ -43,10 +46,9 @@ public class CommentService {
         validateCommentCreation(createDto);
         Comment newComment = commentMapper.toEntity(createDto);
         newComment = commentRepository.save(newComment);
-        commentCreateMessagePublisher.publish(
-                commentMapper.toEvent(newComment, CommentEventType.CREATE)
-        );
-
+        CommentEvent commentEvent = commentMapper.toEvent(newComment, CommentEventType.CREATE);
+        commentCreateMessagePublisher.publish(commentEvent);
+        commentEventPublisher.publishCommentEvent(commentEvent);
         return commentMapper.toDto(newComment);
     }
 
