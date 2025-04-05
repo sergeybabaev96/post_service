@@ -34,7 +34,7 @@ public class PostService {
         post.setCreatedAt(LocalDateTime.now(clock));
         Post savedPost = postRepository.save(post);
         log.info("Post saved with ID: {}", savedPost.getId());
-        return postMapper.toDto(post);
+        return postMapper.toDto(savedPost);
     }
 
     @Transactional
@@ -45,8 +45,11 @@ public class PostService {
 
     @Transactional
     public PostDto publishPost(long postId) {
-
         Post post = getPostById(postId);
+        if (post.isPublished()) {
+            log.error("Post with ID {} is already published".formatted(postId));
+            throw new PostValidationException("Post is already published");
+        }
         post.setPublished(true);
         postRepository.save(post);
         return postMapper.toDto(post);
@@ -54,10 +57,12 @@ public class PostService {
 
     @Transactional
     public PostDto updatePost(long postId, String content) {
+        log.info("Updating post with ID {}", postId);
         Post post = getPostById(postId);
         post.setContent(content);
-        post.setUpdatedAt(LocalDateTime.now());
-        postRepository.save(post);
+        post.setUpdatedAt(LocalDateTime.now(clock));
+        Post updatedPost = postRepository.save(post);
+        log.info("Post with ID: {} is updated", updatedPost.getId());
         return postMapper.toDto(post);
     }
 

@@ -19,5 +19,6 @@ public record PostDto(
         Long authorId,
         Long projectId,
         boolean published,
-        LocalDateTime createdAt) {
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt) {
 }
