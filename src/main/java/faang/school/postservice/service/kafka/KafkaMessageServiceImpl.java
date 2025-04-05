@@ -1,11 +1,10 @@
 package faang.school.postservice.service.kafka;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import faang.school.postservice.enums.KafkaStatus;
-import faang.school.postservice.kafka.KafkaProducer;
+import faang.school.postservice.kafka.producer.KafkaProducer;
 import faang.school.postservice.model.KafkaMessage;
 import faang.school.postservice.repository.KafkaMessageRepository;
+import faang.school.postservice.utils.JsonUtils;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +21,6 @@ public class KafkaMessageServiceImpl implements KafkaMessageService {
 
     private final KafkaMessageRepository kafkaMessageRepository;
     private final KafkaProducer kafkaProducer;
-    private final ObjectMapper objectMapper;
 
     @Value("${kafka.message.send.max-attempts}")
     private int maxAttempts;
@@ -30,7 +28,7 @@ public class KafkaMessageServiceImpl implements KafkaMessageService {
     @Transactional
     @Override
     public void sendMessage(String topic, Object message) {
-        String messageToSend = mapObjectToString(message);
+        String messageToSend = JsonUtils.mapObjectToJson(message);
         try {
             kafkaProducer.produce(topic, messageToSend);
             log.info("Message sent to topic: {}", topic);
@@ -62,14 +60,6 @@ public class KafkaMessageServiceImpl implements KafkaMessageService {
                     log.warn("Message with id = {} didn't send. Retrying...", message.getId());
                 }
             }
-        }
-    }
-
-    private String mapObjectToString(Object message) {
-        try {
-            return objectMapper.writeValueAsString(message);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
         }
     }
 

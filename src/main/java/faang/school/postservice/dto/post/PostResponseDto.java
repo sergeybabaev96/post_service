@@ -1,25 +1,29 @@
 package faang.school.postservice.dto.post;
 
 import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Data
 @Builder
-@RequiredArgsConstructor
-public class PostResponseDto {
+public record PostResponseDto(
 
-    private final Long id;
+        long id,
 
-    private final String content;
+        String content,
 
-    private final Long authorId;
+        long authorId,
 
-    private final Long projectId;
+        long projectId,
 
-    private final LocalDateTime createdAt;
+        int likesCount,
 
-    private final LocalDateTime updatedAt;
+        int commentsCount,
+
+        int viewsCount,
+
+        LocalDateTime createdAt,
+
+        LocalDateTime updatedAt
+) {
+
 }

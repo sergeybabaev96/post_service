@@ -10,6 +10,7 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.post.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.post.PostRepository;
+import faang.school.postservice.service.cache.AuthorCacheService;
 import faang.school.postservice.service.kafka.KafkaMessageService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -31,9 +32,10 @@ public class CommentServiceImpl implements CommentService {
     private final CommentMapper commentMapper;
     private final UserServiceClient userServiceClient;
     private final KafkaMessageService kafkaMessageService;
+    private final AuthorCacheService authorCacheService;
 
     @Value("${kafka.comment.topic}")
-    private String topic;
+    private String commentTopic;
 
     @Override
     public CommentDto createComment(CommentDto dto) {
@@ -42,12 +44,17 @@ public class CommentServiceImpl implements CommentService {
             log.error("Author with id = {} not found", dto.authorId());
             throw new EntityNotFoundException(String.format("Author with id = %d not found", dto.authorId()));
         }
-        log.info("Get user with id = {} from user_service", author.id());
+        log.info("Get user with id = {} from user_service", author.getId());
         Post post = postRepository.findById(dto.postId()).orElseThrow(() ->
                 new EntityNotFoundException(String.format("Post with id = %d not found", dto.postId())));
+        if (!post.isPublished()) {
+            throw new IllegalArgumentException(String.format("Post with id = %d not published", post.getId()));
+        }
         Comment createdComment = commentRepository.save(buildComment(dto, post));
-        kafkaMessageService.sendMessage(topic,
-                new CommentEvent(dto.postId(), post.getAuthorId(), createdComment.getId(), LocalDateTime.now()));
+        kafkaMessageService.sendMessage(commentTopic,
+                new CommentEvent(author.getId(), dto.postId(), post.getAuthorId(), createdComment.getId(),
+                        createdComment.getContent(), LocalDateTime.now()));
+        authorCacheService.cacheAuthor(author.getId(), author);
         return commentMapper.toDto(createdComment);
     }
 

@@ -27,6 +27,8 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
+    consumer:
+      group-id: post-service
 
 server:
   port: 8081
@@ -49,7 +51,9 @@ domain:
 
 redis:
   cache:
-    ttl-minutes: 1
+    hashtag-ttl: 1 #minutes
+    post-ttl: 1 # days
+    authors-ttl: 1 # days
 
 hashtags:
   limit: 5
@@ -77,13 +81,41 @@ ad:
     cron: "0 0 0 * * *" # every day at midnight
 
 kafka:
+
+  group:
+    id: post-service
+
   message:
     send:
       max-attempts: 3
       interval: 30000 # 30 sec
+
   album:
     created:
       topic: created-album
 
   comment:
     topic: comment_event
+
+  post:
+    topic: post_event
+    views:
+      topic: post_views_event
+
+  like:
+    topic: like_event
+
+  feed:
+    heat-tasks:
+      topic: feed-heat-tasks
+    heat-progress:
+      topic: feed-heat-progress
+
+feed:
+  max-size: 500
+  comment:
+    max-size: 3
+
+heat:
+  batch-size: 100
+  threads-per-instance: 5
