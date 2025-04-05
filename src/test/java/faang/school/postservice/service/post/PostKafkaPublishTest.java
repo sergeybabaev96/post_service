@@ -5,6 +5,7 @@ import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.post.PostCreatedEvent;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.repository.FeedRepository;
 import faang.school.postservice.util.BaseContextTest;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -28,9 +29,11 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(classes = PostServiceApp.class)
 @ActiveProfiles("test")
@@ -45,6 +48,9 @@ class PostKafkaPublishTest extends BaseContextTest {
 
     @Autowired
     private PostRepository postRepository;
+
+    @Autowired
+    private FeedRepository feedRepository;
 
     @Autowired
     private PostService postService;
@@ -92,6 +98,12 @@ class PostKafkaPublishTest extends BaseContextTest {
             assertThat(event.postId()).isEqualTo(post.getId());
             assertThat(event.authorId()).isEqualTo(1L);
             assertThat(event.subscriberIds()).containsExactly(2L, 3L, 4L);
+
+            event.subscriberIds().forEach(id -> {
+                Set<Object> feed = feedRepository.getFeed(id, 10);
+                assertTrue(feed.contains(String.valueOf(post.getId())),
+                        "Feed for subscriber " + id + " should contain post id " + post.getId());
+            });
         });
 
         postRepository.delete(post);

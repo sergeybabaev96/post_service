@@ -124,6 +124,15 @@ kafka:
   topic:
     comment: user-comment-post
     post: user-create-post
+  consumer:
+    group-id: "post-group"
+    retry-interval-ms: 5000
+    max-attempts: 5
+
+feed:
+  key: feed
+  post:
+    max-size: 500
 
 news-feed:
   keys:

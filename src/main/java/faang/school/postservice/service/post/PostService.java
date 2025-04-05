@@ -100,7 +100,6 @@ public class PostService {
     }
 
     @ViewPost
-    @Transactional(readOnly = true)
     public Post getPostById(Long postId) {
         Post post = getPost(postId);
 
@@ -176,15 +175,8 @@ public class PostService {
         batches.forEach(publishPerformer::publishBatch);
     }
 
-    private void doesProjectExist(Long projectId) {
-        try {
-            projectServiceClient.getProject(projectId);
-        } catch (FeignException.NotFound e) {
-            throw new ProjectNotFoundException("Project with id " + projectId + " not found");
-        }
-    }
-
-    private Post getPost(Long postId) {
+    @Transactional(readOnly = true)
+    public Post getPost(Long postId) {
         Post post = postCacheRepository.findById(postId);
         if (post != null) {
             return post;
@@ -194,4 +186,13 @@ public class PostService {
         postCacheRepository.save(post);
         return post;
     }
+
+    private void doesProjectExist(Long projectId) {
+        try {
+            projectServiceClient.getProject(projectId);
+        } catch (FeignException.NotFound e) {
+            throw new ProjectNotFoundException("Project with id " + projectId + " not found");
+        }
+    }
+
 }
