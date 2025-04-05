@@ -49,3 +49,4 @@ project-service:
 payment-service:
   host: localhost
   port: 9080
+
