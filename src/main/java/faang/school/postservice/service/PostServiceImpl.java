@@ -17,7 +17,7 @@ public class PostServiceImpl implements PostService {
 
     private final RedisUserBanTopicPublisher redisUserBanTopicPublisher;
 
-    @Value("${moderation.post-count-threshold}")
+    @Value("${app.moderation.post-count-threshold}")
     private int postCountThreshold;
 
     public void banUsersIfRequired() {
