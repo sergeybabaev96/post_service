@@ -17,13 +17,14 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Random;
 import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class FileService {
 
-    private static final String FILE_KEY_PATTERN= "USER_ID_%s/%s-%s";
+    private static final String FILE_KEY_PATTERN= "USER_ID_%s/%s-%s-%s";
     private static final String DEFAULT_USER_ID = "DEFAULT";
     private static final String SMALL_IMAGE_KEY_PATTERN = "small/%s";
 
@@ -153,6 +154,9 @@ public class FileService {
         String timeStamp = String.valueOf(System.nanoTime());
         fileName = fileName.replaceAll("[^\\p{L}\\p{N}._\\-\\— ]", "_");
 
-        return String.format(FILE_KEY_PATTERN, pathName, timeStamp, fileName);
+        Random rand = new Random();
+        int randomNumber = 100 + rand.nextInt(900);
+
+        return String.format(FILE_KEY_PATTERN, pathName, timeStamp, randomNumber, fileName);
     }
 }
