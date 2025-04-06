@@ -82,7 +82,8 @@ tasks.bootJar {
 val jacocoInclude = listOf(
     "**/service/**",
     "**/controller/**",
-    "**/validation/**"
+    "**/validation/**",
+    "**/scheduler/**"
 )
 
 jacoco {
