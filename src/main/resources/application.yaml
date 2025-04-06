@@ -38,7 +38,7 @@ spring:
           spring.json.add.type.headers: false
       topic:
         post-views:
-          name: post-views
+          name: post.views
         post:
           name: posts
           partitions: 10

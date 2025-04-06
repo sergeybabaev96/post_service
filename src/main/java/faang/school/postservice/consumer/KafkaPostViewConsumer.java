@@ -1,7 +1,6 @@
 package faang.school.postservice.consumer;
 
 import faang.school.postservice.event.PostViewEvent;
-import faang.school.postservice.service.FeedService;
 import faang.school.postservice.service.PostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,17 +14,11 @@ import org.springframework.stereotype.Component;
 public class KafkaPostViewConsumer {
 
     private final PostService postService;
-    private final FeedService feedService;
 
-    @KafkaListener(topics = "post-views", groupId = "post-view-group")
+    @KafkaListener(topics = "post.views", groupId = "post-view-group", containerFactory = "postViewKafkaListenerContainerFactory")
     public void listen(PostViewEvent event, Acknowledgment ack) {
         try {
-            Long views = postService.incrementView(event.postId());
-
-            if (views != null) {
-                feedService.incrementViewCache(event, views);
-            }
-
+            postService.incrementView(event.postId());
             ack.acknowledge();
         } catch (Exception e) {
             log.error("Произошла ошибка при увеличении просмотров у поста", e);
