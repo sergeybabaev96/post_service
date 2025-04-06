@@ -45,6 +45,12 @@ dependencies {
     annotationProcessor("org.mapstruct:mapstruct-processor:1.5.3.Final")
 
     /**
+     *  Minio/S3 and Thumbnailator
+     */
+    implementation("software.amazon.awssdk:s3:2.31.7")
+    implementation("net.coobird:thumbnailator:0.4.20")
+
+    /**
      * Test containers
      */
     implementation(platform("org.testcontainers:testcontainers-bom:1.17.6"))
