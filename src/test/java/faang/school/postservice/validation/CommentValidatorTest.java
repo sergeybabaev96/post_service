@@ -50,7 +50,7 @@ public class CommentValidatorTest {
 
         @Test
         @DisplayName("Должен пройти успешно, когда комментарий принадлежит посту")
-        void givenValidArguments_whenValidateCommentBelongsToPost_thenSuccess() {
+        void givenValidArguments_WhenValidateCommentBelongsToPost_ThenSuccess() {
             when(comment.belongsToPost(postId)).thenReturn(true);
 
             assertDoesNotThrow(() ->
@@ -62,7 +62,7 @@ public class CommentValidatorTest {
 
         @Test
         @DisplayName("Должен выбросить исключение, когда комментарий не принадлежит посту")
-        void givenInvalidArguments_whenValidateCommentBelongsToPost_thenThrowDataValidationException() {
+        void givenInvalidArguments_WhenValidateCommentBelongsToPost_ThenThrowDataValidationException() {
             when(comment.belongsToPost(postId)).thenReturn(false);
 
             DataValidationException exception = assertThrows(DataValidationException.class,
@@ -75,7 +75,7 @@ public class CommentValidatorTest {
 
         @Test
         @DisplayName("Должен выбросить исключение, когда комментарий null")
-        void givenNullComment_whenValidateCommentBelongsToPost_thenThrowDataValidationException() {
+        void givenNullComment_WhenValidateCommentBelongsToPost_ThenThrowDataValidationException() {
             DataValidationException exception = assertThrows(DataValidationException.class,
                     () -> commentValidator.validateCommentBelongsToPost(null, postId, commentId)
             );
@@ -90,7 +90,7 @@ public class CommentValidatorTest {
 
         @Test
         @DisplayName("Проверка существования пользователя")
-        void givenValidUserId_whenValidateUserById_thenSuccess() {
+        void givenValidUserId_WhenValidateUserById_ThenSuccess() {
             when(userServiceClient.getUser(authorId))
                     .thenReturn(new UserDto(1L, "username", "email@gmail.com"));
 
@@ -104,7 +104,7 @@ public class CommentValidatorTest {
 
     @Test
     @DisplayName("Должен выбросить исключение, когда пользователь не существует")
-    void givenInvalidUserId_whenValidateUserById_thenThrowEntityNotFoundException() {
+    void givenInvalidUserId_WhenValidateUserById_ThenThrowEntityNotFoundException() {
         when(userServiceClient.getUser(authorId)).thenReturn(null);
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
@@ -120,7 +120,7 @@ public class CommentValidatorTest {
 
         @Test
         @DisplayName("Должен пройти успешно, когда пост существует")
-        void givenExistingPostId_whenValidatePostExists_thenSuccess() {
+        void givenExistingPostId_WhenValidatePostExists_ThenSuccess() {
             when(postRepository.existsById(postId)).thenReturn(true);
 
             assertDoesNotThrow(() ->
@@ -132,7 +132,7 @@ public class CommentValidatorTest {
 
         @Test
         @DisplayName("Должен выбросить исключение, когда пост не существует")
-        void givenNonExistingPostId_whenValidatePostExists_thenThrowEntityNotFoundException() {
+        void givenNonExistingPostId_WhenValidatePostExists_ThenThrowEntityNotFoundException() {
             when(postRepository.existsById(postId)).thenReturn(false);
 
             EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
@@ -144,7 +144,7 @@ public class CommentValidatorTest {
 
         @Test
         @DisplayName("Должен выбросить исключение, когда postId равен null")
-        void givenNullPostId_whenValidatePostExists_thenThrowIllegalArgumentException() {
+        void givenNullPostId_WhenValidatePostExists_ThenThrowIllegalArgumentException() {
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
                     () -> commentValidator.validatePostExists(null)
             );

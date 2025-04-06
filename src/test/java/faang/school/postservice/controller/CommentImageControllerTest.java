@@ -61,7 +61,7 @@ public class CommentImageControllerTest {
 
         @Test
         @DisplayName("Успешная загрузка изображения")
-        void givenValidImageFile_whenUploadImage_thenReturnOkResponse() {
+        void givenValidImageFile_WhenUploadImage_ThenReturnOkResponse() {
             when(commentImageService.uploadImage(postId, commentId, imageFile))
                     .thenReturn(commentViewDto);
 
@@ -75,7 +75,7 @@ public class CommentImageControllerTest {
 
         @Test
         @DisplayName("Ошибка при пустом файле (с моком сервиса)")
-        void givenEmptyFile_whenUploadImage_thenThrowException() {
+        void givenEmptyFile_WhenUploadImage_ThenThrowDataValidationException() {
             MockMultipartFile emptyFile = new MockMultipartFile(
                     "file", "empty.jpg", MediaType.IMAGE_JPEG_VALUE, new byte[0]
             );
@@ -89,7 +89,7 @@ public class CommentImageControllerTest {
 
         @Test
         @DisplayName("Ошибка при невалидном типе файла")
-        void givenInvalidFileType_whenUploadImage_thenThrowException() {
+        void givenInvalidFileType_WhenUploadImage_ThenThrowDataValidationException() {
             MockMultipartFile textFile = new MockMultipartFile(
                     "file", "test.txt", MediaType.TEXT_PLAIN_VALUE, "text".getBytes()
             );
@@ -108,7 +108,7 @@ public class CommentImageControllerTest {
 
         @Test
         @DisplayName("Успешное удаление изображения")
-        void givenValidComment_whenDeleteImage_thenReturnOkResponse() {
+        void givenValidComment_WhenDeleteImage_ThenReturnOkResponse() {
             when(commentImageService.deleteImage(postId, commentId))
                     .thenReturn(commentViewDto);
 
@@ -122,7 +122,7 @@ public class CommentImageControllerTest {
 
         @Test
         @DisplayName("Ошибка при несуществующем комментарии")
-        void givenNonExistentComment_whenDeleteImage_thenThrowException() {
+        void givenNonExistentComment_WhenDeleteImage_ThenThrowEntityNotFoundException() {
             when(commentImageService.deleteImage(postId, commentId))
                     .thenThrow(new EntityNotFoundException("Comment not found"));
 

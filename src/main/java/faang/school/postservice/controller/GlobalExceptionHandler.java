@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
         log.error("Data validation error: {}", dataValidationException.getMessage());
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(String.format("Ошибка валидации данных: %s", dataValidationException.getMessage()));
+                .body(String.format("Data validation error: %s", dataValidationException.getMessage()));
     }
 
     /**
@@ -49,21 +49,21 @@ public class GlobalExceptionHandler {
         log.error("Entity not found: {}", entityNotFoundException.getMessage());
 
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(String.format("Сущность не найдена: %s", entityNotFoundException.getMessage()));
+                .body(String.format("Entity not found: %s", entityNotFoundException.getMessage()));
     }
 
     /**
      * Обрабатывает исключения типа {@link ImageProcessingException} (ошибки обработки изображений).
      * Возникают при проблемах с чтением, изменением размера или сохранением изображений.
      *
-     * @param ex перехваченное исключение, содержащее информацию об ошибке
+     * @param imageProcessingException перехваченное исключение, содержащее информацию об ошибке
      * @return ответ с сообщением об ошибке (HTTP 422 Unprocessable Entity)
      */
     @ExceptionHandler(ImageProcessingException.class)
-    public ResponseEntity<String> handleImageProcessingException(ImageProcessingException ex) {
-        log.error("Image processing failed: {}", ex.getMessage());
+    public ResponseEntity<String> handleImageProcessingException(ImageProcessingException imageProcessingException) {
+        log.error("Image processing failed: {}", imageProcessingException.getMessage());
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
-                .body("Image processing error: " + ex.getMessage());
+                .body("Image processing error: " + imageProcessingException.getMessage());
     }
 
     /**
@@ -103,7 +103,7 @@ public class GlobalExceptionHandler {
         log.error("Null pointer: {}", exception.getMessage(), exception);
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(String.format("Не заполнено обязательное поле: %s", exception.getMessage()));
+                .body(String.format("Required field is missing %s", exception.getMessage()));
     }
 
     /**
@@ -121,7 +121,7 @@ public class GlobalExceptionHandler {
         log.error("Feign exception: {}", exception.getMessage(), exception);
 
         return ResponseEntity.status(exception.status())
-                .body(String.format("Ошибка внешнего сервиса: %s", exception.getMessage()));
+                .body(String.format("External service error: %s", exception.getMessage()));
     }
 
     /**
@@ -136,6 +136,6 @@ public class GlobalExceptionHandler {
         log.error("Internal server error: {}", exception.getMessage(), exception);
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(String.format("Произошла внутренняя ошибка: %s", exception.getMessage()));
+                .body(String.format("An internal error has occurred: %s", exception.getMessage()));
     }
 }

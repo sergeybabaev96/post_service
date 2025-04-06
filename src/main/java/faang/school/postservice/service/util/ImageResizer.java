@@ -1,13 +1,21 @@
 package faang.school.postservice.service.util;
 
+import org.imgscalr.Scalr;
 import org.springframework.stereotype.Service;
 
-import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
  * Сервис для изменения размера изображений.
- * Поддерживает пропорциональное масштабирование с сохранением соотношения сторон.
+ * Использует библиотеку ImgScalr для обработки изображений.
+ *
+ * <p>Основные функции:</p>
+ * <ul>
+ *   <li>{@link #resize} - Изменение размера изображения с сохранением пропорций</li>
+ * </ul>
+ *
+ * @author Zhltsk-V
+ * @version 1.0
  */
 @Service
 public class ImageResizer {
@@ -21,25 +29,6 @@ public class ImageResizer {
      * @return новое изображение с измененными размерами
      */
     public BufferedImage resize(BufferedImage originalImage, int maxSize) {
-        int originalWidth = originalImage.getWidth();
-        int originalHeight = originalImage.getHeight();
-
-        int newWidth;
-        int newHeight;
-        if (originalWidth > originalHeight) {
-            newWidth = maxSize;
-            newHeight = (int) ((double) originalHeight / originalWidth * maxSize);
-        } else {
-            newHeight = maxSize;
-            newWidth = (int) ((double) originalWidth / originalHeight * maxSize);
-        }
-
-        BufferedImage resizedImage = new BufferedImage(newWidth, newHeight, originalImage.getType());
-        Graphics2D g = resizedImage.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        g.drawImage(originalImage, 0, 0, newWidth, newHeight, null);
-        g.dispose();
-
-        return resizedImage;
+        return Scalr.resize(originalImage, Scalr.Method.QUALITY, Scalr.Mode.AUTOMATIC, maxSize);
     }
 }

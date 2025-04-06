@@ -23,7 +23,7 @@ public class ValidateImageTest {
 
         @Test
         @DisplayName("Валидное изображение")
-        void givenValidImageFile_whenValidate_thenSuccess() {
+        void givenValidImageFile_WhenValidateImageFile_ThenSuccess() {
             MockMultipartFile file = new MockMultipartFile(
                     "file", "test.jpg", "image/jpeg", new byte[1024]);
 
@@ -31,8 +31,8 @@ public class ValidateImageTest {
         }
 
         @Test
-        @DisplayName("Пустой файл")
-        void givenEmptyFile_whenValidate_thenThrowException() {
+        @DisplayName("Валидация пустого файла")
+        void givenEmptyFile_WhenValidateImageFile_ThenThrowDataValidationException() {
             MockMultipartFile file = new MockMultipartFile(
                     "file", "empty.jpg", "image/jpeg", new byte[0]);
 
@@ -41,8 +41,8 @@ public class ValidateImageTest {
         }
 
         @Test
-        @DisplayName("Слишком большой файл")
-        void givenLargeFile_whenValidate_thenThrowException() {
+        @DisplayName("Валидация слишком большого файла")
+        void givenLargeFile_WhenValidateImageFile_ThenThrowDataValidationException() {
             MockMultipartFile file = new MockMultipartFile(
                     "file", "large.jpg", "image/jpeg", new byte[5 * 1024 * 1024 + 1]);
 
@@ -51,8 +51,8 @@ public class ValidateImageTest {
         }
 
         @Test
-        @DisplayName("Неизображение")
-        void givenNonImageFile_whenValidate_thenThrowException() {
+        @DisplayName("Валидация файла не являющегося изображением")
+        void givenNonImageFile_WhenValidateImageFile_ThenThrowDataValidationException() {
             MockMultipartFile file = new MockMultipartFile(
                     "file", "text.txt", "text/plain", "text".getBytes());
 
