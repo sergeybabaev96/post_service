@@ -39,6 +39,11 @@ public class FeedService {
         }
     }
 
+    public void incrementViewCache(long postId) {
+        String key = "posts:" + postId + ":views";
+        redisTemplate.opsForValue().increment(key);
+    }
+
     private void validatePostEvent(PostEvent postEvent) {
         if (postEvent == null || postEvent.createdAt() == null) {
             throw new InvalidPostEventException("PostEvent или createdAt не может быть равно null");
