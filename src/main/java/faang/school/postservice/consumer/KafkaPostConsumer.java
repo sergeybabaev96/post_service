@@ -2,7 +2,7 @@ package faang.school.postservice.consumer;
 
 import faang.school.postservice.event.post.PostCreatedEvent;
 import faang.school.postservice.event.post.PostDeletedEvent;
-import faang.school.postservice.service.feed.FeedService;
+import faang.school.postservice.service.feed.NewsFeedService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,27 +18,27 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class KafkaPostConsumer {
 
-    private final FeedService feedService;
+    private final NewsFeedService newsFeedService;
 
-    @Value("${spring.kafka.listener.retry.maxAttempts}")
+    @Value("${spring.kafka.consumer.retry.maxAttempts}")
     private int maxAttempts;
 
-    @Value("${spring.kafka.listener.retry.delay}")
+    @Value("${spring.kafka.consumer.retry.delay}")
     private long delay;
 
-    @Value("${spring.kafka.listener.retry.multiplier}")
+    @Value("${spring.kafka.consumer.retry.multiplier}")
     private double multiplier;
 
     @Retryable(
             retryFor = {DataAccessException.class},
-            maxAttemptsExpression = "#{${spring.kafka.listener.retry.maxAttempts}}",
-            backoff = @Backoff(delayExpression = "#{${spring.kafka.listener.retry.delay}}",
-                    multiplierExpression = "#{${spring.kafka.listener.retry.multiplier}}")
+            maxAttemptsExpression = "#{${spring.kafka.consumer.retry.maxAttempts}}",
+            backoff = @Backoff(delayExpression = "#{${spring.kafka.consumer.retry.delay}}",
+                    multiplierExpression = "#{${spring.kafka.consumer.retry.multiplier}}")
     )
     @KafkaListener(topics = "post-creations", containerFactory = "kafkaListenerContainerFactory")
     public void listenCreations(PostCreatedEvent event, Acknowledgment ack) {
         try {
-            feedService.addToFeed(event);
+            newsFeedService.addToFeed(event);
             ack.acknowledge();
         } catch (Exception e) {
             log.error("Не удалось обработать PostCreatedEvent: {}",  event.getPostId(), e);
@@ -55,7 +55,7 @@ public class KafkaPostConsumer {
     @KafkaListener(topics = "post-deletions", containerFactory = "kafkaListenerContainerFactory")
     public void listenUpdates(PostDeletedEvent event, Acknowledgment ack) {
         try {
-            feedService.removeFromFeed(event);
+            newsFeedService.removeFromFeed(event);
             ack.acknowledge();
         } catch (Exception e) {
             log.error("Не удалось обработать PostDeletedEvent: {}",  event.getPostId(), e);

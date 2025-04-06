@@ -18,7 +18,7 @@ public class KafkaTopicConfig {
     public NewTopic postsTopic() {
         return TopicBuilder.name("posts")
                 .partitions(partitions)
-                .replicas(partitions)
+                .replicas(replicas)
                 .build();
     }
 }

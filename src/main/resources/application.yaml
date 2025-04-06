@@ -29,6 +29,8 @@ spring:
         max-size: 500
         ttl-days: 30
         batch-size: 100
+    jdbc:
+      batch-size: 1000
 
   kafka:
     bootstrap-servers: "localhost:9092"
