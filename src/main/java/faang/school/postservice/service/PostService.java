@@ -36,6 +36,7 @@ public class PostService {
     private final SpellCheckerService spellCheckerService;
     private final KafkaPostProducer kafkaPostProducer;
     private final PostCacheService postCacheService;
+    private final UserCashService userCashService;
 
     @Value("${moderation.threadSize}")
     private int threadSize;
@@ -46,7 +47,8 @@ public class PostService {
                        AsyncModerationService asyncModerationService,
                        SpellCheckerService spellCheckerService,
                        KafkaPostProducer kafkaPostProducer,
-                       PostCacheService postCacheService) {
+                       PostCacheService postCacheService,
+                       UserCashService userCashService) {
         this.postRepository = postRepository;
         this.internalServices = internalServices;
         this.asyncModerationService = asyncModerationService;
@@ -54,6 +56,7 @@ public class PostService {
         this.spellCheckerService = spellCheckerService;
         this.kafkaPostProducer = kafkaPostProducer;
         this.postCacheService = postCacheService;
+        this.userCashService = userCashService;
     }
 
     @Transactional
@@ -79,6 +82,8 @@ public class PostService {
         Post result = postRepository.save(post);
         kafkaPostProducer.publishPostCreationEvent(result);
         postCacheService.cachePost(result);
+
+        userCashService.cacheUser(result.getAuthorId());
 
         return result;
     }

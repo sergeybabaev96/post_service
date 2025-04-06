@@ -10,6 +10,7 @@ import faang.school.postservice.service.KafkaPostProducer;
 import faang.school.postservice.service.PostCacheService;
 import faang.school.postservice.service.PostService;
 import faang.school.postservice.service.SpellCheckerService;
+import faang.school.postservice.service.UserCashService;
 import faang.school.postservice.validation.ModerationDictionaryValidation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
@@ -82,6 +83,9 @@ public class PostServiceTest {
 
     @Mock
     private PostCacheService postCacheService;
+
+    @Mock
+    UserCashService userCashService;
 
     @InjectMocks
     private PostService postService;
@@ -376,7 +380,8 @@ public class PostServiceTest {
                 asyncModerationService,
                 spellCheckerService,
                 kafkaPostProducer,
-                postCacheService);
+                postCacheService,
+                userCashService);
 
         doAnswer(invocation -> {
             List<Callable<Void>> tasks = invocation.getArgument(0);
