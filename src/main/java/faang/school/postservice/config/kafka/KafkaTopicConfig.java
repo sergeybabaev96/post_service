@@ -22,6 +22,7 @@ public class KafkaTopicConfig {
     @Value("${spring.data.kafka.topic.post-view.name}")
     private String postViewsTopic;
 
+
     @Value(value = "${spring.data.kafka.topic.post.partitions}")
     private int postTopicNumPartitions;
 

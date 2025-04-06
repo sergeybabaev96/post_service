@@ -44,6 +44,7 @@ public class PostService {
     private final PostEventPublisher postEventPublisher;
     private final KafkaPostProducer kafkaPostProducer;
     private final UserServiceClient userServiceClient;
+    private final FeedService feedService;
 
     public Post findById(@NotNull Long id) {
         return postRepository.findById(id)
@@ -161,5 +162,15 @@ public class PostService {
             }
             page++;
         } while (posts.size() == batchSize);
+    }
+
+    @Transactional
+    public void incrementView(long postId) {
+        Post post = findById(postId);
+
+        if (post.isPublished()) {
+            post.setViews(post.getViews() + 1);
+            feedService.incrementViewCache(postId);
+        }
     }
 }
