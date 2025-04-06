@@ -17,17 +17,27 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.transaction.PlatformTransactionManager;
 
+import java.lang.reflect.Field;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -48,6 +58,12 @@ class PostServiceImplTest {
 
     @Mock
     private ProjectServiceClient projectServiceClient;
+
+    @Mock
+    private PlatformTransactionManager transactionManager;
+
+    @MockBean
+    private ExecutorService postPublishPool;
 
     @InjectMocks
     private PostServiceImpl postService;
@@ -72,7 +88,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    void testCreatePostDraft_SuccessWithUser() {
+    void testCreatePostDraftSuccessWithUser() {
         inputDto.setAuthorId(1L);
         inputDto.setProjectId(0L);
         entity.setAuthorId(1L);
@@ -94,7 +110,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    void testCreatePostDraft_SuccessWithProject() {
+    void testCreatePostDraftSuccessWithProject() {
         inputDto.setAuthorId(0L);
         inputDto.setProjectId(1L);
         entity.setAuthorId(0L);
@@ -116,7 +132,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    void testCreatePostDraft_NegativeAuthorId() {
+    void testCreatePostDraftNegativeAuthorId() {
         inputDto.setAuthorId(-1L);
         inputDto.setProjectId(0L);
 
@@ -129,7 +145,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    void testCreatePostDraft_BothIdsZero() {
+    void testCreatePostDraftBothIdsZero() {
         inputDto.setAuthorId(0L);
         inputDto.setProjectId(0L);
 
@@ -142,7 +158,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    void testCreatePostDraft_BothIdsNonZero() {
+    void testCreatePostDraftBothIdsNonZero() {
         inputDto.setAuthorId(1L);
         inputDto.setProjectId(1L);
 
@@ -155,7 +171,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    void testCreatePostDraft_UserNotFound() {
+    void testCreatePostDraftUserNotFound() {
         inputDto.setAuthorId(1L);
         inputDto.setProjectId(0L);
         when(userServiceClient.getUser(1L)).thenReturn(new UserDto(0L, "Not Found", "none"));
@@ -169,7 +185,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    void testCreatePostDraft_ProjectNotFound() {
+    void testCreatePostDraftProjectNotFound() {
         inputDto.setAuthorId(0L);
         inputDto.setProjectId(1L);
         when(projectServiceClient.getProject(1L)).thenReturn(new ProjectDto(0L, "Not Found"));
@@ -184,7 +200,7 @@ class PostServiceImplTest {
 
     /****************************************************************************************/
     @Test
-    void testPublicPost_Success() {
+    void testPublicPostSuccess() {
         when(postRepository.findById(1L)).thenReturn(Optional.of(entity));
         when(postRepository.save(any(Post.class))).thenReturn(entity);
 
@@ -202,7 +218,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    void testPublicPost_PostNotFound() {
+    void testPublicPostPostNotFound() {
         when(postRepository.findById(1L)).thenReturn(Optional.empty());
 
         PostDtoValidationException exception = assertThrows(PostDtoValidationException.class,
@@ -216,7 +232,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    void testPublicPost_PostDeleted() {
+    void testPublicPostPostDeleted() {
         entity.setDeleted(true);
         when(postRepository.findById(1L)).thenReturn(Optional.of(entity));
 
@@ -231,7 +247,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    void testPublicPost_AlreadyPublished() {
+    void testPublicPostAlreadyPublished() {
         entity.setPublished(true);
         when(postRepository.findById(1L)).thenReturn(Optional.of(entity));
 
@@ -247,7 +263,7 @@ class PostServiceImplTest {
 
     /****************************************************************************************/
     @Test
-    void testUpdatePost_Success() {
+    void testUpdatePostSuccess() {
         inputDto.setContent("Updated content");
         entity.setContent("Original content");
         when(postRepository.findById(1L)).thenReturn(Optional.of(entity));
@@ -263,7 +279,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    void testUpdatePost_PostNotFound() {
+    void testUpdatePostPostNotFound() {
         when(postRepository.findById(1L)).thenReturn(Optional.empty());
 
         PostDtoValidationException exception = assertThrows(
@@ -277,7 +293,7 @@ class PostServiceImplTest {
 
     /****************************************************************************************/
     @Test
-    void testDeletePost_Success() {
+    void testDeletePostSuccess() {
         entity.setContent("Test content");
         when(postRepository.findById(1L)).thenReturn(Optional.of(entity));
         when(postRepository.save(any(Post.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -293,7 +309,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    void testDeletePost_PostNotFound() {
+    void testDeletePostPostNotFound() {
         when(postRepository.findById(1L)).thenReturn(Optional.empty());
 
         PostDtoValidationException exception = assertThrows(
@@ -307,7 +323,7 @@ class PostServiceImplTest {
 
     /****************************************************************************************/
     @Test
-    void testGetPost_Success() {
+    void testGetPostSuccess() {
         entity.setContent("Test content");
         when(postRepository.findById(1L)).thenReturn(Optional.of(entity));
 
@@ -320,7 +336,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    void testGetPost_PostNotFound() {
+    void testGetPostPostNotFound() {
         when(postRepository.findById(1L)).thenReturn(Optional.empty());
 
         PostDtoValidationException exception = assertThrows(
@@ -333,7 +349,7 @@ class PostServiceImplTest {
 
     /***************************************************************************************/
     @Test
-    public void testGetAuthorPostDrafts_Success() {
+    public void testGetAuthorPostDraftsSuccess() {
         Long authorId = 1L;
         PostDto inputDto = new PostDto();
         inputDto.setAuthorId(1L);
@@ -373,7 +389,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    public void testGetAuthorPostDrafts_EmptyList_ReturnsEmpty() {
+    public void testGetAuthorPostDraftsEmptyListReturnsEmpty() {
         Long authorId = 1L;
         PostDto inputDto = new PostDto();
         inputDto.setAuthorId(authorId);
@@ -388,7 +404,7 @@ class PostServiceImplTest {
     }
 
     @Test
-    public void testGetAuthorPublishedPosts_Success() {
+    public void testGetAuthorPublishedPostsSuccess() {
         Long authorId = 1L;
         PostDto inputDto = new PostDto();
         inputDto.setAuthorId(1L);
@@ -425,5 +441,60 @@ class PostServiceImplTest {
         assertEquals(1L, result.get(1).getId());
         verify(postRepository).findByAuthorId(authorId);
         verify(postMapper, times(2)).toDto(any(Post.class));
+    }
+
+    /***************************************************************************************/
+    private void setUpPublishScheduledPosts() {
+        postPublishPool = new ThreadPoolExecutor(
+                10,
+                10,
+                0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(100),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
+
+        try {
+            Field field = PostServiceImpl.class.getDeclaredField("postPublishPool");
+            field.setAccessible(true);
+            field.set(postService, postPublishPool);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException("Failed to set postPublishPool", e);
+        }
+    }
+
+    @Test
+    void testPublishScheduledPostsWithEmptyList() {
+        when(postRepository.findReadyToPublish()).thenReturn(List.of());
+
+        postService.publishScheduledPosts();
+
+        verify(postRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    void testPublishScheduledPostsWithPostsProcessesChunks() {
+        setUpPublishScheduledPosts();
+        List<Post> posts = new ArrayList<>();
+        for (long i = 1; i <= 25; i++) {
+            Post post = new Post();
+            post.setId(i);
+            post.setPublished(false);
+            post.setDeleted(false);
+            post.setScheduledAt(LocalDateTime.now().minusDays(1));
+            posts.add(post);
+        }
+
+        when(postRepository.findReadyToPublish()).thenReturn(posts);
+        when(postRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        postService.publishScheduledPosts();
+
+        for (Post post : posts) {
+            assertTrue(post.isPublished());
+            assertNotNull(post.getPublishedAt());
+            assertNull(post.getScheduledAt());
+        }
+
+        verify(postRepository, times(9)).saveAll(anyList());
     }
 }

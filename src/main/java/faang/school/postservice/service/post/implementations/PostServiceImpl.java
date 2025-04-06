@@ -3,6 +3,8 @@ package faang.school.postservice.service.post.implementations;
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.post.PostDto;
+import faang.school.postservice.dto.project.ProjectDto;
+import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.PostDtoValidationException;
 import faang.school.postservice.exception.PostNotFoundException;
 import faang.school.postservice.mapper.post.PostMapper;
@@ -12,15 +14,19 @@ import faang.school.postservice.service.post.interfaces.PostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Slf4j
@@ -32,28 +38,67 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
     private final ExecutorService postPublishPool;
+    private final PlatformTransactionManager transactionManager;
 
-    private static final int SCHEDULED_POSTS_CHUNK_SIZE = 10;
+    public static final int POST_PUBLISH_POOL_SIZE = 10;
     private final AtomicBoolean isRunning = new AtomicBoolean(false);
 
     @Override
-    @Transactional
     public void publishScheduledPosts() {
         if (isRunning.compareAndSet(false, true)) {
             try {
                 List<Post> posts = postRepository.findReadyToPublish();
-                List<List<Post>> chunks = splitIntoChunks(posts, SCHEDULED_POSTS_CHUNK_SIZE);
-                chunks.forEach(chunk -> postPublishPool.submit(() -> {
-                    System.out.println("Task executed in thread: " + Thread.currentThread().getName());
-                }));
+                if (posts.isEmpty()) {
+                    log.info("Post list is empty");
+                    return;
+                }
+
+                int chunkCount = Math.min(POST_PUBLISH_POOL_SIZE, posts.size());
+                int chunkSize = (int) Math.ceil((double) posts.size() / chunkCount);
+
+                List<List<Post>> chunks = splitIntoChunks(posts, chunkSize);
+
+                List<CompletableFuture<Void>> futures = chunks.stream()
+                        .map(chunk -> CompletableFuture
+                                .runAsync(() -> {
+                                    TransactionTemplate transactionTemplate =
+                                            new TransactionTemplate(transactionManager);
+                                    transactionTemplate.setPropagationBehavior(
+                                            TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+                                    transactionTemplate.execute(status -> {
+                                        try {
+                                            log.info("Processing chunk of size {}", chunk.size());
+                                            chunk.forEach(post -> {
+                                                post.setPublished(true);
+                                                post.setPublishedAt(LocalDateTime.now());
+                                                post.setScheduledAt(null);
+                                            });
+                                            postRepository.saveAll(chunk);
+                                            log.info("Saved chunk of size {}", chunk.size());
+                                        } catch (Exception e) {
+                                            log.error("Error processing chunk", e);
+                                            throw e;
+                                        }
+                                        return null;
+                                    });
+                                }, postPublishPool)
+                                .exceptionally(throwable -> {
+                                    log.error("Chunk processing failed", throwable);
+                                    return null;
+                                }))
+                        .toList();
+                try {
+                    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get();
+                } catch (InterruptedException | ExecutionException e) {
+                    log.error("Error while processing chunks", e);
+                    throw new RuntimeException("Failed to process scheduled posts", e);
+                }
             } finally {
                 isRunning.set(false);
             }
         } else {
             log.warn("Previous task still running, skipping...");
         }
-
-        postPublishPool.shutdown();
     }
 
     public List<List<Post>> splitIntoChunks(List<Post> list, int chunkSize) {
@@ -169,7 +214,7 @@ public class PostServiceImpl implements PostService {
             throw new PostDtoValidationException("The author can be either a user or a project!");
         }
 
-        /*if (postDto.getAuthorId() != 0) {
+        if (postDto.getAuthorId() != 0) {
             UserDto userDto = userServiceClient.getUser(postDto.getAuthorId());
             if (userDto.id() == 0) {
                 throw new PostDtoValidationException(String.format(
@@ -181,7 +226,7 @@ public class PostServiceImpl implements PostService {
                 throw new PostDtoValidationException(String.format(
                         "Project with ID %d not found!", postDto.getProjectId()));
             }
-        }*/
+        }
     }
 
     private Post validateDataForPublication(PostDto postDto) {
