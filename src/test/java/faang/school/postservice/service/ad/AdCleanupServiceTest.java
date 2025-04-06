@@ -1,4 +1,4 @@
-package faang.school.postservice.service;
+package faang.school.postservice.service.ad;
 
 import faang.school.postservice.model.ad.Ad;
 import faang.school.postservice.repository.ad.AdRepository;
@@ -22,6 +22,8 @@ import static org.mockito.Mockito.when;
 public class AdCleanupServiceTest {
     @Mock
     private AdRepository adRepository;
+    @Mock
+    private AdCleanupAsyncService adCleanupAsyncService;
 
     @InjectMocks
     private AdCleanupService adCleanupService;
@@ -34,7 +36,7 @@ public class AdCleanupServiceTest {
 
         adCleanupService.cleanupExpiredAds(batchSize);
 
-        verify(adRepository, never()).deleteAll(anyList());
+        verify(adCleanupAsyncService, never()).removeBatch(anyList());
         verify(adRepository, times(1)).findExpiredAd();
     }
 
@@ -47,14 +49,6 @@ public class AdCleanupServiceTest {
 
         adCleanupService.cleanupExpiredAds(batchSize);
 
-        verify(adRepository, times(batchSize)).deleteAll(anyList());
-    }
-
-    @Test
-    @DisplayName("Удаляет рекламу")
-    public void removeBatch_whenRemoveBatchCalled_thenExecutesAsync() {
-        adCleanupService.removeBatch(anyList());
-
-        verify(adRepository, times(1)).deleteAll(anyList());
+        verify(adCleanupAsyncService, times(batchSize)).removeBatch(anyList());
     }
 }

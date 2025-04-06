@@ -1,11 +1,10 @@
-package faang.school.postservice.service;
+package faang.school.postservice.service.ad;
 
 import faang.school.postservice.model.ad.Ad;
 import faang.school.postservice.repository.ad.AdRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AdCleanupService {
     private final AdRepository adRepository;
+    private final AdCleanupAsyncService adCleanupAsyncService;
 
     @Transactional
     public void cleanupExpiredAds(int batchSize) {
@@ -26,11 +26,6 @@ public class AdCleanupService {
         }
         log.info("Found {} expired ads. Processing in batches...", expiredAds.size());
         ListUtils.partition(expiredAds, batchSize)
-                .forEach(this::removeBatch);
-    }
-
-    @Async("adCleanupExecutor")
-    public void removeBatch(List<Ad> adIds) {
-        adRepository.deleteAll(adIds);
+                .forEach(adCleanupAsyncService::removeBatch);
     }
 }
