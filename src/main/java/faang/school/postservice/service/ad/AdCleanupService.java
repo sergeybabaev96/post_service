@@ -17,6 +17,11 @@ public class AdCleanupService {
     private final AdRepository adRepository;
     private final AdCleanupAsyncService adCleanupAsyncService;
 
+    /**
+     * Очищает устаревшую рекламу, обрабатывая их батчами.
+     *
+     * @param batchSize размер батча для обработки
+     */
     @Transactional
     public void cleanupExpiredAds(int batchSize) {
         List<Ad> expiredAds = adRepository.findExpiredAd();

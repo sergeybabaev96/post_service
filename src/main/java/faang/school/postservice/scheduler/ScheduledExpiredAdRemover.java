@@ -13,6 +13,10 @@ public class ScheduledExpiredAdRemover {
     @Value("${ad-cleanup.scheduled.batch-size}")
     private int batchSize;
 
+    /**
+     * Задача по удалению просроченной рекламы.
+     * Выполняется по расписанию, заданному в cron-выражении.
+     */
     @Scheduled(cron = "${ad-cleanup.scheduled.cron}")
     public void deleteExpiredAdPosts() {
         adCleanupService.cleanupExpiredAds(batchSize);
