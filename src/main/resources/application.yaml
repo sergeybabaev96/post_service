@@ -38,7 +38,7 @@ spring:
         acknowledgement: all
 
       topics:
-        PostViewEvent:
+        postView:
           name: post-views
           partitions: 1
           replications: 1
