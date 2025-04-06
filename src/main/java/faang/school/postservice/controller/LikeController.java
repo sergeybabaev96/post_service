@@ -18,23 +18,23 @@ public class LikeController {
 
     private final LikeService likeService;
 
-    @PostMapping("like/post/{postId}")
+    @PostMapping("posts/{postId}/likes")
     public PostDto addLikeToPost(@PathVariable Long postId) {
         return likeService.addLikeToPost(postId);
     }
 
-    @DeleteMapping("/like/posts/{postId}")
+    @DeleteMapping("posts/{postId}/likes")
     public PostDto removeLikeFromPost(@PathVariable Long postId) {
 
         return likeService.removeLikeFromPost(postId);
     }
 
-    @PostMapping("/like/comment/{commentId}")
+    @PostMapping("/comments/{commentId}/likes")
     public CommentDto addLikeToComment(@PathVariable Long commentId) {
         return likeService.addLikeToComment(commentId);
     }
 
-    @DeleteMapping("/like/comments/{commentId}")
+    @DeleteMapping("/comments/{commentId}/likes")
     public CommentDto removeLikeFromComment(@PathVariable Long commentId) {
         return likeService.removeLikeFromComment(commentId);
     }
