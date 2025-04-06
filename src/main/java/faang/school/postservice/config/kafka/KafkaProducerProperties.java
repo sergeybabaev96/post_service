@@ -18,9 +18,11 @@ public class KafkaProducerProperties {
     @Data
     public static class Topic {
 
+        /** Наименование */
         @NotBlank
         private String name;
 
+        /** Включение продьюсера */
         @NotNull
         private Boolean enabled;
     }
