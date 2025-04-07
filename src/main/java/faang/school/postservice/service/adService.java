@@ -1,4 +1,4 @@
-package faang.school.postservice.service.post_ad;
+package faang.school.postservice.service;
 
 import faang.school.postservice.model.ad.Ad;
 import faang.school.postservice.repository.ad.AdRepository;
@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class postAdService {
+public class adService {
     private final AdRepository adRepository;
 
     @Transactional(readOnly = true)
@@ -32,7 +32,6 @@ public class postAdService {
     public CompletableFuture<Void> deleteAdsBatch(List<Long> adIds) {
         log.debug("Starting deletion of ads batch, size: {}", adIds.size());
         adRepository.deleteExpiredAds(adIds);
-
         log.debug("Successfully deleted ads batch, size: {}", adIds.size());
         return CompletableFuture.completedFuture(null);
     }
