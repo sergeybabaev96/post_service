@@ -1,14 +1,17 @@
 package faang.school.postservice.dto.album;
 
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
+@Builder
+@EqualsAndHashCode
 public class PostDto {
 
-    private MultipartFile image;
+    private Long id;
     private String title;
     private String description;
 }

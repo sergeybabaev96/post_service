@@ -39,7 +39,7 @@ public class AlbumServiceImpl implements AlbumService {
     @Override
     public AlbumDto createAlbum(long userId, AlbumDto albumDto) {
         checkIfUserExist(userId);
-        if (!isNull(albumRepository.findAlbumByAuthorId((userId)))) {
+        if (!isNull(albumRepository.findAlbumByAuthorIdAndTitle(userId, albumDto.getTitle()))) {
             throw new RuntimeException("Album already exists");
         }
         Album album = albumMapper.toEntity(albumDto);
@@ -51,15 +51,15 @@ public class AlbumServiceImpl implements AlbumService {
     @Override
     public AlbumDto addPost(long albumId, long userId, long postId) {
         Album album = albumRepository.findAlbumById(albumId);
-        Optional<Post> post = postRepository.findById(postId);
+        Post post = postRepository.findById(postId);
         checkIfAlbumExist(albumId);
         checkIfUserExist(userId);
         checkIfPostExist(postId);
         checkIfUserHaveAccess(userId, albumId);
-        if (album.getPosts().contains(post.get())) {
+        if (album.getPosts().contains(post)) {
             throw new EntityExistsException("Post already exists in this album");
         }
-        album.addPost(post.get());
+        album.addPost(post);
         albumRepository.save(album);
         return albumMapper.toDto(album);
     }
@@ -83,13 +83,13 @@ public class AlbumServiceImpl implements AlbumService {
 
     @Override
     public List<AlbumDto> findByAuthorId(long authorId, Optional<AlbumFilterDto> albumFilterDto) {
-        List<Album> albums = albumRepository.findAlbumByAuthorId(authorId);
-        Predicate<Album> albumPredicate = Album -> true;
         checkIfUserExist(authorId);
-        if (albumFilterDto.isPresent()) {
+        Optional<List<Album>> albums = albumRepository.findAlbumsByAuthorId(authorId);
+        Predicate<Album> albumPredicate = Album -> true;
+        if (albumFilterDto.isPresent() && !isNull(albums)) {
             albumPredicate = makePredicateFilter(albumPredicate, albumFilterDto.get());
         }
-        return albums.stream().filter(albumPredicate).map(albumMapper::toDto).collect(Collectors.toList());
+        return albums.get().stream().filter(albumPredicate).map(albumMapper::toDto).collect(Collectors.toList());
     }
 
     @Override
@@ -114,6 +114,7 @@ public class AlbumServiceImpl implements AlbumService {
     public AlbumDto deleteAlbumFromFavorites(long albumId, long userId) {
         checkIfAlbumExist(albumId);
         checkIfUserExist(userId);
+        checkIfUserHaveAccess(userId, albumId);
         albumRepository.deleteAlbumFromFavorite(albumId, userId);
         return albumMapper.toDto(albumRepository.findAlbumById(albumId));
     }
@@ -126,8 +127,9 @@ public class AlbumServiceImpl implements AlbumService {
         long[] favoriteAlbumIds = albumRepository.findFavoriteAlbumIdsByUserId(userId);
         for (long favoriteAlbumId : favoriteAlbumIds) {
             favoriteAlbums.add(albumRepository.findAlbumById(favoriteAlbumId));
+        } if (albumFilterDto.isPresent()) {
+            albumPredicate = makePredicateFilter(albumPredicate, albumFilterDto.get());
         }
-        albumPredicate = makePredicateFilter(albumPredicate, albumFilterDto.get());
         return favoriteAlbums.stream().filter(albumPredicate).map(albumMapper::toDto).collect(Collectors.toList());
     }
 
@@ -147,7 +149,7 @@ public class AlbumServiceImpl implements AlbumService {
         checkIfUserExist(userId);
         checkIfPostExist(postId);
         checkIfUserHaveAccess(userId, albumId);
-        if (album.getPosts().contains(postRepository.findById(postId).get())) {
+        if (!album.getPosts().contains(postRepository.findById(postId))) {
             throw new DataValidationException("Post is not in this album");
         }
         album.removePost(postId);
@@ -185,7 +187,7 @@ public class AlbumServiceImpl implements AlbumService {
     }
 
     private void checkIfPostExist(long postId) {
-        if (postRepository.findById(postId).isEmpty()) {
+        if (isNull(postRepository.findById(postId))) {
             throw new EntityNotFoundException("Post not found");
         }
     }

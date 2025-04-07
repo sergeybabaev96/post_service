@@ -14,7 +14,6 @@ import jakarta.persistence.TemporalType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -58,10 +57,12 @@ public class Album {
     private LocalDateTime updatedAt;
 
     public void addPost(Post post) {
-        posts.add(post);
+        getPosts().add(post);
     }
 
     public void removePost(long postId) {
-        posts.removeIf(post -> post.getId() == postId);
+        getPosts().remove(Post.builder()
+                .id(postId)
+                .build());
     }
 }
