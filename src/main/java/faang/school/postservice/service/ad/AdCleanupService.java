@@ -31,6 +31,6 @@ public class AdCleanupService {
         }
         log.info("Found {} expired ads. Processing in batches...", expiredAds.size());
         ListUtils.partition(expiredAds, batchSize)
-                .forEach(adCleanupAsyncService::removeBatch);
+                .forEach(adCleanupAsyncService::cleanupExpiredAdsAsync);
     }
 }

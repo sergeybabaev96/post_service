@@ -1,8 +1,8 @@
 package faang.school.postservice.service.ad;
 
 import faang.school.postservice.model.ad.Ad;
-import faang.school.postservice.repository.ad.AdRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -15,8 +15,9 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AdCleanupAsyncService {
-    private final AdRepository adRepository;
+    private final AdTransactionalService adTransactionalService;
 
     /**
      * Асинхронно удаляет переданный список рекламы.
@@ -24,7 +25,12 @@ public class AdCleanupAsyncService {
      * @param expiredAds список рекламы для удаления
      */
     @Async("adCleanupExecutor")
-    public void removeBatch(List<Ad> expiredAds) {
-        adRepository.deleteAll(expiredAds);
+    public void cleanupExpiredAdsAsync(List<Ad> expiredAds) {
+        try {
+            adTransactionalService.deleteAdsBatchInTransaction(expiredAds);
+        } catch (Exception e) {
+            log.error("Failed to cleanup {} ads: {}", expiredAds.size(), e.getMessage());
+            throw new RuntimeException("Async cleanup failed for batch", e);
+        }
     }
 }

@@ -36,7 +36,7 @@ public class AdCleanupServiceTest {
 
         adCleanupService.cleanupExpiredAds(batchSize);
 
-        verify(adCleanupAsyncService, never()).removeBatch(anyList());
+        verify(adCleanupAsyncService, never()).cleanupExpiredAdsAsync(anyList());
         verify(adRepository, times(1)).findExpiredAd();
     }
 
@@ -49,6 +49,6 @@ public class AdCleanupServiceTest {
 
         adCleanupService.cleanupExpiredAds(batchSize);
 
-        verify(adCleanupAsyncService, times(batchSize)).removeBatch(anyList());
+        verify(adCleanupAsyncService, times(batchSize)).cleanupExpiredAdsAsync(anyList());
     }
 }
