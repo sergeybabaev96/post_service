@@ -413,7 +413,12 @@ class PostServiceTest {
     }
 
     @Test
-    void getAllDraftsByProjectId() {
+    void testGetAllDraftsByProjectIdShouldReturnsDraftsByProjectIdWhenProjectHasDrafts() {
+        when(postRepository.findByProjectId(EXISTENT_PROJECT_ID)).thenReturn(draftListWithAuthorId1);
+
+        List<PostDto> actualDtaftDtoList = postService.getAllDraftsByAuthorId(EXISTENT_AUTHOR_ID);
+        verify(postMapper).toDtoList(postListCaptor.capture());
+        assertEquals(filteredPostList, postListCaptor.getValue());
     }
 
     @Test

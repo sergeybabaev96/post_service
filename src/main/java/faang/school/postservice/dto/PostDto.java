@@ -7,7 +7,7 @@ import lombok.Builder;
 
 import java.time.LocalDateTime;
 
-@Builder
+@Builder(toBuilder = true)
 public record PostDto(
         Long id,
 
@@ -20,5 +20,6 @@ public record PostDto(
         Long projectId,
         boolean published,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt) {
+        LocalDateTime updatedAt
+) {
 }

@@ -28,7 +28,7 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping("/draft")
-    public PostDto createDraft(@RequestBody @Valid PostDto postDto) {
+    public PostDto createDraft(@Valid @RequestBody PostDto postDto) {
         log.info("Received request to create draft post: {}", postDto);
         PostDto createdDraft = postService.createDraft(postDto);
         log.info("Draft post created successfully with ID: {}", createdDraft.id());
@@ -46,7 +46,7 @@ public class PostController {
     }
 
     @PutMapping("/{postId}")
-    public PostDto updatePost(@PathVariable long postId, @RequestBody @Valid PostDto postDto) {
+    public PostDto updatePost(@PathVariable long postId, @Valid @RequestBody PostDto postDto) {
         return postService.updatePost(postId, postDto.content());
     }
 
@@ -56,23 +56,23 @@ public class PostController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/draft/by-author")
-    public List<PostDto> getAllDraftsByAuthorId(@RequestParam long authorId) {
+    @GetMapping("/draft/by-author/{authorId}")
+    public List<PostDto> getAllDraftsByAuthorId(@PathVariable long authorId) {
         return postService.getAllDraftsByAuthorId(authorId);
     }
 
-    @GetMapping("/draft/by-project")
-    public List<PostDto> getAllDraftsByProjectId(@RequestParam long projectId) {
+    @GetMapping("/draft/by-project{projectId}")
+    public List<PostDto> getAllDraftsByProjectId(@PathVariable long projectId) {
         return postService.getAllDraftsByProjectId(projectId);
     }
 
-    @GetMapping("/by-author")
-    public List<PostDto> getAllPostsByAuthorId(@RequestParam long authorId) {
+    @GetMapping("/by-author/{authorId}")
+    public List<PostDto> getAllPostsByAuthorId(@PathVariable long authorId) {
         return postService.getAllPostsByAuthorId(authorId);
     }
 
-    @GetMapping("/by-project")
-    public List<PostDto> getAllPostsByProjectId(@RequestParam long projectId) {
+    @GetMapping("/by-project/{projectId}")
+    public List<PostDto> getAllPostsByProjectId(@PathVariable long projectId) {
         return postService.getAllPostsByProjectId(projectId);
     }
 }
