@@ -8,10 +8,10 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.service.util.ImageProcessor;
 import faang.school.postservice.validation.CommentValidator;
 import faang.school.postservice.validation.ValidateImage;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.image.BufferedImage;
@@ -73,7 +73,7 @@ public class CommentImageService {
         try {
             originalImage = imageProcessor.convertToBufferedImage(file);
         } catch (IOException exception) {
-            log.error("Failed to convert image: {}", exception.getMessage());
+            log.error("Failed to convert image", exception);
             throw new ImageProcessingException("Failed to convert image");
         }
         ImageProcessor.ProcessedImages processedImages = imageProcessor.processImage(originalImage);
@@ -98,8 +98,8 @@ public class CommentImageService {
 
         try {
             deleteCommentImages(comment);
-        } catch (ImageProcessingException e) {
-            log.warn("Failed to delete images from storage: {}", e.getMessage());
+        } catch (ImageProcessingException exception) {
+            log.warn("Failed to delete images from storage", exception);
         }
         return clearImageReferences(comment);
     }
@@ -141,7 +141,7 @@ public class CommentImageService {
             storageService.uploadToS3(baseKey + "-large.jpg", images.largeImage(), IMAGE_CONTENT_TYPE);
             storageService.uploadToS3(baseKey + "-small.jpg", images.smallImage(), IMAGE_CONTENT_TYPE);
         } catch (IOException exception) {
-            log.error("Failed to upload processed images: {}", exception.getMessage());
+            log.error("Failed to upload processed images", exception);
             throw new ImageProcessingException("Failed to upload processed images");
         }
     }

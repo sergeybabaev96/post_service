@@ -69,6 +69,7 @@ public class ImageProcessor {
     public BufferedImage convertToBufferedImage(MultipartFile file) throws IOException {
         BufferedImage image = ImageIO.read(file.getInputStream());
         if (image == null) {
+            log.error("Failed to convert file to BufferedImage: {}", file.getOriginalFilename());
             throw new DataValidationException("Invalid image file");
         }
         return image;

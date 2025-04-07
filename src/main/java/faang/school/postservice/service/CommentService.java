@@ -5,19 +5,25 @@ import faang.school.postservice.dto.comment.CommentCreateDto;
 import faang.school.postservice.dto.comment.CommentViewDto;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
+import faang.school.postservice.exception.ModerationException;
 import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.config.moderation.ModerationConfig;
+import faang.school.postservice.service.util.CommentModerationAsyncHandler;
 import faang.school.postservice.validation.CommentValidator;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.ListUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Сервис для работы с комментариями.
@@ -50,6 +56,8 @@ public class CommentService {
     private final CommentMapper commentMapper;
     private final UserServiceClient userServiceClient;
     private final CommentValidator commentValidator;
+    private final ModerationConfig commentModerationConfig;
+    private final CommentModerationAsyncHandler commentModerationAsyncHandler;
 
     /**
      * Создает новый комментарий к указанному посту.
@@ -139,6 +147,45 @@ public class CommentService {
 
         commentRepository.delete(comment);
         log.debug("Comment with ID: {} successfully deleted", commentId);
+    }
+
+    /**
+     * Запускает процесс модерации всех неверифицированных комментариев.
+     * <p>
+     * Метод выполняет следующие действия:
+     * <ol>
+     *   <li>Находит все комментарии без даты верификации</li>
+     *   <li>Разбивает их на пакеты указанного размера</li>
+     *   <li>Запускает асинхронную проверку каждого пакета</li>
+     *   <li>Ожидает завершения всех проверок</li>
+     * </ol>
+     */
+    public void moderateUnverifiedComment() {
+        log.info("Moderation of unverified posts started");
+        List<Comment> unverifiedComments = commentRepository.findAllByVerifiedAtIsNull();
+
+        if (unverifiedComments.isEmpty()) {
+            log.info("No unverified comments found");
+            return;
+        }
+
+        List<List<Comment>> batches = batches = ListUtils.partition(unverifiedComments,
+                commentModerationConfig.getBatchSize());
+
+
+        List<CompletableFuture<Void>> moderationTasks = batches.stream()
+                .map(commentModerationAsyncHandler::checkForProfanity)
+                .toList();
+
+        try {
+            CompletableFuture.allOf(moderationTasks.toArray(new CompletableFuture[0]))
+                    .get(1, TimeUnit.HOURS);
+            log.info("Moderation completed successfully. Total comments processed: {}",
+                    unverifiedComments.size());
+        } catch (Exception exception) {
+            log.error("Error during moderation process", exception);
+            throw new ModerationException("Failed to complete moderation process");
+        }
     }
 
     /**

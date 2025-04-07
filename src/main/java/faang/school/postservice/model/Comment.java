@@ -29,7 +29,6 @@ import java.util.List;
  *
  * @author Zhltsk-V
  * @version 1.0
- *
  */
 @Data
 @NoArgsConstructor
@@ -104,11 +103,24 @@ public class Comment {
     private String smallImageFileKey;
 
     /**
+     * Флаг, указывающий, прошел ли пост модерацию.
+     */
+    @Column(name = "verified")
+    private boolean verified;
+
+    /**
+     * Дата и время проверки комментария модератором. Может быть пустым, если пост не проверен.
+     */
+    @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "verified_at")
+    private LocalDateTime verifiedAt;
+
+    /**
      * Проверяет, принадлежит ли комментарий к указанному посту.
      *
      * @param postId идентификатор поста для проверки принадлежности
      * @return true если комментарий принадлежит указанному посту,
-     *         false если пост не установлен или идентификатор не совпадает
+     * false если пост не установлен или идентификатор не совпадает
      * @throws NullPointerException если переданный postId равен null
      */
     public boolean belongsToPost(Long postId) {

@@ -49,3 +49,11 @@ services:
     secretKey: password
     bucketName:
       name: corpbucket
+
+app:
+  scheduler:
+    daily-cron: "0 0 0 * * *"
+  dictionary:
+    path: "dictionary-for-moderation-comment.txt"
+    batch:
+      size: 2000

@@ -1,6 +1,7 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.config.moderation.ModerationConfig;
 import faang.school.postservice.dto.comment.CommentCreateDto;
 import faang.school.postservice.dto.comment.CommentViewDto;
 import faang.school.postservice.exception.DataValidationException;
@@ -10,6 +11,7 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.service.util.CommentModerationAsyncHandler;
 import faang.school.postservice.validation.CommentValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -24,14 +26,18 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -49,6 +55,10 @@ public class CommentServiceTest {
     private UserServiceClient userServiceClient;
     @Mock
     private CommentValidator commentValidator;
+    @Mock
+    private ModerationConfig moderationConfig;
+    @Mock
+    private CommentModerationAsyncHandler commentModerationAsyncHandler;
 
     @InjectMocks
     private CommentService commentService;
@@ -60,6 +70,8 @@ public class CommentServiceTest {
     private CommentViewDto commentViewDto;
     private Comment comment;
     private Post post;
+    private List<Comment> comments;
+    private final int batchesSize = 10;
 
     @BeforeEach
     void setUp() {
@@ -83,6 +95,9 @@ public class CommentServiceTest {
         comment.setAuthorId(authorId);
         comment.setPost(post);
         comment.setCreatedAt(LocalDateTime.now());
+
+        comment.setContent("Valid content");
+        comments = List.of(comment);
     }
 
     @Nested
@@ -268,6 +283,62 @@ public class CommentServiceTest {
         void givenNullCommentId_WhenGetCommentById_ThenThrowIllegalArgumentException() {
             assertThrows(EntityNotFoundException.class,
                     () -> commentService.getCommentById(null));
+        }
+    }
+
+    @Nested
+    @DisplayName("Модерация неверифицированных комментариев")
+    class ModerateUnverifiedComments {
+        @Test
+        @DisplayName("Комментарий без нарушений проходит верификацию")
+        void givenCleanComment_whenModerate_thenCommentVerified() {
+            when(commentRepository.findAllByVerifiedAtIsNull()).thenReturn(comments);
+            when(moderationConfig.getBatchSize()).thenReturn(batchesSize);
+            when(commentModerationAsyncHandler.checkForProfanity(anyList()))
+                    .thenReturn(CompletableFuture.completedFuture(null));
+
+            assertDoesNotThrow(() -> commentService.moderateUnverifiedComment());
+
+            verify(commentRepository).findAllByVerifiedAtIsNull();
+        }
+
+        @Test
+        @DisplayName("Комментарий с запрещенными словами не проходит верификацию")
+        void givenProfanityComment_whenModerate_thenCommentNotVerified() {
+            comment.setContent("profanity bad word");
+
+            when(commentRepository.findAllByVerifiedAtIsNull()).thenReturn(comments);
+            when(moderationConfig.getBatchSize()).thenReturn(batchesSize);
+            when(commentModerationAsyncHandler.checkForProfanity(anyList()))
+                    .thenReturn(CompletableFuture.completedFuture(null));
+
+            assertDoesNotThrow(() -> commentService.moderateUnverifiedComment());
+        }
+
+        @Test
+        @DisplayName("Пустой список комментариев не требует модерации")
+        void givenEmptyList_whenModerate_thenSkipProcessing() {
+            List<Comment> emptyComments = Collections.emptyList();
+            when(commentRepository.findAllByVerifiedAtIsNull()).thenReturn(emptyComments);
+
+            assertDoesNotThrow(() -> commentService.moderateUnverifiedComment());
+
+            verify(commentRepository).findAllByVerifiedAtIsNull();
+            verify(commentModerationAsyncHandler, never()).checkForProfanity(anyList());
+        }
+
+        @Test
+        @DisplayName("Большое количество комментариев разбивается на батчи")
+        void givenLargeCommentList_whenModerate_thenProcessInBatches() {
+            List<Comment> largeCommentList = Collections.nCopies(25, new Comment());
+            when(commentRepository.findAllByVerifiedAtIsNull()).thenReturn(largeCommentList);
+            when(moderationConfig.getBatchSize()).thenReturn(10);
+            when(commentModerationAsyncHandler.checkForProfanity(anyList()))
+                    .thenReturn(CompletableFuture.completedFuture(null));
+
+            assertDoesNotThrow(() -> commentService.moderateUnverifiedComment());
+
+            verify(commentModerationAsyncHandler, times(3)).checkForProfanity(anyList());
         }
     }
 }
