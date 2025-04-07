@@ -8,6 +8,7 @@ import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,6 +25,7 @@ public interface PostMapper {
     @Mapping(target = "updatedAt", ignore = true)
     Post toEntity(PostDto postDto);
 
+    @Mapping(target = "likeCount", source = "likes", qualifiedByName = "calculateLikeCount")
     @Mapping(target = "likesId", expression = "java(mapLikeToIds(post.getLikes()))")
     @Mapping(target = "commentsId", expression = "java(mapCommentToIds(post.getComments()))")
     @Mapping(target = "albumsId", expression = "java(mapAlbumToIds(post.getAlbums()))")
@@ -53,5 +55,10 @@ public interface PostMapper {
         return resources != null ? resources.stream()
                 .map(Resource::getId)
                 .toList() : Collections.emptyList();
+    }
+
+    @Named("calculateLikeCount")
+    default Integer calculateLikeCount(List<Like> likes) {
+        return likes != null ? likes.size() : 0;
     }
 }
