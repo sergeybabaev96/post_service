@@ -16,16 +16,12 @@ public interface ResourceMapper {
     @Mapping(target = "createdAt", ignore = true)
     Resource toResource(ResourceDto resourceDto);
 
-    @Mapping(target = "postId", source = "post")
+    @Mapping(target = "postId", source = "post.id")
     ResourceDto toResourceDto(Resource resource);
 
     List<Resource> toResourceList(List<ResourceDto> resourceDtoList);
 
     List<ResourceDto> toResourceDtoList(List<Resource> resourceList);
-
-    default Long mapPostToId(Post post) {
-        return post != null ? post.getId() : null;
-    }
 
     default Post mapIdToPost(Long id) {
         if (id == null) {

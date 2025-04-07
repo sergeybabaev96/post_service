@@ -1,10 +1,10 @@
 package faang.school.postservice.exception;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Builder;
 
-@Data
-@AllArgsConstructor
+@Builder
 public class ErrorResponse {
+    private Exception exception;
     private String message;
+    private String service;
 }

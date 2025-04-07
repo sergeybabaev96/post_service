@@ -4,6 +4,9 @@ spring:
     url: jdbc:postgresql://localhost:5432/postgres
     username: user
     password: password
+  messages:
+    basename: messages
+    encoding: UTF-8
 
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
@@ -47,8 +50,3 @@ project-service:
 payment-service:
   host: localhost
   port: 9080
-
-  spring:
-    messages:
-      basename: messages
-      encoding: UTF-8

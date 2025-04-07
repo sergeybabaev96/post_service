@@ -1,8 +1,5 @@
 package faang.school.postservice.messages;
 
-import org.springframework.stereotype.Component;
-
-@Component
 public class ValidationMessages {
     public static final String validationKeyNotEmpty = "Key can't be empty";
     public static final String validationKeyMaxLength = "Length of key can't be more than 50 symbols";

@@ -3,7 +3,7 @@ package faang.school.postservice.exception.handler;
 import faang.school.postservice.exception.ErrorResponse;
 import faang.school.postservice.exception.InvalidFileException;
 import faang.school.postservice.exception.MaxResourcesReachedException;
-import faang.school.postservice.exception.ResourcePostIdNotEqualsPostIdException;
+import faang.school.postservice.exception.PostIdMismatchException;
 import faang.school.postservice.exception.not_found_exceptions.PostNotFoundException;
 import faang.school.postservice.exception.not_found_exceptions.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -33,30 +33,50 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PostNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handlePostNotFoundException(PostNotFoundException e) {
-        return new ErrorResponse(e.getMessage());
+        return ErrorResponse.builder()
+                .exception(e)
+                .message(e.getMessage())
+                .service("PostResourceService")
+                .build();
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleResourceNotFoundException(ResourceNotFoundException e) {
-        return new ErrorResponse(e.getMessage());
+        return ErrorResponse.builder()
+                .exception(e)
+                .message(e.getMessage())
+                .service("PostResourceService")
+                .build();
     }
 
-    @ExceptionHandler(ResourcePostIdNotEqualsPostIdException.class)
+    @ExceptionHandler(PostIdMismatchException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponse handleResourcePostIdNotEqualsPostIdException(ResourcePostIdNotEqualsPostIdException e) {
-        return new ErrorResponse(e.getMessage());
+    public ErrorResponse handleResourcePostIdNotEqualsPostIdException(PostIdMismatchException e) {
+        return ErrorResponse.builder()
+                .exception(e)
+                .message(e.getMessage())
+                .service("PostResourceService")
+                .build();
     }
 
     @ExceptionHandler(MaxResourcesReachedException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleMaxResourcesReachedException(MaxResourcesReachedException e) {
-        return new ErrorResponse(e.getMessage());
+        return ErrorResponse.builder()
+                .exception(e)
+                .message(e.getMessage())
+                .service("PostResourceService")
+                .build();
     }
 
     @ExceptionHandler(InvalidFileException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleInvalidFileException(InvalidFileException e) {
-        return new ErrorResponse(e.getMessage());
+        return ErrorResponse.builder()
+                .exception(e)
+                .message(e.getMessage())
+                .service("PostResourceService")
+                .build();
     }
 }

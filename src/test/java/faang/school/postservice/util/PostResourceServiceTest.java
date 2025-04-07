@@ -3,7 +3,7 @@ package faang.school.postservice.util;
 import faang.school.postservice.dto.resource.ResourceDto;
 import faang.school.postservice.exception.InvalidFileException;
 import faang.school.postservice.exception.MaxResourcesReachedException;
-import faang.school.postservice.exception.ResourcePostIdNotEqualsPostIdException;
+import faang.school.postservice.exception.PostIdMismatchException;
 import faang.school.postservice.exception.not_found_exceptions.PostNotFoundException;
 import faang.school.postservice.exception.not_found_exceptions.ResourceNotFoundException;
 import faang.school.postservice.mapper.ResourceMapperImpl;
@@ -13,6 +13,7 @@ import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.PostResourceRepository;
+import faang.school.postservice.service.MinioService;
 import faang.school.postservice.service.PostResourceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,13 +51,13 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class PostResourceServiceTest {
-    private final Long postId = 1L;
-    private final Long resourceId = 1L;
     private static final int STANDARD_WIDTH = 1080;
     private static final int HORIZONTAL_HEIGHT = 566;
     private static final int VERTICAL_SQUARE_HEIGHT = 1080;
     private static final long BYTES_FILE_SIZE = 5L * 1024L * 1024L;
     private static final Integer MAX_COUNT_OF_RESOURCES = 10;
+    private final Long postId = 1L;
+    private final Long resourceId = 1L;
     private MultipartFile file;
     private Post post;
     private Resource resource;
@@ -68,7 +69,7 @@ public class PostResourceServiceTest {
     @Spy
     private ResourceMapperImpl resourceMapper = new ResourceMapperImpl();
     @Mock
-    private MinioConfig minioConfig;
+    private MinioService minioService;
     @InjectMocks
     private PostResourceService postResourceService;
 
@@ -121,8 +122,9 @@ public class PostResourceServiceTest {
     @Test
     void shouldThrowWhenPostNotFound() {
         when(postRepository.findById(anyLong())).thenReturn(Optional.empty());
-        assertThrows(PostNotFoundException.class,
+        PostNotFoundException exception = assertThrows(PostNotFoundException.class,
                 () -> postResourceService.add(999L, List.of(file)));
+        assertEquals(ExceptionMessages.POST_NOT_FOUND_EXCEPTION, exception.getMessage());
     }
 
     @Test
@@ -137,13 +139,6 @@ public class PostResourceServiceTest {
         assertEquals(ExceptionMessages.RESOURCE_MAX_LIMIT_EXCEPTION, exception.getMessage());
     }
 
-    private byte[] createTestImage(int width, int height) throws IOException {
-        BufferedImage image = new BufferedImage(width, height, TYPE_INT_RGB);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(image, "jpg", baos);
-        return baos.toByteArray();
-    }
-
     @Test
     void shouldProcessImageCorrectly() throws Exception {
         byte[] imageBytes = createTestImage(100, 100);
@@ -154,7 +149,7 @@ public class PostResourceServiceTest {
         when(postRepository.findById(anyLong())).thenReturn(Optional.of(mockPost));
 
         Resource mockResource = new Resource();
-        when(minioConfig.uploadImage(
+        when(minioService.uploadImage(
                 any(InputStream.class),
                 any(byte[].class),
                 anyString(),
@@ -162,10 +157,10 @@ public class PostResourceServiceTest {
                 anyString()
         )).thenReturn(mockResource);
 
-        ResourceDto result = postResourceService.add(1L, List.of(imageFile));
+        List<ResourceDto> result = postResourceService.add(1L, List.of(imageFile));
 
         assertNotNull(result);
-        verify(minioConfig).uploadImage(
+        verify(minioService).uploadImage(
                 any(InputStream.class),
                 any(byte[].class),
                 anyString(),
@@ -178,6 +173,7 @@ public class PostResourceServiceTest {
     void resizeImageHorizontal() throws Exception {
         BufferedImage originalImage = new BufferedImage(2000, 1000, BufferedImage.TYPE_INT_RGB);
         BufferedImage resizedImage = getResizedImage(originalImage);
+
         assertEquals(STANDARD_WIDTH, resizedImage.getWidth(),
                 "Width should be " + STANDARD_WIDTH);
         assertEquals(HORIZONTAL_HEIGHT, resizedImage.getHeight(),
@@ -202,7 +198,7 @@ public class PostResourceServiceTest {
         );
 
         when(postRepository.findById(anyLong())).thenReturn(Optional.of(post));
-        when(minioConfig.uploadVideoOrAudio(any(), any()))
+        when(minioService.uploadVideoOrAudio(any(), any()))
                 .thenReturn(new Resource());
 
         assertDoesNotThrow(() -> postResourceService.add(1L, List.of(videoFile)));
@@ -212,8 +208,9 @@ public class PostResourceServiceTest {
     void shouldThrowResourceNotFoundException() {
         when(postResourceRepository.findById(resourceId)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class,
+        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
                 () -> postResourceService.delete(postId, resourceId));
+        assertEquals(ExceptionMessages.RESOURCE_NOT_FOUND_EXCEPTION, exception.getMessage());
     }
 
     @Test
@@ -235,8 +232,9 @@ public class PostResourceServiceTest {
         when(postResourceRepository.findById(resourceId)).thenReturn(Optional.of(resource));
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
 
-        assertThrows(ResourcePostIdNotEqualsPostIdException.class,
+        PostIdMismatchException exception = assertThrows(PostIdMismatchException.class,
                 () -> postResourceService.delete(postId, resourceId));
+        assertEquals(ExceptionMessages.PostIdMismatchException, exception.getMessage());
     }
 
     @Test
@@ -246,7 +244,7 @@ public class PostResourceServiceTest {
 
         when(postRepository.save(any(Post.class))).thenAnswer(invocation -> {
             Post savedPost = invocation.getArgument(0);
-            post.getResources().clear(); // Очищаем ресурсы в нашем mock-объекте
+            post.getResources().clear();
             return savedPost;
         });
 
@@ -254,7 +252,7 @@ public class PostResourceServiceTest {
 
         assertEquals(0, post.getResources().size());
         verify(postRepository).save(postArgumentCaptor.capture());
-        verify(minioConfig).delete(stringArgumentCaptor.capture());
+        verify(minioService).delete(stringArgumentCaptor.capture());
         verify(postResourceRepository).deleteById(resourceId);
     }
 
@@ -289,5 +287,12 @@ public class PostResourceServiceTest {
                 contentType,
                 new byte[(int) size]
         );
+    }
+
+    private byte[] createTestImage(int width, int height) throws IOException {
+        BufferedImage image = new BufferedImage(width, height, TYPE_INT_RGB);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(image, "jpg", baos);
+        return baos.toByteArray();
     }
 }

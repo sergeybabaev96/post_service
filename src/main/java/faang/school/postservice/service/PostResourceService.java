@@ -3,17 +3,16 @@ package faang.school.postservice.service;
 import faang.school.postservice.dto.resource.ResourceDto;
 import faang.school.postservice.exception.InvalidFileException;
 import faang.school.postservice.exception.MaxResourcesReachedException;
-import faang.school.postservice.exception.ResourcePostIdNotEqualsPostIdException;
-import faang.school.postservice.exception.minio_exceptions.MinioUploadingFileException;
+import faang.school.postservice.exception.PostIdMismatchException;
 import faang.school.postservice.exception.not_found_exceptions.PostNotFoundException;
 import faang.school.postservice.exception.not_found_exceptions.ResourceNotFoundException;
 import faang.school.postservice.mapper.ResourceMapper;
 import faang.school.postservice.messages.ExceptionMessages;
-import faang.school.postservice.minio.MinioConfig;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.PostResourceRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.coobird.thumbnailator.Thumbnails;
@@ -26,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -40,15 +40,16 @@ public class PostResourceService {
     private final PostRepository postRepository;
     private final PostResourceRepository postResourceRepository;
     private final ResourceMapper resourceMapper;
-    private final MinioConfig minioConfig;
+    private final MinioService minioService;
 
-    public ResourceDto add(Long postId, List<MultipartFile> files) {
+    @Transactional
+    public List<ResourceDto> add(Long postId, List<MultipartFile> files) {
         files.forEach(this::validateFile);
 
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException(ExceptionMessages.POST_NOT_FOUND_EXCEPTION));
 
-        Resource resource = null;
+        List<Resource> uploadedResource = new ArrayList<>();
 
         for (MultipartFile file : files) {
             if (post.getResources().size() == MAX_COUNT_OF_RESOURCES) {
@@ -57,44 +58,18 @@ public class PostResourceService {
             }
 
             String key = file.getOriginalFilename() + System.currentTimeMillis();
-            String fileExtension = file.getOriginalFilename().
-                    substring(file.getOriginalFilename().lastIndexOf(".") + 1);
+            Resource resource = processAndUploadFile(file, key);
 
-
-            try {
-                if (file.getContentType().startsWith("image")) {
-                    BufferedImage croppedImage = resizeImage(file);
-                    log.info("The file has been resized");
-                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                    ImageIO.write(croppedImage, fileExtension, outputStream);
-                    byte[] imageBytes = outputStream.toByteArray();
-                    InputStream inputStream = new ByteArrayInputStream(imageBytes);
-
-                    resource = minioConfig.uploadImage(inputStream, imageBytes, key, file.getName(), file.getContentType());
-                }
-
-                if (file.getContentType().startsWith("video") || file.getContentType().startsWith("audio")) {
-                    resource = minioConfig.uploadVideoOrAudio(file, key);
-                }
-
-                resource.setPost(post);
-                post.getResources().add(resource);
-                postResourceRepository.save(resource);
-            } catch (IOException e) {
-                log.error(ExceptionMessages.MINIO_UPLOADING_FILE_EXCEPTION);
-                throw new MinioUploadingFileException(ExceptionMessages.MINIO_UPLOADING_FILE_EXCEPTION);
-            }
+            resource.setPost(post);
+            post.getResources().add(resource);
+            uploadedResource.add(resource);
         }
 
-        postRepository.save(post);
-
-        if (resource == null) {
-            throw new RuntimeException();
-        }
-
-        return resourceMapper.toResourceDto(resource);
+        log.info("The file was added to the post");
+        return resourceMapper.toResourceDtoList(uploadedResource);
     }
 
+    @Transactional
     public void delete(Long postId, Long resourceId) {
         Resource resource = postResourceRepository.findById(resourceId)
                 .orElseThrow(() -> new ResourceNotFoundException(ExceptionMessages.RESOURCE_NOT_FOUND_EXCEPTION));
@@ -103,17 +78,43 @@ public class PostResourceService {
         String key = resource.getKey();
 
         if (!postId.equals(resource.getPost().getId())) {
-            log.error(ExceptionMessages.RESOURCE_POST_ID_NOT_EQUALS_POST_ID_EXCEPTION);
-            throw new ResourcePostIdNotEqualsPostIdException(
-                    ExceptionMessages.RESOURCE_POST_ID_NOT_EQUALS_POST_ID_EXCEPTION
+            log.error(ExceptionMessages.PostIdMismatchException);
+            throw new PostIdMismatchException(
+                    ExceptionMessages.PostIdMismatchException
             );
         }
 
         post.getResources().remove(resource);
-        postRepository.save(post);
-        minioConfig.delete(key);
+        minioService.delete(key);
         postResourceRepository.deleteById(resourceId);
         log.info("The file has been removed from the bucket");
+    }
+
+    private Resource processAndUploadFile(MultipartFile file, String key) {
+        String contentType = file.getContentType();
+        String fileExtension = file.getOriginalFilename().
+                substring(file.getOriginalFilename().lastIndexOf(".") + 1);
+
+        if (contentType.startsWith("image")) {
+            try {
+                BufferedImage croppedImage = resizeImage(file);
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                ImageIO.write(croppedImage, fileExtension, outputStream);
+                byte[] imageBytes = outputStream.toByteArray();
+
+                try (InputStream inputStream = new ByteArrayInputStream(imageBytes)) {
+                    return minioService.uploadImage(inputStream, imageBytes, key, file.getName(), contentType);
+                }
+            } catch (IOException e) {
+                throw new InvalidFileException(ExceptionMessages.FILE_PROCESS_IMAGE_EXCEPTION);
+            }
+        }
+
+        if (contentType.startsWith("video") || contentType.startsWith("audio")) {
+            return minioService.uploadVideoOrAudio(file, key);
+        } else {
+            throw new InvalidFileException("Unsupported file type: " + contentType);
+        }
     }
 
     private BufferedImage resizeImage(MultipartFile file) throws IOException {
