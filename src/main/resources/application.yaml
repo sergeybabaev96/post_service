@@ -38,3 +38,5 @@ payment-service:
   host: localhost
   port: 9080
 
+scheduled:
+  publish-cron: "0 * * * * *"
