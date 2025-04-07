@@ -1,11 +1,11 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.exception.DataValidationException;
-import faang.school.postservice.model.Comment;
 import faang.school.postservice.config.context.AsyncConfig;
 import faang.school.postservice.dto.moderation.ItemModerationResultDto;
 import faang.school.postservice.dto.moderation.ItemToVerifyDto;
+import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.mapper.CommentMapper;
+import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Comment_;
 import faang.school.postservice.repository.CommentRepository;
 import jakarta.annotation.PostConstruct;
@@ -31,10 +31,6 @@ public class CommentServiceImpl implements CommentService {
     private final CommentMapper commentMapper;
     private final CommentRepository commentRepository;
 
-    @Override
-    public Comment findCommentById(Long commentId) {
-        return commentRepository.findById(commentId)
-                .orElseThrow(()-> new DataValidationException(String.format("Comment with id %s not found", commentId)));
     @Value("${app.comments-processing-batch-size}")
     private Integer pageSize;
 
@@ -44,6 +40,13 @@ public class CommentServiceImpl implements CommentService {
             throw new IllegalStateException(
                     "Property app.comments-processing-batch-size must be specified and greater than 0");
         }
+    }
+
+    @Override
+    public Comment findCommentById(Long commentId) {
+        return commentRepository.findById(commentId)
+                .orElseThrow(
+                        () -> new DataValidationException(String.format("Comment with id %s not found", commentId)));
     }
 
     @Async("taskExecutor")
