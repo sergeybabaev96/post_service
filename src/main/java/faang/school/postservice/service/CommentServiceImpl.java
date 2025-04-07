@@ -1,5 +1,7 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.exception.DataValidationException;
+import faang.school.postservice.model.Comment;
 import faang.school.postservice.config.context.AsyncConfig;
 import faang.school.postservice.dto.moderation.ItemModerationResultDto;
 import faang.school.postservice.dto.moderation.ItemToVerifyDto;
@@ -29,6 +31,10 @@ public class CommentServiceImpl implements CommentService {
     private final CommentMapper commentMapper;
     private final CommentRepository commentRepository;
 
+    @Override
+    public Comment findCommentById(Long commentId) {
+        return commentRepository.findById(commentId)
+                .orElseThrow(()-> new DataValidationException(String.format("Comment with id %s not found", commentId)));
     @Value("${app.comments-processing-batch-size}")
     private Integer pageSize;
 
