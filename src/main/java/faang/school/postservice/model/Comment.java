@@ -68,5 +68,6 @@ public class Comment {
     private Boolean verified;
 
     @Column(name = "verified_at")
+    @Temporal(TemporalType.TIMESTAMP)
     private LocalDateTime verifiedAt;
 }
