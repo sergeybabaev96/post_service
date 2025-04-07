@@ -24,7 +24,7 @@ public class PerspectiveAPI {
         this.apiUrl = apiUrl;
     }
 
-    public boolean isContentToxic(String text) throws IOException {
+    public boolean isContentToxic(String text) {
         if (text == null || text.trim().isEmpty()) {
             return false;
         }
