@@ -1,12 +1,19 @@
 package faang.school.postservice.config.webclient;
 
+import faang.school.postservice.config.post.PostServiceConstants;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.reactive.function.client.WebClient;
+
+import java.net.http.HttpClient;
+import java.time.Duration;
 
 @Configuration
-public class WebSpellWebClient {
+@Getter
+@RequiredArgsConstructor
+public class WebSpellHttpConfig {
     @Value("${webspell.api.url}")
     private String webSpellApiUrl;
 
@@ -20,12 +27,9 @@ public class WebSpellWebClient {
     private String webSpellApiHost;
 
     @Bean
-    public WebClient webSpellWebClient() {
-        return WebClient.builder()
-                .baseUrl(webSpellApiUrl)
-                .defaultHeader("Content-Type", webSpellApiContentType)
-                .defaultHeader("x-rapidapi-key", webSpellApiKey)
-                .defaultHeader("x-rapidapi-host", webSpellApiHost)
+    public HttpClient webSpellHttpClient() {
+        return HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(PostServiceConstants.TimeOut.CHECK_SPELLING_TIMEOUT))
                 .build();
     }
 }
