@@ -48,7 +48,7 @@ public class PostServiceTest {
     @Mock
     private PostValidator postValidator;
     @Mock
-    private PostModerationService postModerationService;
+    private PostModerationAsyncHandler postModerationAsyncHandler;
     @Mock
     private PostModerationConfig postModerationConfig;
 
@@ -386,7 +386,7 @@ public class PostServiceTest {
     public void givenValidDate_WhenModerateUnverifiedPost_ThenPostIsVerified() {
         when(postRepository.findAllByVerifiedAtIsNull()).thenReturn(posts);
         when(postModerationConfig.getBatchSize()).thenReturn(batchesSize);
-        when(postModerationService.checkForProfanity(anyList()))
+        when(postModerationAsyncHandler.checkForProfanity(anyList()))
                 .thenReturn(CompletableFuture.completedFuture(null));
 
         assertDoesNotThrow(() -> postService.moderateUnverifiedPost());
@@ -399,7 +399,7 @@ public class PostServiceTest {
 
         when(postRepository.findAllByVerifiedAtIsNull()).thenReturn(posts);
         when(postModerationConfig.getBatchSize()).thenReturn(batchesSize);
-        when(postModerationService.checkForProfanity(anyList()))
+        when(postModerationAsyncHandler.checkForProfanity(anyList()))
                 .thenReturn(CompletableFuture.completedFuture(null));
 
 

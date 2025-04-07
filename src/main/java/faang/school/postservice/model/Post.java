@@ -158,7 +158,7 @@ public class Post {
     private LocalDateTime updatedAt;
 
     /**
-     * Флаг, указывающий, проверен ли пост модератором. По умолчанию `false`.
+     * Флаг, указывающий, проверен ли пост модератором..
      */
     @Column(name = "verified")
     private boolean verified;

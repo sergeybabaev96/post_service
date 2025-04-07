@@ -50,7 +50,7 @@ public class PostService {
     private final PostRepository postRepository;
     private final PostMapper postMapper;
     private final PostValidator postValidator;
-    private final PostModerationService postModerationService;
+    private final PostModerationAsyncHandler postModerationAsyncHandler;
     private final PostModerationConfig postModerationConfig;
 
     /**
@@ -235,7 +235,7 @@ public class PostService {
         List<List<Post>> batches = ListUtils.partition(unverifiedPosts, postModerationConfig.getBatchSize());
 
         List<CompletableFuture<Void>> moderationTasks = batches.stream()
-                .map(postModerationService::checkForProfanity)
+                .map(postModerationAsyncHandler::checkForProfanity)
                 .toList();
 
         CompletableFuture.allOf(moderationTasks.toArray(new CompletableFuture[0])).join();
