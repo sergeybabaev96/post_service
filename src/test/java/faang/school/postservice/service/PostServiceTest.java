@@ -1,6 +1,6 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.dictionary.ModerationDictionary;
+import faang.school.postservice.config.moderation.PostModerationConfig;
 import faang.school.postservice.dto.post.PostCreateDto;
 import faang.school.postservice.dto.post.PostUpdateDto;
 import faang.school.postservice.dto.post.PostViewDto;
@@ -19,16 +19,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -47,7 +48,9 @@ public class PostServiceTest {
     @Mock
     private PostValidator postValidator;
     @Mock
-    private ModerationDictionary moderationDictionary;
+    private PostModerationService postModerationService;
+    @Mock
+    private PostModerationConfig postModerationConfig;
 
     @InjectMocks
     private PostService postService;
@@ -57,7 +60,7 @@ public class PostServiceTest {
     private PostUpdateDto postUpdateDto;
     private Post post;
     private List<Post> posts;
-    private final Set<String> profanity = Set.of("profanity");
+    private final int batchesSize = 4;
 
     @BeforeEach
     public void setUp() {
@@ -379,37 +382,38 @@ public class PostServiceTest {
     }
 
     @Test
-    @DisplayName("Проверка модерации поста, пост промодерирован и прошел верефикацию")
+    @DisplayName("Проверка модерации поста, пост промодерирован и прошел верификацию")
     public void givenValidDate_WhenModerateUnverifiedPost_ThenPostIsVerified() {
         when(postRepository.findAllByVerifiedAtIsNull()).thenReturn(posts);
-        when(moderationDictionary.getProfanityWord()).thenReturn(profanity);
-        ReflectionTestUtils.setField(postService, "batchSize", 4);
+        when(postModerationConfig.getBatchSize()).thenReturn(batchesSize);
+        when(postModerationService.checkForProfanity(anyList()))
+                .thenReturn(CompletableFuture.completedFuture(null));
 
         assertDoesNotThrow(() -> postService.moderateUnverifiedPost());
     }
 
     @Test
-    @DisplayName("Проверка модерации поста, пост промодерирован и непрошел верефикацию")
+    @DisplayName("Проверка модерации поста, пост промодерирован и не прошел верификацию")
     public void givenValidDate_WhenModerateUnverifiedPost_ThenPostIsUnverified() {
         post.setContent("profanity");
 
         when(postRepository.findAllByVerifiedAtIsNull()).thenReturn(posts);
-        when(moderationDictionary.getProfanityWord()).thenReturn(profanity);
-        ReflectionTestUtils.setField(postService, "batchSize", 4);
+        when(postModerationConfig.getBatchSize()).thenReturn(batchesSize);
+        when(postModerationService.checkForProfanity(anyList()))
+                .thenReturn(CompletableFuture.completedFuture(null));
+
 
         assertDoesNotThrow(() -> postService.moderateUnverifiedPost());
     }
 
     @Test
-    @DisplayName("Проверка модерации пост с результатом ввиде ошибки")
-    public void givenInvalidDate_WhenModerateUnverifiedPost_ThenException() {
-        post.setContent("profanity");
-
+    @DisplayName("Проверка модерации поста с пустым списком постов")
+    public void givenEmptyPostList_WhenModerateUnverifiedPost_ThenNoModerationPerformed() {
+        posts = Collections.emptyList();
         when(postRepository.findAllByVerifiedAtIsNull()).thenReturn(posts);
-        when(moderationDictionary.getProfanityWord()).thenReturn(profanity);
-        when(postRepository.saveAll(posts)).thenThrow(RuntimeException.class);
-        ReflectionTestUtils.setField(postService, "batchSize", 4);
 
-        assertThrows(RuntimeException.class, () -> postService.moderateUnverifiedPost());
+        assertDoesNotThrow(() -> postService.moderateUnverifiedPost());
+
+        verify(postRepository).findAllByVerifiedAtIsNull();
     }
 }

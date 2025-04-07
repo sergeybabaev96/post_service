@@ -1,8 +1,10 @@
 package faang.school.postservice.dictionary;
 
+import faang.school.postservice.config.moderation.PostModerationConfig;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
@@ -22,12 +24,11 @@ import java.util.Set;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class ModerationDictionary {
+    private final PostModerationConfig postModerationConfig;
 
     private final Set<String> profanityWord = new HashSet<>();
-
-    @Value("${moderation.dictionary.path}")
-    private String dictionaryPath;
 
     /**
      * Инициализирует словарь, загружая слова из файла.
@@ -39,7 +40,7 @@ public class ModerationDictionary {
         try {
             loadDictionary();
         } catch (IOException e) {
-            log.error("CRITICAL: Failed to load moderation dictionary. Shutting down.", e);
+            log.error("Failed to load moderation dictionary. Shutting down.", e);
             System.exit(1);
         }
     }
@@ -53,7 +54,7 @@ public class ModerationDictionary {
      */
     private void loadDictionary() throws IOException {
         log.info("Loading moderation dictionary");
-        ClassPathResource resource = new ClassPathResource(dictionaryPath);
+        ClassPathResource resource = new ClassPathResource(postModerationConfig.getDictionaryPath());
         try (BufferedReader reader =
                      new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
             String line;
@@ -71,6 +72,7 @@ public class ModerationDictionary {
      *
      * @return неизменяемое множество нецензурных слов
      */
+    @Cacheable(value = "profanityDictionary", sync = true)
     public Set<String> getProfanityWord() {
         return new HashSet<>(profanityWord);
     }
