@@ -88,3 +88,9 @@ file-upload:
       rectangular:
         max-long-side-length: 1080
         max-short-side-length: 566
+
+app:
+  scheduler:
+    postAd-removal-cron: "0 0 2 * * ?"  # Каждый день в 2:00"
+    ad:
+      batch-size: 200 # размер пачки для удаления
