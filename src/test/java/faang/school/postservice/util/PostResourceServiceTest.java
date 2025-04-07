@@ -41,6 +41,7 @@ import java.util.Optional;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -242,17 +243,11 @@ public class PostResourceServiceTest {
         when(postResourceRepository.findById(resourceId)).thenReturn(Optional.of(resource));
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
 
-        when(postRepository.save(any(Post.class))).thenAnswer(invocation -> {
-            Post savedPost = invocation.getArgument(0);
-            post.getResources().clear();
-            return savedPost;
-        });
-
         postResourceService.delete(postId, resourceId);
 
-        assertEquals(0, post.getResources().size());
-        verify(postRepository).save(postArgumentCaptor.capture());
-        verify(minioService).delete(stringArgumentCaptor.capture());
+        assertFalse(post.getResources().contains(resource));
+
+        verify(minioService).delete(resource.getKey());
         verify(postResourceRepository).deleteById(resourceId);
     }
 
