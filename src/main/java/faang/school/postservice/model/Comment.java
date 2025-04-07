@@ -65,7 +65,6 @@ public class Comment {
     @Column(name = "verified", nullable = false)
     private boolean verified;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "verified_date")
     private LocalDateTime verifiedDate;
 }
