@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,25 +35,10 @@ public class PostService {
     private final SpellCheckerService spellCheckerService;
     private final KafkaPostProducer kafkaPostProducer;
     private final PostCacheService postCacheService;
+    private final UserCashService userCashService;
 
     @Value("${moderation.threadSize}")
     private int threadSize;
-
-    public PostService(PostRepository postRepository,
-                       InternalServices internalServices,
-                       ThreadPoolTaskExecutor publishingThreadPool,
-                       AsyncModerationService asyncModerationService,
-                       SpellCheckerService spellCheckerService,
-                       KafkaPostProducer kafkaPostProducer,
-                       PostCacheService postCacheService) {
-        this.postRepository = postRepository;
-        this.internalServices = internalServices;
-        this.asyncModerationService = asyncModerationService;
-        this.executorService = publishingThreadPool.getThreadPoolExecutor();
-        this.spellCheckerService = spellCheckerService;
-        this.kafkaPostProducer = kafkaPostProducer;
-        this.postCacheService = postCacheService;
-    }
 
     @Transactional
     public Post createDraft(Post post) {
@@ -79,6 +63,8 @@ public class PostService {
         Post result = postRepository.save(post);
         kafkaPostProducer.publishPostCreationEvent(result);
         postCacheService.cachePost(result);
+
+        userCashService.cacheUser(result.getAuthorId());
 
         return result;
     }

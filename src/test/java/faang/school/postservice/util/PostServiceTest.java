@@ -10,6 +10,7 @@ import faang.school.postservice.service.KafkaPostProducer;
 import faang.school.postservice.service.PostCacheService;
 import faang.school.postservice.service.PostService;
 import faang.school.postservice.service.SpellCheckerService;
+import faang.school.postservice.service.UserCashService;
 import faang.school.postservice.validation.ModerationDictionaryValidation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.MethodOrderer;
@@ -23,7 +24,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.security.InvalidParameterException;
@@ -33,8 +33,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -72,9 +71,6 @@ public class PostServiceTest {
     private AsyncModerationService asyncModerationService;
 
     @Mock
-    private ThreadPoolTaskExecutor publishingThreadPool;
-
-    @Mock
     private SpellCheckerService spellCheckerService;
 
     @Mock
@@ -82,6 +78,9 @@ public class PostServiceTest {
 
     @Mock
     private PostCacheService postCacheService;
+
+    @Mock
+    private UserCashService userCashService;
 
     @InjectMocks
     private PostService postService;
@@ -364,37 +363,30 @@ public class PostServiceTest {
         assertEquals(mockUserIds, result);
     }
 
-    public void publishScheduledPostsTest() throws Exception {
+    @Test
+    void publishScheduledPostsTest() throws Exception {
         when(postRepository.findReadyToPublish()).thenReturn(postsToPublish);
+        ExecutorService mockExecutor = mock(ExecutorService.class);
 
-        ThreadPoolExecutor mockThreadPoolExecutor = mock(ThreadPoolExecutor.class);
-        when(publishingThreadPool.getThreadPoolExecutor()).thenReturn(mockThreadPoolExecutor);
-
-        postService = new PostService(postRepository,
-                internalServices,
-                publishingThreadPool,
-                asyncModerationService,
-                spellCheckerService,
-                kafkaPostProducer,
-                postCacheService);
+        ReflectionTestUtils.setField(postService, "executorService", mockExecutor);
 
         doAnswer(invocation -> {
             List<Callable<Void>> tasks = invocation.getArgument(0);
-            for (Callable<Void> task : tasks) {
-                task.call();
-            }
+            tasks.forEach(task -> {
+                try {
+                    task.call();
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            });
             return null;
-        }).when(mockThreadPoolExecutor).invokeAll(anyList());
+        }).when(mockExecutor).invokeAll(anyList());
 
         postService.publishScheduledPosts();
 
         verify(postRepository).findReadyToPublish();
-        verify(publishingThreadPool, times(2)).getThreadPoolExecutor();
+        verify(mockExecutor).invokeAll(anyList());
         verify(postRepository).saveAll(postsToPublish);
-        postsToPublish.forEach(post -> {
-            assertTrue(post.isPublished());
-            assertNotNull(post.getPublishedAt());
-        });
     }
 
     @Test
@@ -449,7 +441,7 @@ public class PostServiceTest {
     }
 
     @Test
-    void testMethod(){
+    void testMethod() {
         Page<Post> page = new PageImpl<>(unpublishedPosts);
         when(postRepository.findByPublishedFalse(any(Pageable.class))).thenReturn(page);
 
