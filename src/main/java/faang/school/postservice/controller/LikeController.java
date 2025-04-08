@@ -12,19 +12,19 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/like")
+@RequestMapping("/likes")
 @RequiredArgsConstructor
 public class LikeController {
 
     private final LikeService likeService;
 
-    @GetMapping("/users/post/{postId}")
+    @GetMapping("/post/{postId}")
     public List<UserDto> getPostLikeUsers(@NonNull @PathVariable("postId") Long postId) {
-        return likeService.getPostLikes(postId);
+        return likeService.getUsersWhoLikedPost(postId);
     }
 
-    @GetMapping("/users/comment/{commentId}")
+    @GetMapping("/comment/{commentId}")
     public List<UserDto> getCommentLikeUsers(@NonNull @PathVariable("commentId") Long commentId) {
-        return likeService.getCommentLikes(commentId);
+        return likeService.getUsersWhoLikedComment(commentId);
     }
 }

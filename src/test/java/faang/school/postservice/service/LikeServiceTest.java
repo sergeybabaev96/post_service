@@ -25,7 +25,7 @@ import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class LikeServiceTest {
+class LikeServiceImplTest {
     private static final Request REQUEST = Request.create(Request.HttpMethod.GET, "/likes", Collections.emptyMap(), null, Charset.defaultCharset(), new RequestTemplate());
     private static final Long NON_EXISTENT_USER_ID = 999L;
     private static final Long COMMENT_ID = 1L;
@@ -37,13 +37,13 @@ class LikeServiceTest {
     private UserServiceClient userServiceClient;
 
     @InjectMocks
-    private LikeService likeService;
+    private LikeServiceImpl likeService;
 
     private final UserDto firstUserDto = new UserDto(1L, "firstUser", "firstUser@email.com");
     private final UserDto secondUserDto = new UserDto(1L, "secondUser", "secondUser@email.com");
 
     @Test
-    void testGetPostLikes() {
+    void testGetUsersWhoLikedPost() {
         long postId = 1L;
         Post post = Post.builder().id(postId).build();
         Like like = Like.builder().post(post).build();
@@ -51,7 +51,7 @@ class LikeServiceTest {
         when(likeRepository.findByPostId(postId)).thenReturn(List.of(like));
         when(userServiceClient.getUsersByIds(anyList())).thenReturn(Arrays.asList(firstUserDto, secondUserDto));
 
-        List<UserDto> result = likeService.getPostLikes(postId);
+        List<UserDto> result = likeService.getUsersWhoLikedPost(postId);
         assertNotNull(result);
         assertEquals(2, result.size());
         verify(likeRepository, times(1)).findByPostId(postId);
@@ -59,7 +59,7 @@ class LikeServiceTest {
     }
 
     @Test
-    void testGetCommentLikes() {
+    void testGetUsersWhoLikedComment() {
         long commentId = 1L;
         Comment comment = Comment.builder().id(commentId).build();
         Like like = Like.builder().comment(comment).build();
@@ -67,7 +67,7 @@ class LikeServiceTest {
         when(likeRepository.findByCommentId(commentId)).thenReturn(List.of(like));
         when(userServiceClient.getUsersByIds(anyList())).thenReturn(Arrays.asList(firstUserDto, secondUserDto));
 
-        List<UserDto> result = likeService.getCommentLikes(commentId);
+        List<UserDto> result = likeService.getUsersWhoLikedComment(commentId);
         assertNotNull(result);
         assertEquals(2, result.size());
         verify(likeRepository, times(1)).findByCommentId(commentId);
@@ -75,26 +75,26 @@ class LikeServiceTest {
     }
 
     @Test
-    public void getCommentLikesWithException() {
+    void getUsersWhoLikedCommentWithException() {
         Like likeWithNonExistentUser = Like.builder().userId(NON_EXISTENT_USER_ID).build();
 
         when(likeRepository.findByCommentId(COMMENT_ID)).thenReturn(List.of(likeWithNonExistentUser));
         when(userServiceClient.getUsersByIds(anyList()))
                 .thenThrow(new FeignException.NotFound("User not found", REQUEST, null, null));
 
-        assertThrows(FeignException.NotFound.class, () -> likeService.getCommentLikes(COMMENT_ID));
+        assertThrows(FeignException.NotFound.class, () -> likeService.getUsersWhoLikedComment(COMMENT_ID));
         verify(userServiceClient).getUsersByIds(List.of(NON_EXISTENT_USER_ID));
     }
 
     @Test
-    public void getPostLikesWithException() {
+    void getUsersWhoLikedPostWithException() {
         Like likeWithNonExistentUser = Like.builder().userId(NON_EXISTENT_USER_ID).build();
 
         when(likeRepository.findByPostId(POST_ID)).thenReturn(List.of(likeWithNonExistentUser));
         when(userServiceClient.getUsersByIds(anyList()))
                 .thenThrow(new FeignException.NotFound("User not found", REQUEST, null, null));
 
-        assertThrows(FeignException.NotFound.class, () -> likeService.getPostLikes(POST_ID));
+        assertThrows(FeignException.NotFound.class, () -> likeService.getUsersWhoLikedPost(POST_ID));
         verify(userServiceClient).getUsersByIds(List.of(NON_EXISTENT_USER_ID));
     }
 }
