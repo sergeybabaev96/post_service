@@ -1,7 +1,8 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.api.PerspectiveAPI;
-import faang.school.postservice.exception.ModerationException;
+import faang.school.postservice.exception.PostModerationException;
+import faang.school.postservice.exception.PerspectiveAPIException;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,13 +16,11 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -31,32 +30,34 @@ public class PostService {
     private final PostRepository postRepository;
     private final PerspectiveAPI perspectiveAPI;
     private final ExecutorService moderationExecutor;
+    private Page<Post> page;
 
     @Value("${moderation.batch.size}")
     private int pageSize;
 
     @Async
     public void moderatePosts() {
+        log.info("Starting posts moderation");
         int pageNumber = 0;
-        Page<Post> page;
 
         do {
             page = postRepository.findByVerifiedDateIsNull(
                     PageRequest.of(pageNumber, pageSize, Sort.by("id").ascending())
             );
 
-            List<CompletableFuture<Void>> futures = partition(page.getContent(), pageSize).stream()
-                    .map(batch -> CompletableFuture.runAsync(() -> moderateBatch(batch), moderationExecutor))
-                    .toList();
-
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            CompletableFuture.runAsync(() -> moderateBatch(page.getContent()), moderationExecutor)
+                    .join();
 
             pageNumber++;
         } while (page.hasNext());
     }
 
-    @Retryable(retryFor = ModerationException.class, backoff = @Backoff(delay = 1000, multiplier = 2))
+    @Retryable(retryFor = PostModerationException.class, backoff = @Backoff(delayExpression = "${moderation.retry.delay}",
+            multiplierExpression = "${moderation.retry.multiplier}"),
+            maxAttemptsExpression = "${moderation.retry.max-attempts}")
     public void moderateBatch(List<Post> batch) {
+        List<Post> failedPosts = new ArrayList<>();
+
         for (Post post : batch) {
             try {
                 boolean isToxic = perspectiveAPI.isContentToxic(post.getContent());
@@ -66,22 +67,16 @@ public class PostService {
 
                 postRepository.save(post);
                 log.info("Post {} moderated. Toxic: {}", post.getId(), isToxic);
-            } catch (IOException e) {
-                log.error(MODERATION_FAIL_EXCEPTION);
-                throw new ModerationException(MODERATION_FAIL_EXCEPTION);
+            } catch (PerspectiveAPIException e) {
+                failedPosts.add(post);
+                throw new PostModerationException(MODERATION_FAIL_EXCEPTION);
             }
         }
-    }
 
-    private <T> List<List<T>> partition(List<T> list, int size) {
-        List<List<T>> partitions = new ArrayList<>();
-        for (int i = 0; i < list.size(); i += size) {
-            partitions.add(list.subList(i, Math.min(i + size, list.size())));
+        if (!failedPosts.isEmpty()) {
+            throw new PostModerationException("Failed to moderate" + failedPosts.size() + "posts");
         }
-        return partitions;
-    }
 
-    public void setPageSizeForTesting(int pageSize) {
-        this.pageSize = pageSize;
+        log.info("All post have been moderated");
     }
 }

@@ -1,7 +1,7 @@
 package faang.school.postservice.util.post;
 
 import faang.school.postservice.api.PerspectiveAPI;
-import faang.school.postservice.exception.ModerationException;
+import faang.school.postservice.exception.PostModerationException;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.PostService;
@@ -14,6 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.util.List;
@@ -46,7 +47,7 @@ public class PostServiceTest {
     void setUp() {
         ExecutorService immediateExecutor = Executors.newSingleThreadExecutor();
         postService = new PostService(postRepository, perspectiveAPI, immediateExecutor);
-        postService.setPageSizeForTesting(pageSize);
+        ReflectionTestUtils.setField(postService, "pageSize", pageSize);
     }
 
     @Test
@@ -93,9 +94,9 @@ public class PostServiceTest {
     void moderateBatch_ShouldHandleApiErrors() throws Exception {
         Post post = createPost(3L, "Error content");
         when(perspectiveAPI.isContentToxic(anyString()))
-                .thenThrow(new ModerationException(MODERATION_FAIL_EXCEPTION));
+                .thenThrow(new PostModerationException(MODERATION_FAIL_EXCEPTION));
 
-        assertThrows(ModerationException.class, () ->
+        assertThrows(PostModerationException.class, () ->
                 postService.moderateBatch(List.of(post)));
     }
 
