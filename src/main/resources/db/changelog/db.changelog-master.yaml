@@ -10,4 +10,4 @@ databaseChangeLog:
   - include:
       file: db/changelog/changeset/post_V005_add_tag.sql
   - include:
-      file: db/changelog/changeset/post_V006_add_columns_for_verify_comments.sql
+      file: db/changelog/changeset/post_V005_add_columns_for_verify_comments.sql
