@@ -1,16 +1,15 @@
 package faang.school.postservice.handler;
 
+import faang.school.postservice.dto.ErrorResponse;
 import faang.school.postservice.exception.PostValidationException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDateTime;
+
 @Slf4j
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -31,9 +30,11 @@ public class GlobalExceptionHandler {
     }*/
 
     @ExceptionHandler(PostValidationException.class)
-    public ResponseEntity<String> handlePostValidationException(PostValidationException e) {
-        log.error("!!! PostValidationException  ---  " + e.getMessage());
-        return ResponseEntity.badRequest().body(e.getMessage());
+    public ResponseEntity<ErrorResponse> handlePostValidationException(PostValidationException e) {
+        log.error("PostValidationException: " + e.getMessage());
+        ErrorResponse errorResponse = new ErrorResponse(
+                e.getMessage(), HttpStatus.BAD_REQUEST.value(), LocalDateTime.now());
+        return ResponseEntity.badRequest().body(errorResponse);
     }
 
 
