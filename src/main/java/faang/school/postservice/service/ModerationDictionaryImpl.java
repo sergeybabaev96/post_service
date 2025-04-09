@@ -17,7 +17,7 @@ import java.util.List;
 @Component
 public class ModerationDictionaryImpl implements ModerationDictionary {
 
-    private static final List<String> MODERATION_DICTIONARY_FILES = new ArrayList<>();
+    private final List<String> deniedWordsList = new ArrayList<>();
 
     @Value("${dictionary.comments.path_to_file}")
     private String pathToDictionary;
@@ -30,7 +30,7 @@ public class ModerationDictionaryImpl implements ModerationDictionary {
             }
 
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-                MODERATION_DICTIONARY_FILES.addAll(reader.lines().map(String::toLowerCase).toList());
+                deniedWordsList.addAll(reader.lines().map(String::toLowerCase).toList());
             }
         } catch (IOException e) {
             throw new ModerationDictionaryException(e);
@@ -38,6 +38,6 @@ public class ModerationDictionaryImpl implements ModerationDictionary {
     }
 
     public boolean isTextAreCorrect(@NotBlank String text) {
-        return MODERATION_DICTIONARY_FILES.stream().noneMatch(text::contains);
+        return deniedWordsList.stream().noneMatch(text::contains);
     }
 }
