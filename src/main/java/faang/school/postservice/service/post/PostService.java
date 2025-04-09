@@ -32,6 +32,8 @@ public class PostService {
     private final PostMapper postMapper;
     private final ExecutorService postPublishingExecutor;
 
+    private final static int BATCH_SIZE = 1000;
+
 
     public PostDto createDraftPost(PostDto postDto) {
         validateOwner(postDto.getAuthorId(), postDto.getProjectId());
@@ -119,13 +121,13 @@ public class PostService {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        int chunkSize = 1000;
+
 
         List<CompletableFuture<Void>> futures = new ArrayList<>();
-        for (int i = 0; i < posts.size(); i+=chunkSize) {
-            List<Post> chunk = posts.subList(i,Math.min(i+chunkSize, posts.size()));
+        for (int i = 0; i < posts.size(); i+= BATCH_SIZE) {
+            List<Post> chunk = posts.subList(i,Math.min(i+ BATCH_SIZE, posts.size()));
 
-            int chunkNumber = i / chunkSize +1;
+            int chunkNumber = i / BATCH_SIZE +1;
             CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                 log.info("Начинаем обработку чанка {} ({} постов) в потоке: {}",
                         chunkNumber, chunk.size(), Thread.currentThread().getName());
@@ -138,8 +140,11 @@ public class PostService {
             futures.add(future);
         }
 
+        log.info("🌀 Ожидаем завершения всех задач публикации...");
+
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        log.info("Все посты успешно опубликованы!");
+
+        log.info("✅ Все посты успешно опубликованы!");
     }
 
     private List<PostDto> getAllFilterAndSortedPosts(List<Post> posts, Predicate<Post> publishedFilter) {
