@@ -49,7 +49,7 @@ public class PostServiceImpl implements PostService {
             try {
                 List<Post> posts = postRepository.findReadyToPublish();
                 if (posts.isEmpty()) {
-                    log.info("Post list is empty");
+                    log.warn("Post list is empty");
                     return;
                 }
 
@@ -106,6 +106,8 @@ public class PostServiceImpl implements PostService {
                 .mapToObj(i -> list.subList(i * chunkSize, Math.min((i + 1) * chunkSize, list.size())))
                 .toList();
     }
+
+
 
     @Override
     public Post getPostById(Long postId) {

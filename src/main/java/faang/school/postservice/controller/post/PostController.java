@@ -36,7 +36,6 @@ import static org.springframework.http.ResponseEntity.ok;
 @RequestMapping("/post-service/posts")
 @RequiredArgsConstructor
 public class PostController {
-
     private final PostService postService;
     private final PostFileService postFileService;
 

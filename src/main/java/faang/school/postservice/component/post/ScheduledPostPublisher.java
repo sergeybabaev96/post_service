@@ -1,19 +1,19 @@
 package faang.school.postservice.component.post;
 
 import faang.school.postservice.service.post.interfaces.PostService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class ScheduledPostPublisher {
-    PostService postService;
+    private final PostService postService;
 
     @Scheduled(cron = "0 * * * * ?")
-    void startPublishPost() {
+    public void startPublishPost() {
         try {
             postService.publishScheduledPosts();
         } catch (Exception e) {
