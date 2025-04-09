@@ -5,6 +5,10 @@ spring:
     username: user
     password: password
 
+  mvc:
+    servlet:
+      path: /api/v1
+
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
@@ -32,30 +36,24 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092
 
+    consumer:
+      group-id: group_id
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.value.default.type: faang.school.postservice.dto.post
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      properties:
-        spring.json.add.type.headers: false
-        spring.json.trusted.packages: "*"  # Разрешить десериализацию всех пакетов
 
     topic:
       post:
         name: posts
         partitions: 10
         replicas: 1
-    admin:
-      properties:
-        retries: 5
-        retry.backoff.ms: 1000
-
-    consumer:
-      group-id: 1
-      #trusted-packages: faang.school.postservice.event
-
-      properties:
-        spring.json.add.type.headers: false
-        spring.json.trusted.packages: "*"  # Разрешить десериализацию всех пакетов
 
 
   servlet:
@@ -64,9 +62,7 @@ spring:
       max-file-size: 5MB
       max-request-size: 50MB
 
-  mvc:
-    servlet:
-      path: /api/v1
+
 
 server:
   port: 8081
@@ -95,7 +91,7 @@ logging:
   level:
     root: info
     #org.springframework.kafka: DEBUG
-    org.apache.kafka.clients.consumer: DEBUG
+    #org.apache.kafka.clients.consumer: DEBUG
 
 user-service:
   host: localhost
@@ -152,8 +148,8 @@ comment:
   path-to-dictionary: /bad_words_list.txt
 
   schedule:
-    verify: "*/10 * * * * *"
-    user-ban: "*/30 * * * * *"
+    verify: "* * */10 * * * "
+    user-ban: "* * */30 * * *"
   batchSize: 100
   thread-pool-size: 4
   word-split-regex: "(?<=\\p{L})(?=\\p{P})|(?<=\\p{P})(?=\\p{L})|\\s+"
@@ -181,5 +177,3 @@ post-comments:
 
 feed-posts:
   size: 500
-
-

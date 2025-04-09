@@ -2,7 +2,6 @@ package faang.school.postservice.publisher.kafka;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
@@ -11,10 +10,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public abstract class AbstractEventProducer<T> {
     private final KafkaTemplate<String, Object> kafkaTemplate;
-    private final NewTopic topic;
 
-    public void sendEvent(T event) {
-        log.info ("Sending an event {} to Kafka with the topic {}", event, topic.name ());
-        kafkaTemplate.send(topic.name(), event);
+    public void sendEvent(T event, String topicName) {
+        log.info ("Sending an event {} to Kafka with the topic {}", event, topicName);
+        kafkaTemplate.send(topicName, event);
     }
 }

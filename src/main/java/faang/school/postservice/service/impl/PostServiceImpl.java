@@ -38,6 +38,9 @@ public class PostServiceImpl implements PostService {
     @Value("${post_service.batch_size}")
     private int postBatchSize;
 
+    @Value("${spring.kafka.topic.post.name}")
+    private final String postTopicName;
+
     private final PostRepository postRepository;
     private final PostServiceValidator postServiceValidator;
     private final PostMapper postMapper;
@@ -56,6 +59,7 @@ public class PostServiceImpl implements PostService {
         log.info("Post draft created, id = {}", draftPost.getId());
 
         List<Long> subscriberIds = userServiceClient.getFollowerIds(draftPost.getAuthorId());
+
         PostCreatedEvent event = PostCreatedEvent.builder()
                 .postId(draftPost.getId())
                 .authorId(draftPost.getAuthorId())
@@ -63,7 +67,7 @@ public class PostServiceImpl implements PostService {
                 .build();
         log.info("subscriberIds size = {}", event.getSubscriberIds().size());
 
-        kafkaPostProducer.sendEvent(event);
+        kafkaPostProducer.sendEvent(event, postTopicName);
         return postMapper.toPostResponseDto(draftPost);
     }
 
@@ -88,14 +92,16 @@ public class PostServiceImpl implements PostService {
 
         List<Post> scheduledPosts = findAllPostsByFilter(postFilterDto);
         List<List<Post>> postBatches = ListUtils.partition(scheduledPosts, postBatchSize);
+
         postBatches.stream()
                 .map(this::preparePostList)
-                .map(postsBatch -> CompletableFuture.runAsync(() -> {
-                    postRepository.saveAll(postsBatch);
-                }, executorService).exceptionally(error -> {
+                .map(postsBatch ->
+                        CompletableFuture.runAsync(() -> postRepository.saveAll(postsBatch), executorService)
+                        .exceptionally(error -> {
                     log.error("Error processing scheduled posts", error);
                     throw new RuntimeException("Failed to process scheduled posts", error);
-                })).forEach(CompletableFuture::join);
+                }))
+                .forEach(CompletableFuture::join);
     }
 
     @Override

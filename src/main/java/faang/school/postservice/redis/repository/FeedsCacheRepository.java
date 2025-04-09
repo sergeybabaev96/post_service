@@ -5,5 +5,5 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface FeedsCacheRepository extends CrudRepository<FeedCache,Long> {
+public interface FeedsCacheRepository extends CrudRepository<FeedCache, Long> {
 }

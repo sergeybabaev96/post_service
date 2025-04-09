@@ -1,8 +1,8 @@
-package faang.school.postservice.redis.service;
+package faang.school.postservice.redis.service.feed;
 
 import faang.school.postservice.redis.model.entity.FeedCache;
 import faang.school.postservice.redis.repository.FeedsCacheRepository;
-import faang.school.postservice.redis.service.FeedCacheService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -15,25 +15,23 @@ import java.util.concurrent.CompletableFuture;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class FeedCacheServiceImpl implements FeedCacheService {
     private final FeedsCacheRepository feedsCacheRepository;
     private final RedissonClient redissonClient;
 
     @Value("${feed-posts.size}")
-    private int feedSize;
-
-    public FeedCacheServiceImpl(FeedsCacheRepository feedsCacheRepository, RedissonClient redissonClient) {
-        this.feedsCacheRepository = feedsCacheRepository;
-        this.redissonClient = redissonClient;
-    }
+    private final int feedSize;
 
     @Override
     @Async("feedExecutor")
     public CompletableFuture<Void> getAndSaveFeed(Long feedId, Long postId) {
         log.debug("Lock acquired for feedId: {}", postId);
+
         String lockKey = "lock:" + feedId;
         RLock lock = redissonClient.getLock(lockKey);
         lock.lock();
+
         try {
             FeedCache feedCache = feedsCacheRepository.findById(feedId)
                     .orElseGet(() -> new FeedCache(feedId, new LinkedList<>()));
@@ -50,6 +48,7 @@ public class FeedCacheServiceImpl implements FeedCacheService {
 
     private FeedCache addPostIdToFeed(FeedCache feedCache, Long postId) {
         LinkedList<Long> restoredPostIds = feedCache.getPostIds();
+
         if (!restoredPostIds.contains(postId)) {
             restoredPostIds.add(0, postId);
         }

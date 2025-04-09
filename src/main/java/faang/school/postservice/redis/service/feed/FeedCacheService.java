@@ -1,4 +1,4 @@
-package faang.school.postservice.redis.service;
+package faang.school.postservice.redis.service.feed;
 
 import java.util.concurrent.CompletableFuture;
 
