@@ -1,12 +1,14 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.dto.LikeViewDto;
+import faang.school.postservice.dto.like.LikeViewDto;
 import faang.school.postservice.mapper.LikeMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.LikeRepository;
+import faang.school.postservice.service.like.LikeNotificationService;
 import faang.school.postservice.validation.LikeValidator;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ public class LikeService {
     private final PostService postService;
     private final LikeValidator likeValidator;
     private final CommentService commentService;
+    private final LikeNotificationService likeNotificationService;
 
     /**
      * Добавляет лайк на пост.
@@ -41,6 +44,7 @@ public class LikeService {
      * @param userId Идентификатор пользователя.
      * @return DTO с информацией о добавленном лайке.
      */
+    @Transactional
     public LikeViewDto likePost(long postId, long userId) {
         log.info("Попытка добавить лайк на пост с ID {} от пользователя с ID {}", postId, userId);
 
@@ -53,6 +57,7 @@ public class LikeService {
 
         Like newLike = likeRepository.save(like);
 
+        likeNotificationService.publishUserLikeEvent(post, userId);
         log.info("Лайк на пост с ID {} от пользователя с ID {} успешно добавлен. ID лайка: {}",
                 postId, userId, newLike.getId());
 
@@ -80,6 +85,7 @@ public class LikeService {
      * @param userId    Идентификатор пользователя.
      * @return DTO с информацией о добавленном лайке.
      */
+    @Transactional
     public LikeViewDto likeComment(long commentId, long userId) {
         log.info("Попытка добавить лайк на комментарий с ID {} от пользователя с ID {}",
                 commentId, userId);
