@@ -64,9 +64,29 @@ tasks.test {
     finalizedBy(tasks.jacocoTestReport)
 }
 
+
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
+    reports {
+        xml.required.set(false)
+        html.required.set(true)
+    }
 }
+
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.jacocoTestReport)
+    violationRules {
+        rule {
+            element = "PACKAGE"
+            includes = listOf("faang.school.postservice.service")
+
+            limit {
+                minimum = BigDecimal.valueOf(0.7)
+            }
+        }
+    }
+}
+
 
 tasks.withType<Test> {
     useJUnitPlatform()
