@@ -38,6 +38,7 @@ public class PostController {
 
     @GetMapping("/{postId}")
     public PostDto getPost(@PathVariable long postId) {
+        log.info(">>> Received GET /posts/{}", postId);
         return postService.getPost(postId);
     }
 

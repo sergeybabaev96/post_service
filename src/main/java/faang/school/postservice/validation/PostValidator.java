@@ -57,7 +57,7 @@ public class PostValidator {
                 ProjectDto projectDto = projectServiceClient.getProject(postDto.projectId());
             }catch (FeignException.NotFound e) {
                 log.error("Project with ID = {} does not exist", postDto.projectId(), e);
-                throw new PostValidationException("Project with ID  does not exist");
+                throw new PostValidationException("Project with ID = %d does not exist".formatted(postDto.projectId()));
             }
         }
     }

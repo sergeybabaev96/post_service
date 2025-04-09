@@ -22,13 +22,20 @@ public class GlobalExceptionHandler {
         response.put("message", e.getMessage());
         return response;
     }*/
-
+/*
     @ExceptionHandler(PostValidationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public String handlePostValidationException(PostValidationException e) {
         log.error("!!! PostValidationException  ---  " + e.getMessage());
         return e.getMessage();
+    }*/
+
+    @ExceptionHandler(PostValidationException.class)
+    public ResponseEntity<String> handlePostValidationException(PostValidationException e) {
+        log.error("!!! PostValidationException  ---  " + e.getMessage());
+        return ResponseEntity.badRequest().body(e.getMessage());
     }
+
 
 
 
