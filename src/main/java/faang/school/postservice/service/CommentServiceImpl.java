@@ -1,15 +1,29 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.dto.comment.CommentCreateDto;
+import faang.school.postservice.dto.comment.CommentResponseDto;
+import faang.school.postservice.dto.comment.CommentUpdateDto;
+import faang.school.postservice.dto.user.UserDto;
+import faang.school.postservice.exception.DataValidationException;
+import faang.school.postservice.exception.EntityNotFoundException;
+import faang.school.postservice.exception.NotFoundException;
+import faang.school.postservice.mapper.CommentCreateMapper;
+import faang.school.postservice.mapper.CommentResponseMapper;
 import faang.school.postservice.model.Comment;
+import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
