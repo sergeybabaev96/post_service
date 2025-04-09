@@ -3,6 +3,7 @@ package faang.school.postservice.service;
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.PostDto;
+import faang.school.postservice.dto.event.PostViewEvent;
 import faang.school.postservice.exceptions.PostAlreadyPublishedException;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Album;
@@ -11,6 +12,7 @@ import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
 import faang.school.postservice.model.ad.Ad;
+import faang.school.postservice.publisher.PostViewEventPublisher;
 import faang.school.postservice.repository.AlbumRepository;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.LikeRepository;
@@ -40,6 +42,7 @@ public class PostService {
     private final AdRepository adRepository;
     private final ResourceRepository resourceRepository;
     private final AlbumRepository albumRepository;
+    private final PostViewEventPublisher postViewEventPublisher;
 
     public PostDto create(PostDto postDto) {
         validateContent(postDto);
@@ -96,40 +99,58 @@ public class PostService {
         postRepository.save(post);
     }
 
-    public PostDto getPost(Long postId) {
+    public PostDto getPost(Long postId, Long userId) {
         Post post = takePost(postId);
         log.info("Post retrieved: {}", post);
+        postViewEventPublisher.published(new PostViewEvent(postId, userId,
+                post.getAuthorId(), LocalDateTime.now()));
         return postMapper.toDto(post);
     }
 
-    public List<PostDto> findDraftsByAuthorId(Long authorId) {
+    public List<PostDto> findDraftsByAuthorId(Long authorId, Long userId) {
         return postRepository.findByAuthorId(authorId)
                 .filter(post -> !post.isDeleted() && !post.isPublished())
                 .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
+                .peek(post -> {
+                    postViewEventPublisher.published(
+                            new PostViewEvent(post.getId(), userId, authorId, LocalDateTime.now()));
+                })
                 .map(postMapper::toDto)
                 .toList();
     }
 
-    public List<PostDto> findDraftsByProjectId(Long projectId) {
+    public List<PostDto> findDraftsByProjectId(Long projectId, Long userId) {
         return postRepository.findByProjectId(projectId)
                 .filter(post -> !post.isDeleted() && !post.isPublished())
                 .sorted(Comparator.comparing(Post::getCreatedAt).reversed())
+                .peek(post -> {
+                    postViewEventPublisher.published(
+                            new PostViewEvent(post.getId(), userId, projectId, LocalDateTime.now()));
+                })
                 .map(postMapper::toDto)
                 .toList();
     }
 
-    public List<PostDto> findPublishedByAuthorId(Long authorId) {
+    public List<PostDto> findPublishedByAuthorId(Long authorId, Long userId) {
         return postRepository.findByAuthorId(authorId)
                 .filter(post -> !post.isDeleted() && post.isPublished())
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
+                .peek(post -> {
+                    postViewEventPublisher.published(
+                            new PostViewEvent(post.getId(), userId, authorId, LocalDateTime.now()));
+                })
                 .map(postMapper::toDto)
                 .toList();
     }
 
-    public List<PostDto> findPublishedByProjectId(Long projectId) {
+    public List<PostDto> findPublishedByProjectId(Long projectId, Long userId) {
         return postRepository.findByProjectId(projectId)
                 .filter(post -> !post.isDeleted() && post.isPublished())
                 .sorted(Comparator.comparing(Post::getPublishedAt).reversed())
+                .peek(post -> {
+                    postViewEventPublisher.published(
+                            new PostViewEvent(post.getId(), userId, projectId, LocalDateTime.now()));
+                })
                 .map(postMapper::toDto)
                 .toList();
     }

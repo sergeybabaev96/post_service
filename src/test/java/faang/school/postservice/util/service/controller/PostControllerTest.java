@@ -87,7 +87,7 @@ public class PostControllerTest {
 
     @Test
     void testPositiveGetPost() throws Exception {
-        when(postService.getPost(any())).thenReturn(preparePostDto());
+        when(postService.getPost(1L,1L)).thenReturn(preparePostDto());
 
         mockMvc.perform(get(REQUEST_URL_POST_ID, 1)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -98,7 +98,7 @@ public class PostControllerTest {
 
     @Test
     void testPositiveGetDraftsByAuthor() throws Exception {
-        when(postService.findDraftsByAuthorId(any())).thenReturn(list());
+        when(postService.findDraftsByAuthorId(any(),any())).thenReturn(list());
 
         mockMvc.perform(get(DRAFTS_BY_AUTHOR_URL, 1)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -109,7 +109,7 @@ public class PostControllerTest {
 
     @Test
     void testPositiveGetDraftsByProject() throws Exception {
-        when(postService.findDraftsByProjectId(any())).thenReturn(list());
+        when(postService.findDraftsByProjectId(any(),any())).thenReturn(list());
 
         mockMvc.perform(get(DRAFTS_BY_PROJECT_URL, 1)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -120,7 +120,7 @@ public class PostControllerTest {
 
     @Test
     void testPositiveGetPublishedByAuthor() throws Exception {
-        when(postService.findPublishedByAuthorId(any())).thenReturn(list());
+        when(postService.findPublishedByAuthorId(any(),any())).thenReturn(list());
 
         mockMvc.perform(get(PUBLISHED_BY_AUTHOR_URL, 1)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -131,7 +131,7 @@ public class PostControllerTest {
 
     @Test
     void testPositiveGetPublishedByProject() throws Exception {
-        when(postService.findPublishedByProjectId(any())).thenReturn(list());
+        when(postService.findPublishedByProjectId(any(),any())).thenReturn(list());
 
         mockMvc.perform(get(PUBLISHED_BY_PROJECT_URL, 1)
                         .contentType(MediaType.APPLICATION_JSON)
