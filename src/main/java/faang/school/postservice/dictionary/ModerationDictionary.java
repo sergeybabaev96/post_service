@@ -28,7 +28,7 @@ import java.util.Set;
 public class ModerationDictionary {
     private final PostModerationConfig postModerationConfig;
 
-    private final Set<String> profanityWord = new HashSet<>();
+    private final Set<String> profanityWords = new HashSet<>();
 
     /**
      * Инициализирует словарь, загружая слова из файла.
@@ -41,7 +41,6 @@ public class ModerationDictionary {
             loadDictionary();
         } catch (IOException e) {
             log.error("Failed to load moderation dictionary. Shutting down.", e);
-            System.exit(1);
         }
     }
 
@@ -60,11 +59,11 @@ public class ModerationDictionary {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (!line.trim().isEmpty()) {
-                    profanityWord.add(line.trim().toLowerCase());
+                    profanityWords.add(line.trim().toLowerCase());
                 }
             }
         }
-        log.info("Loaded {} profanity word", profanityWord.size());
+        log.info("Loaded {} profanity word", profanityWords.size());
     }
 
     /**
@@ -73,7 +72,7 @@ public class ModerationDictionary {
      * @return неизменяемое множество нецензурных слов
      */
     @Cacheable(value = "profanityDictionary", sync = true)
-    public Set<String> getProfanityWord() {
-        return new HashSet<>(profanityWord);
+    public Set<String> getProfanityWords() {
+        return Set.copyOf(profanityWords);
     }
 }

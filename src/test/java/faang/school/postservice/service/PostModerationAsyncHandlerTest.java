@@ -48,7 +48,7 @@ public class PostModerationAsyncHandlerTest {
     @Test
     @DisplayName("Проверка поста, пост должен быть верифицирован")
     public void givenCleanPost_whenCheckForProfanity_thenPostVerified() {
-        when(moderationDictionary.getProfanityWord()).thenReturn(profanityWords);
+        when(moderationDictionary.getProfanityWords()).thenReturn(profanityWords);
         doNothing().when(postModerationService).moderatePosts(any(), any());
 
         CompletableFuture<Void> result = postModerationAsyncHandler.checkForProfanity(List.of(cleanPost));
@@ -59,7 +59,7 @@ public class PostModerationAsyncHandlerTest {
     @Test
     @DisplayName("Проверка поста, пост не должен быть верифицирован")
     public void givenProfanityPost_whenCheckForProfanity_thenPostNotVerified() {
-        when(moderationDictionary.getProfanityWord()).thenReturn(profanityWords);
+        when(moderationDictionary.getProfanityWords()).thenReturn(profanityWords);
         doNothing().when(postModerationService).moderatePosts(any(), any());
 
         CompletableFuture<Void> result = postModerationAsyncHandler.checkForProfanity(List.of(profanityPost));

@@ -47,14 +47,18 @@ public interface PostMapper {
 
     default List<Long> getCommentIds(List<Comment> comments) {
         if (comments != null) {
-            return comments.stream().map(Comment::getId).toList();
+            return comments.stream()
+                    .map(Comment::getId)
+                    .toList();
         }
         return new ArrayList<>();
     }
 
     default List<Long> getResourcesIds(List<Resource> resources) {
         if (resources != null) {
-            return resources.stream().map(Resource::getId).toList();
+            return resources.stream()
+                    .map(Resource::getId)
+                    .toList();
         }
         return new ArrayList<>();
     }

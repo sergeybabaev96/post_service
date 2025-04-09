@@ -36,11 +36,11 @@ public class PostModerationService {
 
         posts.forEach(post -> {
             String content = post.getContent().toLowerCase();
-            boolean profanityFound = profanityWords.stream()
-                    .anyMatch(content::contains);
+            boolean isClean = profanityWords.stream()
+                    .noneMatch(content::contains);
 
             post.setVerifiedAt(now);
-            post.setVerified(!profanityFound);
+            post.setVerified(isClean);
         });
 
         postRepository.saveAll(posts);
