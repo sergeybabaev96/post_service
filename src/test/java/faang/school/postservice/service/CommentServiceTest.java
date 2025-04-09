@@ -2,25 +2,16 @@ package faang.school.postservice.service;
 
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.repository.CommentRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.stream.LongStream;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.anyList;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CommentServiceTest {
@@ -28,20 +19,12 @@ public class CommentServiceTest {
     @Mock
     private CommentRepository commentRepository;
     @Mock
-    private ModerationDictionaryImpl moderationDictionary;
+    private AsyncCommentService asyncCommentService;
     @InjectMocks
     private CommentServiceImpl commentService;
 
-    private final Executor synchronousExecutor = Runnable::run;
-
-    @BeforeEach
-    void setup() {
-        ReflectionTestUtils.setField(commentService, "commentModeratorExecutor", synchronousExecutor);
-        ReflectionTestUtils.setField(commentService, "limit", 20);
-    }
-
     @Test
-    public void moderateCommentsTest(){
+    public void moderateCommentsTest() {
         List<Long> commentIds = LongStream.range(1, 101)
                 .boxed()
                 .toList();
@@ -50,7 +33,6 @@ public class CommentServiceTest {
                 .map(id -> Comment.builder().id(id).content("Some content").build())
                 .toList();
 
-        when(moderationDictionary.isTextAreCorrect(anyString())).thenReturn(true);
         when(commentRepository.getUnverifiedCommentsIds()).thenReturn(commentIds);
         when(commentRepository.getUnverifiedComments(anyList()))
                 .thenAnswer(invocation -> {
@@ -59,13 +41,9 @@ public class CommentServiceTest {
                             .filter(c -> ids.contains(c.getId()))
                             .toList();
                 });
-        when(commentRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        commentService.moderateComments();
+        commentService.moderateComments(20);
 
-        verify(commentRepository, times(5)).getUnverifiedComments(anyList());
-        verify(commentRepository, times(comments.size())).save(any(Comment.class));
-
-        comments.forEach(comment -> assertTrue(comment.getVerified()));
+        verify(asyncCommentService, times(5)).moderateComments(anyList());
     }
 }

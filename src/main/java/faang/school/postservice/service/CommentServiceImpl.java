@@ -15,17 +15,14 @@ import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.apache.commons.collections4.ListUtils;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 @Service
 @Transactional
@@ -38,26 +35,14 @@ public class CommentServiceImpl implements CommentService {
     private final CommentResponseMapper commentResponseMapper;
     private final PostService postService;
     private final UserServiceClient userServiceClient;
-    private final Executor commentModeratorExecutor;
-    private final ModerationDictionaryImpl moderationDictionary;
-
-    @Value("${spring.task.scheduling.comment.max_comments_per_size}")
-    private int limit;
+    private final AsyncCommentService asyncCommentService;
 
     @Override
-    public void moderateComments() {
+    public void moderateComments(int batchSize) {
         log.info("Start moderating comments");
-        List<Long> unverifiedCommentsIds = commentRepository.getUnverifiedCommentsIds();
-
-        for (int i = 0; i < unverifiedCommentsIds.size(); i += limit) {
-            List<Long> subList = unverifiedCommentsIds.subList(i, Math.min(unverifiedCommentsIds.size(), i + limit));
-            List<CompletableFuture<Void>> futures = commentRepository.getUnverifiedComments(subList).stream()
-                    .map(this::moderateComment)
-                    .toList();
-
-            futures.forEach(CompletableFuture::join);
-        }
-
+        ListUtils.partition(commentRepository.getUnverifiedCommentsIds(), batchSize).stream()
+                .map(commentRepository::getUnverifiedComments)
+                .forEach(asyncCommentService::moderateComments);
         log.info("Finished moderating comments");
     }
 
@@ -175,24 +160,5 @@ public class CommentServiceImpl implements CommentService {
             log.error("UserDto ID is invalid (< 1) for authorId");
             throw new NotFoundException("UserDto ID is invalid (< 1) for authorId");
         }
-    }
-
-    private CompletableFuture<Void> moderateComment(Comment comment) {
-        return CompletableFuture.runAsync(() -> {
-            try {
-                String content = comment.getContent();
-                if (content == null || content.isBlank()) {
-                    comment.setVerified(true);
-                } else {
-                    comment.setVerified(moderationDictionary.isTextAreCorrect(content.toLowerCase()));
-                }
-                comment.setVerifiedAt(LocalDateTime.now());
-                commentRepository.save(comment);
-                log.debug("Comment: {} moderated. Is verified: {}", comment.getId(), comment.getVerified());
-            } catch (Exception e) {
-                log.error("Error moderating comment: {}", comment.getId(), e);
-            }
-
-        }, commentModeratorExecutor);
     }
 }

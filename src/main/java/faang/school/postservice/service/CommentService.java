@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface CommentService {
 
-    void moderateComments();
+    void moderateComments(int batchSize);
 
     long createComment(CommentCreateDto commentCreateDto);
 
