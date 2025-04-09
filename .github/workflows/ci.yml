@@ -57,4 +57,4 @@ jobs:
         run: ./gradlew test --no-daemon
 
       - name: Jacoco
-        run: ./gradle test :jacocoTestReport
+        run: ./gradlew test :jacocoTestReport
