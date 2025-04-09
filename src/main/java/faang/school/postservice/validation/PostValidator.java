@@ -7,8 +7,10 @@ import faang.school.postservice.dto.project.ProjectDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.PostValidationException;
 import faang.school.postservice.repository.PostRepository;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -40,18 +42,22 @@ public class PostValidator {
         }
 
         if (postDto.authorId() != null) {
-            UserDto userDto = userServiceClient.getUser(postDto.authorId());
-            if (userDto == null) {
-                log.error("author ID does not exist");
-                throw new PostValidationException("author ID does not exist");
+            try {
+                log.info("Calling user-service for authorId: {}", postDto.authorId());
+                UserDto userDto = userServiceClient.getUser(postDto.authorId());
+            } catch (FeignException.NotFound e) {
+                log.error("author with ID = {} does not exist", postDto.authorId(), e);
+                throw new PostValidationException("author with ID = %d does not exist".formatted(postDto.authorId()));
             }
         }
 
+
         if (postDto.projectId() != null) {
-            ProjectDto projectDto = projectServiceClient.getProject(postDto.projectId());
-            if (projectDto == null) {
-                log.error("project ID does not exist");
-                throw new PostValidationException("project ID does not exist");
+            try {
+                ProjectDto projectDto = projectServiceClient.getProject(postDto.projectId());
+            }catch (FeignException.NotFound e) {
+                log.error("Project with ID = {} does not exist", postDto.projectId(), e);
+                throw new PostValidationException("Project with ID  does not exist");
             }
         }
     }

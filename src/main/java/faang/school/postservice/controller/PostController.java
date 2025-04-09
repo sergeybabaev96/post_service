@@ -28,12 +28,13 @@ public class PostController {
     private final PostService postService;
 
     @PostMapping("/draft")
-    public PostDto createDraft(@Valid @RequestBody PostDto postDto) {
+    public PostDto createDraft( @RequestBody PostDto postDto) {
         log.info("Received request to create draft post: {}", postDto);
         PostDto createdDraft = postService.createDraft(postDto);
         log.info("Draft post created successfully with ID: {}", createdDraft.id());
         return createdDraft;
     }
+
 
     @GetMapping("/{postId}")
     public PostDto getPost(@PathVariable long postId) {
