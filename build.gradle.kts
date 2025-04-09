@@ -31,6 +31,9 @@ dependencies {
     implementation("org.liquibase:liquibase-core")
     implementation("redis.clients:jedis:4.3.2")
     runtimeOnly("org.postgresql:postgresql")
+    annotationProcessor("jakarta.persistence:jakarta.persistence-api:3.1.0")
+    implementation("jakarta.persistence:jakarta.persistence-api:3.1.0")
+    annotationProcessor("org.hibernate.orm:hibernate-jpamodelgen:6.4.0.Final")
 
     /**
      * Utils & Logging

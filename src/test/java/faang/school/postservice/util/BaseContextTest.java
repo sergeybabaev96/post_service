@@ -3,6 +3,7 @@ package faang.school.postservice.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.redis.testcontainers.RedisContainer;
 import faang.school.postservice.PostServiceApp;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,5 +60,10 @@ public class BaseContextTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test
+    void contextLoads() {
+        // тест пройдет если нет проблем с контекстом
     }
 }
