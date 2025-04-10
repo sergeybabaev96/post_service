@@ -49,15 +49,15 @@ public class CommentModerationService {
             return;
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime moderationTime = LocalDateTime.now();
 
         comments.forEach(comment -> {
-            String content = comment.getContent().toLowerCase();
-            boolean profanityFound = profanityWords.stream()
-                    .anyMatch(content::contains);
+            String normalizedContent = comment.getContent().toLowerCase();
+            boolean isProfanityFree = profanityWords.stream()
+                    .noneMatch(normalizedContent::contains);
 
-            comment.setVerifiedAt(now);
-            comment.setVerified(!profanityFound);
+            comment.setVerifiedAt(moderationTime);
+            comment.setVerified(isProfanityFree);
         });
 
         commentRepository.saveAll(comments);

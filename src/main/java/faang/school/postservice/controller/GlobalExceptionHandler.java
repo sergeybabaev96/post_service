@@ -139,12 +139,4 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(String.format("An internal error has occurred: %s", exception.getMessage()));
     }
-
-    @ExceptionHandler(ModerationException.class)
-    public ResponseEntity<String> handleModerationException(ModerationException exception) {
-        log.error("Moderation error: {}", exception.getMessage(), exception);
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(String.format("Moderation error: %s", exception.getMessage()));
-    }
 }

@@ -21,9 +21,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ModerationConfig {
 
-    @Value("${app.dictionary.path}")
+    @Value("${moderation.dictionary.path}")
     private String dictionaryPath;
 
-    @Value("${app.dictionary.batch.size}")
+    @Value("${moderation.dictionary.batch.size}")
     private int batchSize;
 }

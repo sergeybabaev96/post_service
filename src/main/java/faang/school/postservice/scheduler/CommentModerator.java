@@ -29,7 +29,7 @@ public class CommentModerator {
      *
      * @see CommentService#moderateUnverifiedComment() ()
      */
-    @Scheduled(cron = "${app.scheduler.daily-cron}")
+    @Scheduled(cron = "${moderation.cron.expression}")
     public void moderatePost() {
         commentService.moderateUnverifiedComment();
     }

@@ -50,10 +50,10 @@ services:
     bucketName:
       name: corpbucket
 
-app:
-  scheduler:
-    daily-cron: "0 0 0 * * *"
+moderation:
+  cron:
+    expression: 0 0 0 * * ?
   dictionary:
     path: "dictionary-for-moderation-comment.txt"
     batch:
-      size: 2000
+      size: 1000

@@ -50,8 +50,8 @@ public class CommentModerationAsyncHandler {
     @Async
     public CompletableFuture<Void> checkForProfanity(@NotNull List<Comment> comments) {
         try {
-            Set<String> profanity = moderationDictionary.getProfanityWords();
-            commentModerationService.moderateComments(comments, profanity);
+            Set<String> words = moderationDictionary.getProfanityWords();
+            commentModerationService.moderateComments(comments, words);
             return CompletableFuture.completedFuture(null);
         } catch (Exception exception) {
             log.error("Error processing batch of posts", exception);
