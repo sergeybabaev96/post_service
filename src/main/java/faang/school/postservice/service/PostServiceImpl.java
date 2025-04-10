@@ -1,8 +1,8 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.publisher.RedisUserBanTopicPublisher;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.publisher.RedisUserBanTopicPublisher;
 import faang.school.postservice.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
