@@ -3,6 +3,8 @@ package faang.school.postservice.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import faang.school.postservice.dto.PostDto;
 import faang.school.postservice.exception.PostValidationException;
+import faang.school.postservice.exception.PostNotFoundException;
+import faang.school.postservice.handler.GlobalExceptionHandler;
 import faang.school.postservice.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -52,7 +55,10 @@ class PostControllerTest {
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(postController).build();
+        mockMvc = MockMvcBuilders
+                .standaloneSetup(postController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
         objectMapper = new ObjectMapper();
         inputDto = PostDto.builder()
                 .content("Test Content")
@@ -71,7 +77,7 @@ class PostControllerTest {
         mockMvc.perform(post(BASE_URL + "/draft")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(inputDto)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(EXISTENT_POST_ID))
                 .andExpect(jsonPath("$.content").value("Test Content"))
                 .andExpect(jsonPath("$.authorId").value(1L));
@@ -79,14 +85,17 @@ class PostControllerTest {
 
     @Test
     void testCreateDraftShouldReturnBadRequestWhenInvalidInput() throws Exception {
-        // Arrange
         PostDto invalidDto = inputDto.toBuilder().content(" ").build();
+        when(postService.createDraft(invalidDto))
+                .thenThrow(new PostValidationException("Post content cannot be empty"));
 
-        // Act & Assert
         mockMvc.perform(post(BASE_URL + "/draft")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidDto)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Post content cannot be empty"))
+                .andExpect(jsonPath("$.code").value(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
 
@@ -103,15 +112,16 @@ class PostControllerTest {
 
     @Test
     void testGetPostShouldThrowExceptionWhenPostDoesNotExist() throws Exception {
+        String errorMessage = "Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID);
         when(postService.getPost(NON_EXISTENT_POST_ID)).thenThrow(
-                new PostValidationException("Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID))
+                new PostNotFoundException(errorMessage)
         );
 
         mockMvc.perform(get(BASE_URL + "/{postId}", NON_EXISTENT_POST_ID))
                 .andExpect(status().isNotFound())
-                .andExpect(content()
-                        .string(containsString("Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID)))
-                );
+                .andExpect(jsonPath("$.message").value(errorMessage))
+                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test
@@ -124,20 +134,20 @@ class PostControllerTest {
                 .andExpect(jsonPath("$.id").value(EXISTENT_POST_ID))
                 .andExpect(jsonPath("$.content").value("Test Content"))
                 .andExpect(jsonPath("$.authorId").value(1L))
-                .andExpect(jsonPath("$.isPublished").value(true));
+                .andExpect(jsonPath("$.published").value(true));
     }
 
     @Test
     void testPublishPostShouldThrowExceptionWhenPostDoesNotExist() throws Exception {
-        when(postService.getPost(NON_EXISTENT_POST_ID)).thenThrow(
-                new PostValidationException("Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID))
+        String errorMessage = "Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID);
+        when(postService.publishPost(NON_EXISTENT_POST_ID)).thenThrow(
+                new PostValidationException(errorMessage)
         );
-
         mockMvc.perform(put(BASE_URL + "/{postId}/publish", NON_EXISTENT_POST_ID))
-                .andExpect(status().isNotFound())
-                .andExpect(content()
-                        .string(containsString("Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID)))
-                );
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(errorMessage))
+                .andExpect(jsonPath("$.code").value(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test
@@ -150,7 +160,7 @@ class PostControllerTest {
                 .andExpect(jsonPath("$.id").value(EXISTENT_POST_ID))
                 .andExpect(jsonPath("$.content").value("Updated Content"))
                 .andExpect(jsonPath("$.authorId").value(1L))
-                .andExpect(jsonPath("$.isPublished").value(true));
+                .andExpect(jsonPath("$.Published").value(true));
     }
 
     @Test

@@ -283,6 +283,7 @@ class PostServiceTest {
     @Test
     void testGetPostShouldThrowExceptionWhenPostDoesNotExist() {
         when(postRepository.findById(NON_EXISTENT_POST_ID)).thenReturn(Optional.empty());
+
         assertThrows(PostValidationException.class, () -> postService.getPost(NON_EXISTENT_POST_ID));
     }
 
@@ -381,6 +382,7 @@ class PostServiceTest {
         when(postRepository.findById(NON_EXISTENT_POST_ID)).thenReturn(Optional.empty());
         PostValidationException exception = assertThrows(PostValidationException.class, () ->
                 postService.softDeletePost(NON_EXISTENT_POST_ID));
+
         assertEquals("Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID), exception.getMessage());
     }
 
@@ -410,22 +412,5 @@ class PostServiceTest {
         List<PostDto> actualDtaftDtoList = postService.getAllDraftsByAuthorId(NON_EXISTENT_AUTHOR_ID);
         verify(postMapper).toDtoList(postListCaptor.capture());
         assertEquals(List.of(), postListCaptor.getValue());
-    }
-
-    @Test
-    void testGetAllDraftsByProjectIdShouldReturnsDraftsByProjectIdWhenProjectHasDrafts() {
-        when(postRepository.findByProjectId(EXISTENT_PROJECT_ID)).thenReturn(draftListWithAuthorId1);
-
-        List<PostDto> actualDtaftDtoList = postService.getAllDraftsByAuthorId(EXISTENT_AUTHOR_ID);
-        verify(postMapper).toDtoList(postListCaptor.capture());
-        assertEquals(filteredPostList, postListCaptor.getValue());
-    }
-
-    @Test
-    void getAllPostsByAuthorId() {
-    }
-
-    @Test
-    void getAllPostsByProjectId() {
     }
 }

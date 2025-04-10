@@ -1,6 +1,7 @@
 package faang.school.postservice.handler;
 
 import faang.school.postservice.dto.ErrorResponse;
+import faang.school.postservice.exception.PostNotFoundException;
 import faang.school.postservice.exception.PostValidationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -14,37 +15,20 @@ import java.time.LocalDateTime;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-/*    @ExceptionHandler(PostValidationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map<String, String>  handlePostValidationException(PostValidationException e) {
-        Map<String, String> response = new HashMap<>();
-        response.put("message", e.getMessage());
-        return response;
-    }*/
-/*
-    @ExceptionHandler(PostValidationException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public String handlePostValidationException(PostValidationException e) {
-        log.error("!!! PostValidationException  ---  " + e.getMessage());
-        return e.getMessage();
-    }*/
-
     @ExceptionHandler(PostValidationException.class)
     public ResponseEntity<ErrorResponse> handlePostValidationException(PostValidationException e) {
-        log.error("PostValidationException: " + e.getMessage());
-        ErrorResponse errorResponse = new ErrorResponse(
-                e.getMessage(), HttpStatus.BAD_REQUEST.value(), LocalDateTime.now());
-        return ResponseEntity.badRequest().body(errorResponse);
+        return buildErrorResponse(e, HttpStatus.BAD_REQUEST, "PostValidationException");
     }
 
+    @ExceptionHandler(PostNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handlePostNotFoundException(PostNotFoundException e) {
+        return buildErrorResponse(e, HttpStatus.NOT_FOUND, "PostNotFoundException");
+    }
 
-
-
-
-   /* @ExceptionHandler(RuntimeException.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public String handleProjectNotFoundException(RuntimeException e) {
-        return "Unknown error";
-    }*/
-
+    private ResponseEntity<ErrorResponse> buildErrorResponse(Exception e, HttpStatus status, String exceptionName) {
+        log.error("{}: {}", exceptionName, e.getMessage(), e);
+        ErrorResponse errorResponse = new ErrorResponse(
+                e.getMessage(), status.value(), LocalDateTime.now());
+        return ResponseEntity.status(status).body(errorResponse);
+    }
 }

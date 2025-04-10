@@ -1,6 +1,7 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.dto.PostDto;
+import faang.school.postservice.exception.PostNotFoundException;
 import faang.school.postservice.exception.PostValidationException;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
@@ -28,7 +29,7 @@ public class PostService {
 
     @Transactional
     public PostDto createDraft(PostDto postDto) {
-        log.info("Creating draft post: {}", postDto);
+       // log.info("Creating draft post: {}", postDto);
         postValidator.validatePostDto(postDto);
         Post post = postMapper.toEntity(postDto);
         post.setCreatedAt(LocalDateTime.now(clock));
@@ -108,7 +109,7 @@ public class PostService {
 
     private Post getPostById(long postId) {
         return postRepository.findById(postId).orElseThrow(() ->
-                new PostValidationException("Post with id %d does not exist".formatted(postId)));
+                new PostNotFoundException("Post with id %d does not exist".formatted(postId)));
     }
 
 }
