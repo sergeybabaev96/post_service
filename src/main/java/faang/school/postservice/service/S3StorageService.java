@@ -18,9 +18,6 @@ import java.io.IOException;
 /**
  * Сервис для работы с S3-хранилищем.
  * Предоставляет методы для загрузки изображений и проверки их существования.
- *
- * @author Zhltsk-V
- * @version 1.0
  */
 @Slf4j
 @Service
@@ -40,14 +37,15 @@ public class S3StorageService {
      * @throws IOException Если произошла ошибка при записи изображения
      */
     public void uploadToS3(String key, BufferedImage image, String contentType) throws IOException {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        ImageIO.write(image, contentType.split("/")[1], os);
+        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
+            ImageIO.write(image, contentType.split("/")[1], os);
 
-        ObjectMetadata metadata = new ObjectMetadata();
-        metadata.setContentLength(os.size());
-        metadata.setContentType(contentType);
+            ObjectMetadata metadata = new ObjectMetadata();
+            metadata.setContentLength(os.size());
+            metadata.setContentType(contentType);
 
-        amazonS3.putObject(bucketName, key, new ByteArrayInputStream(os.toByteArray()), metadata);
+            amazonS3.putObject(bucketName, key, new ByteArrayInputStream(os.toByteArray()), metadata);
+        }
     }
 
     /**

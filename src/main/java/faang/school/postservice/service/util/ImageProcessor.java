@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Objects;
 
 /**
@@ -20,9 +21,6 @@ import java.util.Objects;
  *   <li>{@link #processImage} - Создание уменьшенных копий изображения</li>
  *   <li>{@link #convertToBufferedImage} - Конвертация MultipartFile в BufferedImage</li>
  * </ul>
- *
- * @author Zhltsk-V
- * @version 1.0
  */
 @Slf4j
 @Service
@@ -67,10 +65,12 @@ public class ImageProcessor {
      * @throws DataValidationException если файл не является валидным изображением
      */
     public BufferedImage convertToBufferedImage(MultipartFile file) throws IOException {
-        BufferedImage image = ImageIO.read(file.getInputStream());
-        if (image == null) {
-            throw new DataValidationException("Invalid image file");
+        try (InputStream inputStream = file.getInputStream()) {
+            BufferedImage image = ImageIO.read(inputStream);
+            if (image == null) {
+                throw new DataValidationException("Invalid image file");
+            }
+            return image;
         }
-        return image;
     }
 }
