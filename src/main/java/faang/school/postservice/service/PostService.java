@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -54,7 +55,8 @@ public class PostService {
         } while (page.hasNext());
     }
 
-    @Retryable(retryFor = PostModerationException.class, backoff = @Backoff(delayExpression = "${moderation.retry.delay}",
+    @Retryable(retryFor = PostModerationException.class, backoff = @Backoff(
+            delayExpression = "${moderation.retry.delay}",
             multiplierExpression = "${moderation.retry.multiplier}"),
             maxAttemptsExpression = "${moderation.retry.max-attempts}")
     public void moderateBatch(List<Post> batch) {
@@ -76,7 +78,12 @@ public class PostService {
         }
 
         if (!failedPosts.isEmpty()) {
-            throw new PostModerationException("Failed to moderate" + failedPosts.size() + "posts");
+            String errorMessage = String.format(
+                    "Failed to moderate %d posts. Failed IDs: %s.",
+                    failedPosts.size(),
+                    failedPosts.stream().map(Post::getId).collect(Collectors.toList())
+            );
+            throw new PostModerationException(errorMessage, failedPosts);
         }
 
         log.info("All post have been moderated");
@@ -84,6 +91,12 @@ public class PostService {
 
     @Recover
     public void recoverModeration(PostModerationException e) {
-        log.error("All moderation attempts failed.", e);
+        List<Post> failedPosts = e.getFailedPosts();
+
+        log.error(
+                "Moderation failed for {} posts after all retries. Failed IDs: {}",
+                failedPosts.size(),
+                failedPosts.stream().map(Post::getId).collect(Collectors.toList())
+        );
     }
 }
