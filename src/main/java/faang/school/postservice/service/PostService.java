@@ -12,12 +12,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Recover;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -69,7 +71,7 @@ public class PostService {
                 log.info("Post {} moderated. Toxic: {}", post.getId(), isToxic);
             } catch (PerspectiveAPIException e) {
                 failedPosts.add(post);
-                throw new PostModerationException(MODERATION_FAIL_EXCEPTION);
+                log.error("Failed to moderate post: {}", post.getId());
             }
         }
 
@@ -78,5 +80,10 @@ public class PostService {
         }
 
         log.info("All post have been moderated");
+    }
+
+    @Recover
+    public void recoverModeration(PostModerationException e) {
+        log.error("All moderation attempts failed.", e);
     }
 }
