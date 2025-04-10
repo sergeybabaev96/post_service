@@ -73,14 +73,6 @@ public class PostServiceTest {
     @InjectMocks
     private PostService postService;
 
-    @Captor
-    ArgumentCaptor<Post> postArgumentCaptor;
-    @Captor
-    ArgumentCaptor<Resource> resourceArgumentCaptor;
-    @Captor
-    ArgumentCaptor<String> stringArgumentCaptor;
-
-
     @BeforeEach
     void setUp() {
         file = createMultipartFile("file", "puppy,jpg", "image/jpeg", 123);
