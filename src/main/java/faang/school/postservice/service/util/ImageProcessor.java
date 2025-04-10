@@ -21,9 +21,6 @@ import java.util.Objects;
  *   <li>{@link #processImage} - Создание уменьшенных копий изображения</li>
  *   <li>{@link #convertToBufferedImage} - Конвертация MultipartFile в BufferedImage</li>
  * </ul>
- *
- * @author Zhltsk-V
- * @version 1.0
  */
 @Slf4j
 @Service
