@@ -1,7 +1,7 @@
 package faang.school.postservice.controller;
 
 import faang.school.postservice.dto.resource.ResourceDto;
-import faang.school.postservice.service.PostResourceService;
+import faang.school.postservice.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,18 +17,18 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/post")
-public class PostResourceController {
-    private final PostResourceService postResourceService;
+public class PostController {
+    private final PostService postService;
 
     @PutMapping("/{postId}")
     public @Validated List<ResourceDto> addResource(@PathVariable Long postId,
                                               @RequestParam("files") List<MultipartFile> files) {
-        List<ResourceDto> resourceDtoList = postResourceService.add(postId, files);
+        List<ResourceDto> resourceDtoList = postService.add(postId, files);
         return resourceDtoList;
     }
 
     @DeleteMapping("/{postId}/resources/{resourceId}")
     public void deleteResource(@PathVariable Long postId, @PathVariable Long resourceId) {
-        postResourceService.delete(postId, resourceId);
+        postService.delete(postId, resourceId);
     }
 }

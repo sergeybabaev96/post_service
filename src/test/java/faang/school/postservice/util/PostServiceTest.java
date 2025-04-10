@@ -8,13 +8,12 @@ import faang.school.postservice.exception.not_found_exceptions.PostNotFoundExcep
 import faang.school.postservice.exception.not_found_exceptions.ResourceNotFoundException;
 import faang.school.postservice.mapper.ResourceMapperImpl;
 import faang.school.postservice.messages.ExceptionMessages;
-import faang.school.postservice.minio.MinioConfig;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.PostResourceRepository;
 import faang.school.postservice.service.MinioService;
-import faang.school.postservice.service.PostResourceService;
+import faang.school.postservice.service.PostService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +50,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-public class PostResourceServiceTest {
+public class PostServiceTest {
     private static final int STANDARD_WIDTH = 1080;
     private static final int HORIZONTAL_HEIGHT = 566;
     private static final int VERTICAL_SQUARE_HEIGHT = 1080;
@@ -72,7 +71,7 @@ public class PostResourceServiceTest {
     @Mock
     private MinioService minioService;
     @InjectMocks
-    private PostResourceService postResourceService;
+    private PostService postService;
 
     @Captor
     ArgumentCaptor<Post> postArgumentCaptor;
@@ -94,7 +93,7 @@ public class PostResourceServiceTest {
     void testValidateWithEmptyFileName() {
         MultipartFile file = createMultipartFile("  ", "test", "test", 123);
         InvalidFileException exception = assertThrows(InvalidFileException.class,
-                () -> postResourceService.add(1L, List.of(file)));
+                () -> postService.add(1L, List.of(file)));
 
         assertEquals(ExceptionMessages.FILE_NAME_EMPTY_EXCEPTION, exception.getMessage());
     }
@@ -104,7 +103,7 @@ public class PostResourceServiceTest {
         MultipartFile file = createMultipartFile("test", "  ", "test", 123);
 
         InvalidFileException exception = assertThrows(InvalidFileException.class,
-                () -> postResourceService.add(1L, List.of(file)));
+                () -> postService.add(1L, List.of(file)));
 
         assertEquals(ExceptionMessages.FILE_ORIGINAL_NAME_EMPTY_EXCEPTION, exception.getMessage());
     }
@@ -115,7 +114,7 @@ public class PostResourceServiceTest {
                 "test", BYTES_FILE_SIZE + 1);
 
         InvalidFileException exception = assertThrows(InvalidFileException.class,
-                () -> postResourceService.add(1L, List.of(file)));
+                () -> postService.add(1L, List.of(file)));
 
         assertEquals(ExceptionMessages.FILE_SIZE_EXCEPTION, exception.getMessage());
     }
@@ -124,7 +123,7 @@ public class PostResourceServiceTest {
     void shouldThrowWhenPostNotFound() {
         when(postRepository.findById(anyLong())).thenReturn(Optional.empty());
         PostNotFoundException exception = assertThrows(PostNotFoundException.class,
-                () -> postResourceService.add(999L, List.of(file)));
+                () -> postService.add(999L, List.of(file)));
         assertEquals(ExceptionMessages.POST_NOT_FOUND_EXCEPTION, exception.getMessage());
     }
 
@@ -135,7 +134,7 @@ public class PostResourceServiceTest {
         when(postRepository.findById(anyLong())).thenReturn(Optional.of(post));
 
         MaxResourcesReachedException exception = assertThrows(MaxResourcesReachedException.class,
-                () -> postResourceService.add(1L, List.of(file)));
+                () -> postService.add(1L, List.of(file)));
 
         assertEquals(ExceptionMessages.RESOURCE_MAX_LIMIT_EXCEPTION, exception.getMessage());
     }
@@ -158,7 +157,7 @@ public class PostResourceServiceTest {
                 anyString()
         )).thenReturn(mockResource);
 
-        List<ResourceDto> result = postResourceService.add(1L, List.of(imageFile));
+        List<ResourceDto> result = postService.add(1L, List.of(imageFile));
 
         assertNotNull(result);
         verify(minioService).uploadImage(
@@ -202,7 +201,7 @@ public class PostResourceServiceTest {
         when(minioService.uploadVideoOrAudio(any(), any()))
                 .thenReturn(new Resource());
 
-        assertDoesNotThrow(() -> postResourceService.add(1L, List.of(videoFile)));
+        assertDoesNotThrow(() -> postService.add(1L, List.of(videoFile)));
     }
 
     @Test
@@ -210,7 +209,7 @@ public class PostResourceServiceTest {
         when(postResourceRepository.findById(resourceId)).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class,
-                () -> postResourceService.delete(postId, resourceId));
+                () -> postService.delete(postId, resourceId));
         assertEquals(ExceptionMessages.RESOURCE_NOT_FOUND_EXCEPTION, exception.getMessage());
     }
 
@@ -220,7 +219,7 @@ public class PostResourceServiceTest {
         when(postRepository.findById(postId)).thenReturn(Optional.empty());
 
         assertThrows(PostNotFoundException.class,
-                () -> postResourceService.delete(postId, resourceId));
+                () -> postService.delete(postId, resourceId));
     }
 
     @Test
@@ -234,8 +233,8 @@ public class PostResourceServiceTest {
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
 
         PostIdMismatchException exception = assertThrows(PostIdMismatchException.class,
-                () -> postResourceService.delete(postId, resourceId));
-        assertEquals(ExceptionMessages.PostIdMismatchException, exception.getMessage());
+                () -> postService.delete(postId, resourceId));
+        assertEquals(ExceptionMessages.POST_ID_MISMATCH_EXCEPTION, exception.getMessage());
     }
 
     @Test
@@ -243,7 +242,7 @@ public class PostResourceServiceTest {
         when(postResourceRepository.findById(resourceId)).thenReturn(Optional.of(resource));
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
 
-        postResourceService.delete(postId, resourceId);
+        postService.delete(postId, resourceId);
 
         assertFalse(post.getResources().contains(resource));
 
@@ -256,11 +255,11 @@ public class PostResourceServiceTest {
         MultipartFile file = new MockMultipartFile(
                 "test.jpg", "test.jpg", "image/jpeg", imageBytes);
 
-        Method resizeMethod = PostResourceService.class
+        Method resizeMethod = PostService.class
                 .getDeclaredMethod("resizeImage", MultipartFile.class);
         resizeMethod.setAccessible(true);
         BufferedImage resizedImage = (BufferedImage) resizeMethod.invoke(
-                postResourceService,
+                postService,
                 file
         );
 

@@ -14,20 +14,20 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class ResourceDto {
-    @NotEmpty(message = ValidationMessages.validationKeyNotEmpty)
-    @Size(max = 50, message = ValidationMessages.validationKeyMaxLength)
+    @NotEmpty(message = ValidationMessages.VALIDATION_KEY_NOT_EMPTY)
+    @Size(max = 50, message = ValidationMessages.VALIDATION_KEY_MAX_LENGTH)
     private String key;
 
     private long size;
 
-    @NotEmpty(message = ValidationMessages.validationNameNotEmpty)
-    @Size(max = 150, message = ValidationMessages.validationNameMaxLength)
+    @NotEmpty(message = ValidationMessages.VALIDATION_NAME_NOT_EMPTY)
+    @Size(max = 150, message = ValidationMessages.VALIDATION_NAME_MAX_LENGTH)
     private String name;
 
-    @NotEmpty(message = ValidationMessages.validationTypeNotEmpty)
-    @Size(max = 50, message = ValidationMessages.validationTypeMaxLength)
+    @NotEmpty(message = ValidationMessages.VALIDATION_TYPE_NOT_EMPTY)
+    @Size(max = 50, message = ValidationMessages.VALIDATION_TYPE_MAX_LENGTH)
     private String type;
 
-    @NotNull(message = ValidationMessages.validationPostIdNotNull)
+    @NotNull(message = ValidationMessages.VALIDATION_POST_ID_NOT_NULL)
     private Long postId;
 }

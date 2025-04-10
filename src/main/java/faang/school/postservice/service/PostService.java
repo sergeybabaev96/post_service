@@ -28,10 +28,12 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import static faang.school.postservice.messages.ValidationMessages.VALIDATION_CONTENT_TYPE;
+
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class PostResourceService {
+public class PostService {
     private static final Long BYTES_FILE_SIZE = 5L * 1024L * 1024L;
     private static final Integer MAX_COUNT_OF_RESOURCES = 10;
     private static final int STANDARD_WIDTH = 1080;
@@ -49,14 +51,14 @@ public class PostResourceService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException(ExceptionMessages.POST_NOT_FOUND_EXCEPTION));
 
+        if (post.getResources().size() == MAX_COUNT_OF_RESOURCES) {
+            log.error(ExceptionMessages.RESOURCE_MAX_LIMIT_EXCEPTION);
+            throw new MaxResourcesReachedException(ExceptionMessages.RESOURCE_MAX_LIMIT_EXCEPTION);
+        }
+
         List<Resource> uploadedResource = new ArrayList<>();
 
         for (MultipartFile file : files) {
-            if (post.getResources().size() == MAX_COUNT_OF_RESOURCES) {
-                log.error(ExceptionMessages.RESOURCE_MAX_LIMIT_EXCEPTION);
-                throw new MaxResourcesReachedException(ExceptionMessages.RESOURCE_MAX_LIMIT_EXCEPTION);
-            }
-
             String key = file.getOriginalFilename() + System.currentTimeMillis();
             Resource resource = processAndUploadFile(file, key);
 
@@ -69,7 +71,6 @@ public class PostResourceService {
         return resourceMapper.toResourceDtoList(uploadedResource);
     }
 
-    @Transactional
     public void delete(Long postId, Long resourceId) {
         Resource resource = postResourceRepository.findById(resourceId)
                 .orElseThrow(() -> new ResourceNotFoundException(ExceptionMessages.RESOURCE_NOT_FOUND_EXCEPTION));
@@ -78,20 +79,32 @@ public class PostResourceService {
         String key = resource.getKey();
 
         if (!postId.equals(resource.getPost().getId())) {
-            log.error(ExceptionMessages.PostIdMismatchException);
+            log.error(ExceptionMessages.POST_ID_MISMATCH_EXCEPTION);
             throw new PostIdMismatchException(
-                    ExceptionMessages.PostIdMismatchException
+                    ExceptionMessages.POST_ID_MISMATCH_EXCEPTION
             );
         }
 
         post.getResources().remove(resource);
-        minioService.delete(key);
         postResourceRepository.deleteById(resourceId);
+        postRepository.save(post);
+        minioService.delete(key);
         log.info("The file has been removed from the bucket");
     }
 
     private Resource processAndUploadFile(MultipartFile file, String key) {
         String contentType = file.getContentType();
+
+        if (contentType == null) {
+            log.error(VALIDATION_CONTENT_TYPE);
+            throw new InvalidFileException(VALIDATION_CONTENT_TYPE);
+        }
+
+        if (file.getOriginalFilename() == null) {
+            log.error(ExceptionMessages.FILE_ORIGINAL_NAME_EMPTY_EXCEPTION);
+            throw new InvalidFileException(ExceptionMessages.FILE_ORIGINAL_NAME_EMPTY_EXCEPTION);
+        }
+
         String fileExtension = file.getOriginalFilename().
                 substring(file.getOriginalFilename().lastIndexOf(".") + 1);
 
