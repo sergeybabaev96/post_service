@@ -14,10 +14,13 @@ public class ScheduledPostPublisher {
 
     @Scheduled(cron = "0 * * * * ?")
     public void startPublishPost() {
-        try {
-            postService.publishScheduledPosts();
-        } catch (Exception e) {
-            log.error("Failed to publish scheduled posts", e);
-        }
+        postService.publishScheduledPosts()
+                .whenComplete((result, throwable) -> {
+                    if (throwable != null) {
+                        log.error("Failed to publish scheduled posts", throwable);
+                    } else {
+                        log.info("All posts published successfully");
+                    }
+                });
     }
 }

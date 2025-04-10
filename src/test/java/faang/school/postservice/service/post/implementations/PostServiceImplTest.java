@@ -487,7 +487,7 @@ class PostServiceImplTest {
         when(postRepository.findReadyToPublish()).thenReturn(posts);
         when(postRepository.saveAll(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        postService.publishScheduledPosts();
+        postService.publishScheduledPosts().join();
 
         for (Post post : posts) {
             assertTrue(post.isPublished());
