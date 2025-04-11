@@ -217,7 +217,6 @@ class PostControllerTest {
     @DisplayName("Get all drafts by authorId, sorted by date in descending order")
     void getAllDraftsByAuthorId() throws Exception {
         long authorId = 1L;
-        LocalDateTime now = LocalDateTime.now();
 
         List<PostDto> drafts = List.of(
                 PostDto.builder()

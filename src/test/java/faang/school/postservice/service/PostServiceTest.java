@@ -93,7 +93,7 @@ class PostServiceTest {
     @Mock
     private PostMapper postMapper;
     @InjectMocks
-    private PostService postService;
+    private PostServiceImpl postService;
 
     @BeforeEach
     void setUp() {
