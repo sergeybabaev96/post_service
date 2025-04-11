@@ -29,8 +29,11 @@ public class AdCleanupAsyncService {
         try {
             adTransactionalService.deleteAdsBatchInTransaction(expiredAds);
         } catch (Exception e) {
-            log.error("Failed to cleanup {} ads: {}", expiredAds.size(), e.getMessage());
-            throw new RuntimeException("Async cleanup failed for batch", e);
+            log.error("Cleanup failed for {} ads. Error: {}",
+                    expiredAds.size(),
+                    e.getMessage(),
+                    e
+            );
         }
     }
 }

@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -22,7 +21,6 @@ public class AdCleanupService {
      *
      * @param batchSize размер батча для обработки
      */
-    @Transactional
     public void cleanupExpiredAds(int batchSize) {
         List<Ad> expiredAds = adRepository.findExpiredAd();
         if (expiredAds.isEmpty()) {
