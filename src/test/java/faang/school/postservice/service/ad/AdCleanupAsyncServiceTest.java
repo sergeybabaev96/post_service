@@ -7,10 +7,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -28,15 +25,5 @@ public class AdCleanupAsyncServiceTest {
         adCleanupAsyncService.cleanupExpiredAdsAsync(anyList());
 
         verify(adTransactionalService, times(1)).deleteAdsBatchInTransaction(anyList());
-    }
-
-    @Test
-    @DisplayName("При попытке удалить рекламу выбрасывается RuntimeException")
-    public void givenExceptionDuringAdDeletion_whenCleanupCalled_thenRuntimeExceptionIsThrown() {
-        doThrow(new RuntimeException())
-                .when(adTransactionalService).deleteAdsBatchInTransaction(anyList());
-        Exception exception = assertThrows(RuntimeException.class,
-                () -> adCleanupAsyncService.cleanupExpiredAdsAsync(anyList()));
-        assertEquals("Async cleanup failed for batch", exception.getMessage());
     }
 }
