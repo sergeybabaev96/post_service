@@ -44,7 +44,9 @@ public class S3StorageService {
             metadata.setContentLength(os.size());
             metadata.setContentType(contentType);
 
-            amazonS3.putObject(bucketName, key, new ByteArrayInputStream(os.toByteArray()), metadata);
+            try (ByteArrayInputStream is = new ByteArrayInputStream(os.toByteArray())) {
+                amazonS3.putObject(bucketName, key, is, metadata);
+            }
         }
     }
 
