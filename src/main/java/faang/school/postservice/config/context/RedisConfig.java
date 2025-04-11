@@ -13,7 +13,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfig {
 
     @Value("${post-service.comment.redis.ban-users-key}")
-    private String banUsersKey;
+    private String banUsersTopic;
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
@@ -25,7 +25,7 @@ public class RedisConfig {
     }
 
     @Bean
-    ChannelTopic topic() {
-        return new ChannelTopic(banUsersKey);
+    ChannelTopic usersBanTopic() {
+        return new ChannelTopic(banUsersTopic);
     }
 }

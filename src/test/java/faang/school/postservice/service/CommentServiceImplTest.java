@@ -13,6 +13,7 @@ import faang.school.postservice.mapper.CommentResponseMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.dto.comment.BanAuthorByCommentsDto;
+import faang.school.postservice.dto.comment.UserUnverifiedCommentsDto;
 import faang.school.postservice.repository.CommentRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.BeforeEach;
@@ -342,8 +343,8 @@ public class CommentServiceImplTest {
     @Test
     public void collectAndPushUsersForBanTest() {
         when(commentRepository.getUnverifiedCommentAuthorCountDto()).thenReturn(
-                List.of(new BanAuthorByCommentsDto(1L, 2L),
-                        new BanAuthorByCommentsDto(3L, 4L)));
+                List.of(new UserUnverifiedCommentsDto(1L, 2L),
+                        new UserUnverifiedCommentsDto(3L, 4L)));
 
         commentService.collectAndPushUsersForBan();
 
