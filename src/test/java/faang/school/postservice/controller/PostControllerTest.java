@@ -66,7 +66,6 @@ class PostControllerTest {
         returnedDto = inputDto.toBuilder().id(EXISTENT_POST_ID).build();
     }
 
-
     @Test
     @DisplayName("Should return PostDto with ID when draft is created with valid input")
     void createDraftShouldCreateDraftWithValidInput() throws Exception {
@@ -129,6 +128,20 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("Should throw PostNotFoundException when post is deleted")
+    void getPostShouldThrowExceptionIfPostIsDeleted() throws Exception {
+        String errorMessage = "Post with ID = %d is deleted".formatted(EXISTENT_POST_ID); //Post exist in DB but marked as deleted
+        when(postService.getPost(EXISTENT_POST_ID)).thenThrow(new PostNotFoundException(errorMessage));
+
+        mockMvc.perform(get(BASE_URL + "/{postId}", EXISTENT_POST_ID))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value(errorMessage))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.timestamp").exists());
+
+    }
+
+    @Test
     @DisplayName("Should publish post when it is a draft")
     void publishPostWhenDraft() throws Exception {
         returnedDto = inputDto.toBuilder().id(EXISTENT_POST_ID).published(true).build();
@@ -180,7 +193,7 @@ class PostControllerTest {
         );
 
         mockMvc.perform(put(BASE_URL + "/{postId}", NON_EXISTENT_POST_ID)
-                .content("Updated Content").contentType(MediaType.APPLICATION_JSON))
+                        .content("Updated Content").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value(errorMessage))
                 .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))

@@ -299,6 +299,21 @@ class PostServiceTest {
     }
 
     @Test
+    void testGetPostShouldThrowExceptionWhenPostAlreadyDeleted() {
+        String errorMessage = "Post with ID = %d is deleted".formatted(EXISTENT_POST_ID);
+       Post deletedPost = Post.builder()
+               .id(EXISTENT_POST_ID) // Post exist in DB but marked as deleted
+               .content("Test Content")
+               .authorId(EXISTENT_AUTHOR_ID)
+               .deleted(true)
+               .build();
+       when(postRepository.findById(EXISTENT_POST_ID)).thenReturn(Optional.of(deletedPost));
+       PostNotFoundException exception = assertThrows(PostNotFoundException.class, () ->
+               postService.getPost(EXISTENT_POST_ID));
+       assertEquals(errorMessage, exception.getMessage());
+    }
+
+    @Test
     void testPublishPostShouldThrowExceptionWhenPostDoesNotExist() {
         when(postRepository.findById(NON_EXISTENT_POST_ID)).thenReturn(Optional.empty());
 
