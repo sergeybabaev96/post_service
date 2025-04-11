@@ -37,7 +37,9 @@ public class ModerationDictionaryImpl implements ModerationDictionary {
         }
     }
 
+    @Override
     public boolean isTextAreCorrect(@NotBlank String text) {
-        return deniedWordsList.stream().noneMatch(text::contains);
+        String lowerCaseText = text.toLowerCase();
+        return deniedWordsList.stream().noneMatch(lowerCaseText::contains);
     }
 }

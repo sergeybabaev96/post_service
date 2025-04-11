@@ -35,14 +35,14 @@ public class CommentServiceImpl implements CommentService {
     private final CommentResponseMapper commentResponseMapper;
     private final PostService postService;
     private final UserServiceClient userServiceClient;
-    private final AsyncCommentService asyncCommentService;
+    private final AsyncCommentServiceImpl asyncCommentServiceImpl;
 
     @Override
     public void moderateComments(int batchSize) {
         log.info("Start moderating comments");
         ListUtils.partition(commentRepository.getUnverifiedCommentsIds(), batchSize).stream()
                 .map(commentRepository::getUnverifiedComments)
-                .forEach(asyncCommentService::moderateComments);
+                .forEach(asyncCommentServiceImpl::moderateComments);
         log.info("Finished moderating comments");
     }
 

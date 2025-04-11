@@ -15,13 +15,13 @@ public class CommentModerator implements Moderator {
     private final CommentService commentService;
 
     @Value("${spring.task.scheduling.comment.max_comments_per_size}")
-    private int batchSize;
+    private int maxCommentsPerBatch;
 
     @Scheduled(cron = "${spring.task.scheduling.comment.cron_expression}")
     @Override
     public void startModerate() {
         log.debug("Starting moderate comments");
-        commentService.moderateComments(batchSize);
+        commentService.moderateComments(maxCommentsPerBatch);
         log.debug("All comments moderated");
     }
 }

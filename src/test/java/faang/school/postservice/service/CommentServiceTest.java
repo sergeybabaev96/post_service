@@ -19,7 +19,7 @@ public class CommentServiceTest {
     @Mock
     private CommentRepository commentRepository;
     @Mock
-    private AsyncCommentService asyncCommentService;
+    private AsyncCommentServiceImpl asyncCommentServiceImpl;
     @InjectMocks
     private CommentServiceImpl commentService;
 
@@ -44,6 +44,6 @@ public class CommentServiceTest {
 
         commentService.moderateComments(20);
 
-        verify(asyncCommentService, times(5)).moderateComments(anyList());
+        verify(asyncCommentServiceImpl, times(5)).moderateComments(anyList());
     }
 }
