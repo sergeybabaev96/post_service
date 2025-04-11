@@ -1,6 +1,7 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.dto.PostDto;
+import faang.school.postservice.exception.PostNotFoundException;
 import faang.school.postservice.exception.PostValidationException;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
@@ -284,7 +285,7 @@ class PostServiceTest {
     void testGetPostShouldThrowExceptionWhenPostDoesNotExist() {
         when(postRepository.findById(NON_EXISTENT_POST_ID)).thenReturn(Optional.empty());
 
-        assertThrows(PostValidationException.class, () -> postService.getPost(NON_EXISTENT_POST_ID));
+        assertThrows(PostNotFoundException.class, () -> postService.getPost(NON_EXISTENT_POST_ID));
     }
 
     @Test
@@ -301,10 +302,9 @@ class PostServiceTest {
     void testPublishPostShouldThrowExceptionWhenPostDoesNotExist() {
         when(postRepository.findById(NON_EXISTENT_POST_ID)).thenReturn(Optional.empty());
 
-        PostValidationException exception = assertThrows(PostValidationException.class, () ->
+        PostNotFoundException exception = assertThrows(PostNotFoundException.class, () ->
                 postService.publishPost(NON_EXISTENT_POST_ID));
-        assertEquals("Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID),
-                exception.getMessage());
+        assertEquals("Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID), exception.getMessage());
     }
 
     @Test
@@ -335,7 +335,7 @@ class PostServiceTest {
         String updatedContent = "Updated content";
         when(postRepository.findById(NON_EXISTENT_POST_ID)).thenReturn(Optional.empty());
 
-        PostValidationException exception = assertThrows(PostValidationException.class, () ->
+        PostNotFoundException exception = assertThrows(PostNotFoundException.class, () ->
                 postService.updatePost(NON_EXISTENT_POST_ID, updatedContent));
         assertEquals("Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID),
                 exception.getMessage());
@@ -380,7 +380,7 @@ class PostServiceTest {
     @Test
     void testSoftDeletePostWhenPostDoesNotExist() {
         when(postRepository.findById(NON_EXISTENT_POST_ID)).thenReturn(Optional.empty());
-        PostValidationException exception = assertThrows(PostValidationException.class, () ->
+        PostNotFoundException exception = assertThrows(PostNotFoundException.class, () ->
                 postService.softDeletePost(NON_EXISTENT_POST_ID));
 
         assertEquals("Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID), exception.getMessage());

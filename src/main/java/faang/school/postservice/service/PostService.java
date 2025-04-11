@@ -41,6 +41,9 @@ public class PostService {
     @Transactional
     public PostDto getPost(long postId) {
         Post post = getPostById(postId);
+        if(post.isDeleted()) {
+            throw new PostNotFoundException("Post with ID = %d is deleted".formatted(postId));
+        }
         return postMapper.toDto(post);
     }
 
