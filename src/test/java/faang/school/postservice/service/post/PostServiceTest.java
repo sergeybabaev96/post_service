@@ -3,10 +3,12 @@ package faang.school.postservice.service.post;
 
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.dto.event.EventDto;
 import faang.school.postservice.dto.post.PostDto;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.mapper.post.PostMapperImpl;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.publisher.PostEventPublisher;
 import faang.school.postservice.repository.PostRepository;
 import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
@@ -34,6 +36,9 @@ class PostServiceTest {
     private PostService postService;
 
     @Mock
+    private PostEventPublisher postEventPublisher;
+
+    @Mock
     private ProjectServiceClient projectServiceClient;
 
     @Mock
@@ -50,6 +55,7 @@ class PostServiceTest {
     private final long projectId= 3;
     private final Post post = new Post();
     private final PostDto postDto = new PostDto();
+    private final EventDto eventDto = EventDto.builder().eventId(postId).authorId(authorId).build();
     private final Post post1 = Post.builder().id(1L).published(true).createdAt(LocalDateTime.now().minusDays(1)).build();
     private final Post post2 = Post.builder().id(2L).published(true).createdAt(LocalDateTime.now().minusDays(2)).build();
     private final Post post3 = Post.builder().id(3L).published(true).createdAt(LocalDateTime.now().minusDays(3)).build();
@@ -156,6 +162,7 @@ class PostServiceTest {
 
     @Test
     public void testPublishPost() {
+        post.setAuthorId(authorId);
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
 
         createDto = postService.publishPost(postId);
@@ -164,6 +171,7 @@ class PostServiceTest {
         assertNotNull(createDto.getPublishedAt());
         verify(postRepository, times(1)).findById(postId);
         verify(postMapper, times(1)).toDto(post);
+        verify(postEventPublisher, times(1)).publish(eventDto);
     }
 
     @Test

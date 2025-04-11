@@ -50,9 +50,11 @@ public class PostService {
         post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
 
+        long authorId = post.getAuthorId() == null ? post.getProjectId() : post.getAuthorId();
+
         postEventPublisher.publish(EventDto.builder()
                 .eventId(postId)
-                .authorId(post.getAuthorId())
+                .authorId(authorId)
                 .build());
 
         return postMapper.toDto(post);
