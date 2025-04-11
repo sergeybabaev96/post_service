@@ -25,10 +25,10 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(e, HttpStatus.NOT_FOUND, "PostNotFoundException");
     }
 
-    private ResponseEntity<ErrorResponse> buildErrorResponse(Exception e, HttpStatus status, String exceptionName) {
+    private ResponseEntity<ErrorResponse> buildErrorResponse(Exception e, HttpStatus StatusCode, String exceptionName) {
         log.error("{}: {}", exceptionName, e.getMessage(), e);
         ErrorResponse errorResponse = new ErrorResponse(
-                e.getMessage(), status.value(), LocalDateTime.now());
-        return ResponseEntity.status(status).body(errorResponse);
+                e.getMessage(), StatusCode.value(), LocalDateTime.now());
+        return ResponseEntity.status(StatusCode).body(errorResponse);
     }
 }

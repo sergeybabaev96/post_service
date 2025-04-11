@@ -50,9 +50,9 @@ public class PostController {
     }
 
     @PutMapping("/{postId}")
-    public PostDto updatePost(@PathVariable long postId, @Valid @RequestBody PostDto postDto) {
+    public PostDto updatePost(@PathVariable long postId, @RequestBody String updatedContent) {
         log.info("Received request to update post with ID = {}", postId);
-        PostDto updatedPost = postService.updatePost(postId, postDto.content());
+        PostDto updatedPost = postService.updatePost(postId, updatedContent);
         log.info("Post with ID = {} is updated successfully", postId);
         return updatedPost;
     }

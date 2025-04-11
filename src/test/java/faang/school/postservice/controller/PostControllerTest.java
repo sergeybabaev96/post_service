@@ -2,12 +2,13 @@ package faang.school.postservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import faang.school.postservice.dto.PostDto;
-import faang.school.postservice.exception.PostValidationException;
 import faang.school.postservice.exception.PostNotFoundException;
+import faang.school.postservice.exception.PostValidationException;
 import faang.school.postservice.handler.GlobalExceptionHandler;
 import faang.school.postservice.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,7 +22,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -30,7 +30,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -69,7 +68,8 @@ class PostControllerTest {
 
 
     @Test
-    void testCreateDraftShouldReturnPostDtoWithIdWhenValidInput() throws Exception {
+    @DisplayName("Should return PostDto with ID when draft is created with valid input")
+    void createDraftShouldCreateDraftWithValidInput() throws Exception {
         // Arrange
         when(postService.createDraft(inputDto)).thenReturn(returnedDto);
 
@@ -84,23 +84,26 @@ class PostControllerTest {
     }
 
     @Test
-    void testCreateDraftShouldReturnBadRequestWhenInvalidInput() throws Exception {
+    @DisplayName("Should return 400 Bad Request when creating draft with invalid content")
+    void createDraftShouldFailWithInvalidInput() throws Exception {
+        String errorMessage = "Post content cannot be empty";
         PostDto invalidDto = inputDto.toBuilder().content(" ").build();
         when(postService.createDraft(invalidDto))
-                .thenThrow(new PostValidationException("Post content cannot be empty"));
+                .thenThrow(new PostValidationException(errorMessage));
 
         mockMvc.perform(post(BASE_URL + "/draft")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidDto)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Post content cannot be empty"))
-                .andExpect(jsonPath("$.code").value(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.message").value(errorMessage))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
 
     @Test
-    void testGetPostShouldReturnPostDtoWhenPostExists() throws Exception {
+    @DisplayName("Should return PostDto when post exists")
+    void getPostShouldReturnPostIfExists() throws Exception {
         when(postService.getPost(1L)).thenReturn(returnedDto);
 
         mockMvc.perform(get(BASE_URL + "/{postId}", EXISTENT_POST_ID))
@@ -111,7 +114,8 @@ class PostControllerTest {
     }
 
     @Test
-    void testGetPostShouldThrowExceptionWhenPostDoesNotExist() throws Exception {
+    @DisplayName("Should throw PostNotFoundException when post does not exist")
+    void getPostShouldThrowExceptionIfPostDoesNotExist() throws Exception {
         String errorMessage = "Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID);
         when(postService.getPost(NON_EXISTENT_POST_ID)).thenThrow(
                 new PostNotFoundException(errorMessage)
@@ -120,12 +124,13 @@ class PostControllerTest {
         mockMvc.perform(get(BASE_URL + "/{postId}", NON_EXISTENT_POST_ID))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message").value(errorMessage))
-                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test
-    void testPublishPostShouldPostBecomePublishedWhenPostIsDraft() throws Exception {
+    @DisplayName("Should publish post when it is a draft")
+    void publishPostWhenDraft() throws Exception {
         returnedDto = inputDto.toBuilder().id(EXISTENT_POST_ID).published(true).build();
         when(postService.publishPost(EXISTENT_POST_ID)).thenReturn(returnedDto);
 
@@ -138,7 +143,8 @@ class PostControllerTest {
     }
 
     @Test
-    void testPublishPostShouldThrowExceptionWhenPostDoesNotExist() throws Exception {
+    @DisplayName("Should return 400 Bad Request when publishing a non-existent post")
+    void publishPostWhenNonExistent() throws Exception {
         String errorMessage = "Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID);
         when(postService.publishPost(NON_EXISTENT_POST_ID)).thenThrow(
                 new PostValidationException(errorMessage)
@@ -146,39 +152,45 @@ class PostControllerTest {
         mockMvc.perform(put(BASE_URL + "/{postId}/publish", NON_EXISTENT_POST_ID))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value(errorMessage))
-                .andExpect(jsonPath("$.code").value(HttpStatus.BAD_REQUEST.value()))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.BAD_REQUEST.value()))
                 .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test
-    void testUpdatePostShouldReturnUpdatedPostDtoWhenPostExists() throws Exception {
+    @DisplayName("Should update post and return updated PostDto when post exists")
+    void updatePostWhenExists() throws Exception {
         PostDto updatedPostDto = returnedDto.toBuilder().content("Updated Content").published(true).build();
         when(postService.updatePost(EXISTENT_POST_ID, "Updated Content")).thenReturn(updatedPostDto);
 
-        mockMvc.perform(put(BASE_URL + "/{postId}", EXISTENT_POST_ID))
+        mockMvc.perform(put(BASE_URL + "/{postId}", EXISTENT_POST_ID)
+                        .content("Updated Content").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(EXISTENT_POST_ID))
                 .andExpect(jsonPath("$.content").value("Updated Content"))
                 .andExpect(jsonPath("$.authorId").value(1L))
-                .andExpect(jsonPath("$.Published").value(true));
+                .andExpect(jsonPath("$.published").value(true));
     }
 
     @Test
-    void testUpdatePostShouldThrowExceptionWhenPostDoesNotExist() throws Exception {
-        when(postService.getPost(NON_EXISTENT_POST_ID)).thenThrow(
-                new PostValidationException("Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID))
+    @DisplayName("Should return 404 Not Found when updating a non-existent post")
+    void updatePostWhenNonExistent() throws Exception {
+        String errorMessage = "Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID);
+        when(postService.updatePost(NON_EXISTENT_POST_ID, "Updated Content")).thenThrow(
+                new PostNotFoundException(errorMessage)
         );
 
-        mockMvc.perform(put(BASE_URL + "/{postId}", NON_EXISTENT_POST_ID))
+        mockMvc.perform(put(BASE_URL + "/{postId}", NON_EXISTENT_POST_ID)
+                .content("Updated Content").contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
-                .andExpect(content()
-                        .string(containsString("Post with id %d does not exist".formatted(NON_EXISTENT_POST_ID)))
-                );
+                .andExpect(jsonPath("$.message").value(errorMessage))
+                .andExpect(jsonPath("$.statusCode").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
 
     @Test
-    void softDeletePostShouldReturnNoContent() throws Exception {
+    @DisplayName("Should soft delete post and return 204 No Content")
+    void softDeletePost() throws Exception {
         doNothing().when(postService).softDeletePost(EXISTENT_POST_ID);
 
         mockMvc.perform(delete(BASE_URL + "/{postId}", EXISTENT_POST_ID)
@@ -189,6 +201,7 @@ class PostControllerTest {
 
 
     @Test
+    @DisplayName("Get all drafts by authorId, sorted by date in descending order")
     void getAllDraftsByAuthorId() throws Exception {
         long authorId = 1L;
         LocalDateTime now = LocalDateTime.now();
@@ -206,7 +219,7 @@ class PostControllerTest {
                         .content("Draft 1")
                         .authorId(authorId)
                         .published(false)
-                        .createdAt(LocalDateTime.of(2020, 4, 1, 12, 0, 0).minusDays(1))
+                        .createdAt(LocalDateTime.of(2020, 3, 31, 12, 0, 0))
                         .build()
         );
         when(postService.getAllDraftsByAuthorId(authorId)).thenReturn(drafts);
@@ -221,11 +234,12 @@ class PostControllerTest {
                 .andExpect(jsonPath("$[1].id").value(1L))
                 .andExpect(jsonPath("$[1].content").value("Draft 1"))
                 .andExpect(jsonPath("$[1].authorId").value(authorId))
-                .andExpect(jsonPath("$[0].createdAt").value("2020-03-31T12:00:00")
+                .andExpect(jsonPath("$[1].createdAt").value("2020-03-31T12:00:00")
                 );
     }
 
     @Test
+    @DisplayName("Get all drafts by projectId, sorted by date in descending order")
     void getAllDraftsByProjectId() throws Exception {
         long projectId = 10L;
         List<PostDto> drafts = List.of(
@@ -260,6 +274,7 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("Get all posts by authorId, sorted by date in descending order")
     void getAllPostsByAuthorId() throws Exception {
         long authorId = 1L;
         List<PostDto> posts = List.of(
@@ -296,6 +311,7 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("Get all posts by projectId, sorted by date in descending order")
     void getAllPostsByProjectId() throws Exception {
         long projectId = 100L;
         List<PostDto> posts = List.of(
