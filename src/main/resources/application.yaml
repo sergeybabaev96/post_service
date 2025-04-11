@@ -38,3 +38,9 @@ payment-service:
   host: localhost
   port: 9080
 
+scheduled: #запускаем каждую менуту
+  publish-cron: "0 * * * * *"
+
+postservice:
+  thread-pool:
+    size: 10
