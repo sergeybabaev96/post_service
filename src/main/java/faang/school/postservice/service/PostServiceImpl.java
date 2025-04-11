@@ -1,6 +1,7 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.dto.PostDto;
+import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.exception.PostNotFoundException;
 import faang.school.postservice.exception.PostValidationException;
 import faang.school.postservice.mapper.PostMapper;
@@ -44,7 +45,7 @@ public class PostServiceImpl implements PostService {
     public PostDto getPost(long postId) {
         Post post = getPostById(postId);
         if(post.isDeleted()) {
-            throw new PostNotFoundException("Post with ID = %d is deleted".formatted(postId));
+            throw new PostNotFoundException("Post with ID = %d was deleted".formatted(postId));
         }
         return postMapper.toDto(post);
     }
@@ -122,6 +123,13 @@ public class PostServiceImpl implements PostService {
     private Post getPostById(long postId) {
         return postRepository.findById(postId).orElseThrow(() ->
                 new PostNotFoundException("Post with id %d does not exist".formatted(postId)));
+    }
+
+    @Override
+    public Post findPostById(long postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new DataValidationException(String.format("Post with id %s not found", postId)));
+
     }
 
 }

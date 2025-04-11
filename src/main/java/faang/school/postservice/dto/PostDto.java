@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
+import java.util.List;
 
 import java.time.LocalDateTime;
 
@@ -23,6 +24,9 @@ public record PostDto(
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         LocalDateTime createdAt,
         @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-        LocalDateTime updatedAt
+        LocalDateTime updatedAt,
+        int amountLikes,
+        List<Long> commentIds,
+        List<Long> albumIds
 ) {
 }

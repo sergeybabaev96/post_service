@@ -4,6 +4,7 @@ import faang.school.postservice.dto.PostDto;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import faang.school.postservice.model.Post;
 
 public interface PostService {
     @Transactional
@@ -32,4 +33,5 @@ public interface PostService {
 
     @Transactional
     List<PostDto> getAllPostsByProjectId(long projectId);
+    Post findPostById(long postId);
 }

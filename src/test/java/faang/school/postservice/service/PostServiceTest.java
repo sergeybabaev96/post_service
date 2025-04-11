@@ -1,6 +1,7 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.dto.PostDto;
+import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.exception.PostNotFoundException;
 import faang.school.postservice.exception.PostValidationException;
 import faang.school.postservice.mapper.PostMapper;
@@ -29,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -427,5 +429,25 @@ class PostServiceTest {
         List<PostDto> actualDtaftDtoList = postService.getAllDraftsByAuthorId(NON_EXISTENT_AUTHOR_ID);
         verify(postMapper).toDtoList(postListCaptor.capture());
         assertEquals(List.of(), postListCaptor.getValue());
+    }
+
+    public void testFindPostByIdWithThrow() {
+        long postId = 1L;
+        when(postRepository.findById(postId)).thenReturn(Optional.empty());
+        Exception exception = assertThrows(DataValidationException.class,
+                () -> postService.findPostById(postId));
+        assertEquals("Post with id 1 not found", exception.getMessage());
+        verify(postRepository,times(1)).findById(postId);
+    }
+
+    @Test
+    public void testFindPostById() {
+        long postId = 1L;
+        Post post = Post.builder().id(postId).build();
+        when(postRepository.findById(postId)).thenReturn(Optional.of(post));
+
+        Post postResult = postService.findPostById(postId);
+        verify(postRepository, times(1)).findById(postId);
+        assertEquals(postId, postResult.getId());
     }
 }
