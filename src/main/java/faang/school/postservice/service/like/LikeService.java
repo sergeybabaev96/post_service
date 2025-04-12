@@ -1,8 +1,6 @@
 package faang.school.postservice.service.like;
 
 import faang.school.postservice.client.UserServiceClient;
-import faang.school.postservice.dto.like.LikeDto;
-import faang.school.postservice.mapper.like.LikeMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
@@ -14,7 +12,6 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,41 +22,34 @@ public class LikeService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserServiceClient userServiceClient;
-    private final LikeMapper likeMapper;
 
     public void likeThePost(long postId, long userId) {
         validationExistsAuthor(userId);
-        validationExistsPost(postId);
+        Post post = getPostOrThrow(postId);
         canLikePost(postId, userId);
-        LikeDto likeDto = LikeDto.builder()
-                //я не совсем понимаю как мы передаем ID для лайка, он автоматически встанет?
-                //есть ли возможность его проверить?
-                .authorId(userId)
-                .postId(postId)
-                .createdAt(LocalDateTime.now()).build();
-        Like like = likeMapper.toEntity(likeDto);
+        Like like = Like.builder()
+                .userId(userId)
+                .post(post).build();
         likeRepository.save(like);
     }
     public void likeTheComment(long commentId, long userId) {
         validationExistsAuthor(userId);
-        validationExistsComment(commentId);
+        Comment comment = getCommentOrThrow(commentId);
         canLikeComment(commentId, userId);
-        LikeDto likeDto = LikeDto.builder()
-                .authorId(userId)
-                .commentId(commentId)
-                .createdAt(LocalDateTime.now()).build();
-        Like like = likeMapper.toEntity(likeDto);
+        Like like = Like.builder()
+                .userId(userId)
+                .comment(comment).build();
         likeRepository.save(like);
     }
     public void removeLikeFromPost(long postId, long userId) {
         validationExistsAuthor(userId);
-        validationExistsPost(postId);
+        Post post = getPostOrThrow(postId);
 
         likeRepository.deleteByPostIdAndUserId(postId, userId);
     }
     public void removeLikeFromComment(long commentId, long userId) {
         validationExistsAuthor(userId);
-        validationExistsComment(commentId);
+        Comment comment = getCommentOrThrow(commentId);
         likeRepository.deleteByCommentIdAndUserId(commentId, userId);
     }
 
@@ -69,18 +59,12 @@ public class LikeService {
         }
     }
 
-    private void validationExistsPost(long postId) {
-        Optional<Post> post = postRepository.findById(postId);
-        if (post.isEmpty()) {
-            throw new EntityNotFoundException("post with id " + postId + " is not exists");
-        }
+    private Post getPostOrThrow(long postId) {
+        return postRepository.findById(postId).orElseThrow(() -> new EntityNotFoundException("post with id " + postId + " is not exists"));
     }
 
-    private void validationExistsComment(long commentId) {
-        Optional<Comment> comment = commentRepository.findById(commentId);
-        if (comment.isEmpty()) {
-            throw new EntityNotFoundException("comment with id " + commentId + " is not exists");
-        }
+    private Comment getCommentOrThrow(long commentId) {
+        return commentRepository.findById(commentId).orElseThrow(() -> new EntityNotFoundException("comment with id " + commentId + " is not exists"));
     }
 
     private void canLikePost(long postId, long userId) {
