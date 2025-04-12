@@ -7,6 +7,7 @@ import faang.school.postservice.filter.AnalyticsEventFilter;
 import faang.school.postservice.mapper.AnalyticsEventMapper;
 import faang.school.postservice.model.analytic.AnalyticsEvent;
 import faang.school.postservice.repository.AnalyticsEventRepository;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -41,7 +42,7 @@ public class AnalyticsEventServiceImpl implements AnalyticsEventService {
      * @param analyticCreateEventDto Сущность для создания аналитики
      */
     @Override
-    public void saveEvent(AnalyticCreateEventDto analyticCreateEventDto) {
+    public void saveEvent(@NotNull AnalyticCreateEventDto analyticCreateEventDto) {
         analyticsEventRepository.save(analyticsEventMapper.toEntity(analyticCreateEventDto));
         log.debug("Event saved {}", analyticCreateEventDto);
     }
@@ -53,7 +54,7 @@ public class AnalyticsEventServiceImpl implements AnalyticsEventService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<AnalyticEventDto> getAnalytics(AnalyticFilterDto filter) {
+    public List<AnalyticEventDto> getAnalytics(@NotNull AnalyticFilterDto filter) {
         Stream<AnalyticsEvent> eventsStream =
                 analyticsEventRepository.findByAuthorIdAndReceiverId(filter.authorId(), filter.receiverId());
 
