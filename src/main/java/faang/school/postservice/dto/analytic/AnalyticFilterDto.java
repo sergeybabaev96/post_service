@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 public record AnalyticFilterDto(
+        @NotNull Long authorId,
         @NotNull Long receiverId,
         @NotNull EventType eventType,
         Interval interval,
