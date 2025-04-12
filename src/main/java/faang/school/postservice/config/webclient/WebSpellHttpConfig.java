@@ -29,7 +29,7 @@ public class WebSpellHttpConfig {
     @Bean
     public HttpClient webSpellHttpClient() {
         return HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(PostServiceConstants.TimeOut.CHECK_SPELLING_TIMEOUT))
+                .connectTimeout(Duration.ofSeconds(PostServiceConstants.CHECK_SPELLING_TIMEOUT))
                 .build();
     }
 }

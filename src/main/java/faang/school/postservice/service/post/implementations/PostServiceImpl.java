@@ -12,7 +12,7 @@ import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.post.interfaces.PostService;
-import faang.school.postservice.service.post_correct.interfaces.PostCorrectService;
+import faang.school.postservice.service.post_check.interfaces.PostCheckerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -33,7 +33,7 @@ import java.util.function.Predicate;
 public class PostServiceImpl implements PostService {
     private final ProjectServiceClient projectServiceClient;
     private final UserServiceClient userServiceClient;
-    private final PostCorrectService postCorrectService;
+    private final PostCheckerService postCorrectService;
     private final PostRepository postRepository;
     private final PostMapper postMapper;
 
@@ -185,17 +185,18 @@ public class PostServiceImpl implements PostService {
         }
 
         ExecutorService executor = Executors.newFixedThreadPool(
-                PostServiceConstants.ThreadPool.EXECUTOR_POOL_THREAD_NUMBER);
-        List<CompletableFuture<Void>> futures = unpublishedPosts.stream()
+                PostServiceConstants.EXECUTOR_POOL_THREAD_NUMBER);
+        List<CompletableFuture<Post>> futures = unpublishedPosts.stream()
                 .map(post -> postCorrectService.correctPost(post, executor))
                 .toList();
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
-                .orTimeout(PostServiceConstants.TimeOut.CORRECT_POSTS_FUTURES_TIMEOUT, TimeUnit.SECONDS)
+                .orTimeout(PostServiceConstants.CORRECT_POSTS_FUTURES_TIMEOUT, TimeUnit.SECONDS)
                 .thenRun(() -> log.info("Finished correcting unpublished posts"))
-                .exceptionally(throwable -> {
-                    log.error("Correction unpublished posts process failed", throwable);
-                    return null;
+                .whenComplete((result, throwable) -> {
+                    if (throwable != null) {
+                        log.error("Correction unpublished posts process failed", throwable);
+                    }
                 })
                 .join();
 
@@ -206,7 +207,7 @@ public class PostServiceImpl implements PostService {
         executor.shutdown();
         try {
             if (!executor.awaitTermination(
-                    PostServiceConstants.AwaitTermination.EXECUTOR_AWAIT_TERMINATION, TimeUnit.SECONDS)) {
+                    PostServiceConstants.EXECUTOR_AWAIT_TERMINATION, TimeUnit.SECONDS)) {
                 executor.shutdownNow();
                 log.warn("Executor did not terminate in the specified time.");
             }

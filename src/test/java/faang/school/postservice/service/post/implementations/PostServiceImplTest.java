@@ -9,7 +9,7 @@ import faang.school.postservice.exception.PostDtoValidationException;
 import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.service.post_correct.implementations.PostCorrectServiceImpl;
+import faang.school.postservice.service.post_check.implementations.PostCheckerServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,7 +55,7 @@ class PostServiceImplTest {
     private ProjectServiceClient projectServiceClient;
 
     @Mock
-    PostCorrectServiceImpl postCorrectService;
+    PostCheckerServiceImpl postCorrectService;
 
     @InjectMocks
     private PostServiceImpl postService;
@@ -461,12 +462,12 @@ class PostServiceImplTest {
     void testCorrectUnpublishedPosts_withFutureCompletedExceptionally() {
         List<Post> unpublishedPosts = List.of(new Post());
         when(postRepository.findReadyToPublish()).thenReturn(unpublishedPosts);
-        CompletableFuture<Void> failedFuture = new CompletableFuture<>();
+        CompletableFuture<Post> failedFuture = new CompletableFuture<>();
         failedFuture.completeExceptionally(new RuntimeException("Correction failed"));
         when(postCorrectService.correctPost(any(Post.class), any(ExecutorService.class)))
                 .thenReturn(failedFuture);
 
-        postService.correctUnpublishedPosts();
+        assertThrows(CompletionException.class, () -> postService.correctUnpublishedPosts());
 
         verify(postCorrectService).correctPost(any(Post.class), any(ExecutorService.class));
     }
