@@ -9,6 +9,6 @@ public record AnalyticEventDto(
         @NotNull Long authorId,
         @NotNull Long receiverId,
         @NotNull EventType eventType,
-        @NotNull LocalDateTime created
+        @NotNull LocalDateTime createdAt
 ) {
 }
