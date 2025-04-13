@@ -1,5 +1,6 @@
 package faang.school.postservice.dto.post;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -21,5 +22,7 @@ public class PostDto {
     private LocalDateTime createdAt;
     private LocalDateTime publishedAt;
     private LocalDateTime updatedAt;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime scheduledAt;
     private long likes;
 }

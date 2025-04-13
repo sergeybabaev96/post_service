@@ -7,27 +7,126 @@ import faang.school.postservice.dto.project.ProjectDto;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.exception.PostDtoValidationException;
 import faang.school.postservice.exception.PostNotFoundException;
+import faang.school.postservice.exception.PostScheduledProcessingException;
 import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.post.interfaces.PostService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.ListUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostServiceImpl implements PostService {
-
     private final ProjectServiceClient projectServiceClient;
     private final UserServiceClient userServiceClient;
     private final PostRepository postRepository;
     private final PostMapper postMapper;
+    private final ExecutorService postPublishPool;
+    private final PlatformTransactionManager transactionManager;
+
+    public static final int POST_PUBLISH_POOL_SIZE = 10;
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
+
+    @Override
+    public CompletableFuture<Void> publishScheduledPosts() {
+        if (!canStartPublishing()) {
+            log.warn("Previous task still running, skipping...");
+            return CompletableFuture.completedFuture(null);
+        }
+
+        try {
+            List<Post> posts = fetchPostsToPublish();
+            if (posts.isEmpty()) {
+                log.warn("Post list is empty");
+                return CompletableFuture.completedFuture(null);
+            }
+
+            List<List<Post>> chunks = prepareChunks(posts);
+            return processPublishPostChunks(chunks);
+        } catch (Exception e) {
+            log.error("Error while starting chunk processing", e);
+            return CompletableFuture.failedFuture(
+                    new PostScheduledProcessingException("Failed to start scheduled posts processing", e));
+        } finally {
+            isRunning.set(false);
+        }
+    }
+
+    private boolean canStartPublishing() {
+        return isRunning.compareAndSet(false, true);
+    }
+
+    @Transactional(readOnly = true)
+    private List<Post> fetchPostsToPublish() {
+        return postRepository.findReadyToPublish();
+    }
+
+    private List<List<Post>> prepareChunks(List<Post> posts) {
+        int chunkCount = Math.min(POST_PUBLISH_POOL_SIZE, posts.size());
+        int chunkSize = (int) Math.ceil((double) posts.size() / chunkCount);
+        return splitIntoChunks(posts, chunkSize);
+    }
+
+    private CompletableFuture<Void> processPublishPostChunks(List<List<Post>> chunks) {
+        List<CompletableFuture<Void>> futures = chunks.stream()
+                .map(chunk -> CompletableFuture
+                        .runAsync(() -> {
+                            TransactionTemplate transactionTemplate =
+                                    new TransactionTemplate(transactionManager);
+                            transactionTemplate.setPropagationBehavior(
+                                    TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+                            transactionTemplate.execute(status -> {
+                                try {
+                                    log.info("Processing chunk of size {}", chunk.size());
+                                    chunk.forEach(post -> {
+                                        post.setPublished(true);
+                                        post.setPublishedAt(LocalDateTime.now());
+                                        post.setScheduledAt(null);
+                                    });
+                                    postRepository.saveAll(chunk);
+                                    log.info("Saved chunk of size {}", chunk.size());
+                                } catch (Exception e) {
+                                    log.error("Error processing chunk", e);
+                                    throw e;
+                                }
+                                return null;
+                            });
+                        }, postPublishPool)
+                        .exceptionally(throwable -> {
+                            log.error("Chunk processing failed", throwable);
+                            return null;
+                        }))
+                .toList();
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .whenComplete((result, throwable) -> {
+                    if (throwable != null) {
+                        log.error("Failed to process all chunks", throwable);
+                    } else {
+                        log.info("All chunks processed successfully");
+                    }
+                });
+    }
+
+    private List<List<Post>> splitIntoChunks(List<Post> list, int chunkSize) {
+        return ListUtils.partition(list, chunkSize);
+    }
 
     @Override
     public Post getPostById(Long postId) {
