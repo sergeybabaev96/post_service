@@ -35,7 +35,11 @@ spring:
     bootstrap-servers: "localhost:9092"
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.JsonSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    topics:
+      post:
+        achievement:
+          post-event-topic: "post_event"
 
 server:
   port: 8081

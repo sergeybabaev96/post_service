@@ -12,6 +12,7 @@ import faang.school.postservice.service.hashtags.HashtagService;
 import faang.school.postservice.utils.validationUtils.PostValidation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,9 @@ public class PostService {
     private final HashtagService hashtagService;
     private final KafkaTemplate<String, PostEvent> kafkaTemplate;
 
+    @Value("${spring.kafka.topics.post.achievement.post-event-topic}")
+    private String postEventTopicName;
+
     public PostResponseDto createDraftPost(PostRequestDto postRequestDto) {
         PostValidation.validatePostAuthors(postRequestDto);
         PostValidation.validatePostDraftCreation(postRequestDto);
@@ -51,7 +55,7 @@ public class PostService {
         postRepository.save(post);
 
         PostEvent event = new PostEvent(post.getAuthorId(), post.getId());
-        kafkaTemplate.send("post_event", event);
+        kafkaTemplate.send(postEventTopicName, event);
 
         hashtagService.extractHashtagsFromPost(post);
         return postMapper.toPostResponseDto(post);
