@@ -1,5 +1,7 @@
 package faang.school.postservice.consumer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import faang.school.postservice.event.PostEvent;
 import faang.school.postservice.exception.InvalidPostEventException;
 import faang.school.postservice.exception.SubscriberProcessingException;
@@ -25,6 +27,7 @@ import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class KafkaPostConsumerTest {
@@ -38,9 +41,13 @@ public class KafkaPostConsumerTest {
     @Mock
     private FeedService feedService;
 
+    @Mock
+    private ObjectMapper objectMapper;
+
     @InjectMocks
     private KafkaPostConsumer kafkaPostConsumer;
 
+    private String validPostEventString;
     private PostEvent validPostEvent;
 
     @BeforeEach
@@ -51,26 +58,29 @@ public class KafkaPostConsumerTest {
                 SUBSCRIBER_IDS,
                 LocalDateTime.now()
         );
+        validPostEventString = validPostEvent.toString();
     }
 
     @Test
-    void listenTest_allSubscribersProcessedSuccessfully() {
-        kafkaPostConsumer.listen(validPostEvent);
+    void listenTest_allSubscribersProcessedSuccessfully() throws JsonProcessingException {
+        when(objectMapper.readValue(validPostEventString, PostEvent.class)).thenReturn(validPostEvent);
+        kafkaPostConsumer.listen(validPostEventString);
 
         verify(feedService, times(SUBSCRIBER_IDS.size())).addPostToFeed(anyLong(), eq(validPostEvent));
     }
 
     @Test
-    void listenTest_partialFailure() {
+    void listenTest_partialFailure() throws JsonProcessingException {
         Long failedSubscriberId = SUBSCRIBER_IDS.get(2);
         doNothing().when(feedService).addPostToFeed(eq(SUBSCRIBER_IDS.get(0)), eq(validPostEvent));
         doNothing().when(feedService).addPostToFeed(eq(SUBSCRIBER_IDS.get(1)), eq(validPostEvent));
         doThrow(new RuntimeException("Test exception")).when(feedService)
                 .addPostToFeed(eq(failedSubscriberId), eq(validPostEvent));
+        when(objectMapper.readValue(validPostEventString, PostEvent.class)).thenReturn(validPostEvent);
 
         SubscriberProcessingException exception = assertThrows(
                 SubscriberProcessingException.class,
-                () -> kafkaPostConsumer.listen(validPostEvent)
+                () -> kafkaPostConsumer.listen(validPostEventString)
         );
 
         String expectedMessage = SUBSCRIBER_PROCESSING_ERROR_MESSAGE + "[" + failedSubscriberId + "]";
@@ -89,16 +99,19 @@ public class KafkaPostConsumerTest {
     }
 
     @Test
-    void testListen_nullSubscribers() {
+    void testListen_nullSubscribers() throws JsonProcessingException {
         PostEvent postEventWithNullSubscribers = new PostEvent(
                 AUTHOR_ID,
                 POST_ID,
                 null,
                 LocalDateTime.now()
         );
+        String postEventWithNullSubscribersString = postEventWithNullSubscribers.toString();
+        when(objectMapper.readValue(postEventWithNullSubscribersString, PostEvent.class))
+                .thenReturn(postEventWithNullSubscribers);
 
         InvalidPostEventException exception = assertThrows(InvalidPostEventException.class,
-                () -> kafkaPostConsumer.listen(postEventWithNullSubscribers)
+                () -> kafkaPostConsumer.listen(postEventWithNullSubscribersString)
         );
 
         assertEquals(INVALID_POST_EVENT_MESSAGE, exception.getMessage());
@@ -106,12 +119,13 @@ public class KafkaPostConsumerTest {
     }
 
     @Test
-    void testListen_allSubscribersFail() {
+    void testListen_allSubscribersFail() throws JsonProcessingException {
+        when(objectMapper.readValue(validPostEventString, PostEvent.class)).thenReturn(validPostEvent);
         doThrow(new RuntimeException("Ошибка обработки")).when(feedService)
                 .addPostToFeed(anyLong(), any(PostEvent.class));
 
         SubscriberProcessingException exception = assertThrows(SubscriberProcessingException.class,
-                () -> kafkaPostConsumer.listen(validPostEvent)
+                () -> kafkaPostConsumer.listen(validPostEventString)
         );
 
         assertEquals(SUBSCRIBER_PROCESSING_ERROR_MESSAGE + SUBSCRIBER_IDS, exception.getMessage());
@@ -119,15 +133,16 @@ public class KafkaPostConsumerTest {
     }
 
     @Test
-    void testListen_partialSubscriberFailure() {
+    void testListen_partialSubscriberFailure() throws JsonProcessingException {
         Long failedSubscriberId = SUBSCRIBER_IDS.get(2);
         doNothing().when(feedService).addPostToFeed(eq(SUBSCRIBER_IDS.get(0)), any(PostEvent.class));
         doNothing().when(feedService).addPostToFeed(eq(SUBSCRIBER_IDS.get(1)), any(PostEvent.class));
         doThrow(new RuntimeException("Ошибка обработки")).when(feedService)
                 .addPostToFeed(eq(failedSubscriberId), any(PostEvent.class));
+        when(objectMapper.readValue(validPostEventString, PostEvent.class)).thenReturn(validPostEvent);
 
         SubscriberProcessingException exception = assertThrows(SubscriberProcessingException.class,
-                () -> kafkaPostConsumer.listen(validPostEvent)
+                () -> kafkaPostConsumer.listen(validPostEventString)
         );
 
         String expectedMessage = SUBSCRIBER_PROCESSING_ERROR_MESSAGE + "[" + failedSubscriberId + "]";
