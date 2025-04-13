@@ -62,6 +62,9 @@ public class PostService {
     @Value("${posts.correction.thread-poop-size}")
     int threadPoolSize;
 
+    @Value("${spring.kafka.topics.post.achievement.post-event-topic}")
+    private String postEventTopicName;
+
     public PostResponseDto createDraftPost(PostRequestDto postRequestDto) {
         PostValidation.validatePostAuthors(postRequestDto);
         PostValidation.validatePostDraftCreation(postRequestDto);
@@ -80,7 +83,7 @@ public class PostService {
         postRepository.save(post);
 
         PostEvent event = new PostEvent(post.getAuthorId(), post.getId());
-        kafkaTemplate.send("post_event", event);
+        kafkaTemplate.send(postEventTopicName, event);
 
         hashtagService.extractHashtagsFromPost(post);
         return postMapper.toPostResponseDto(post);
