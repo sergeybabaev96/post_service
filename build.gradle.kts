@@ -48,6 +48,7 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.26")
     implementation("org.mapstruct:mapstruct:1.5.3.Final")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.5.3.Final")
+    implementation ("org.imgscalr:imgscalr-lib:4.2")
 
     /**
      * Test containers
@@ -64,6 +65,11 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.mockito:mockito-inline:5.2.0")
+
+    /**
+     * AWS S3
+     */
+    implementation("com.amazonaws:aws-java-sdk-s3:1.12.566")
 }
 
 tasks.withType<Test> {
