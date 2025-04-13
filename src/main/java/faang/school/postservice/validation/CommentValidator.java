@@ -6,23 +6,21 @@ import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
  * Валидатор для проверки корректности данных комментариев.
- * Содержит методы валидации перед выполнением операций с комментариями.
+ * Содержит методы для проверки принадлежности комментария к посту,
+ * существования пользователя и существования поста.
  *
- * <p>Основные методы валидации:</p>
+ * <p>Основные функции:</p>
  * <ul>
- *   <li>{@link #validateCommentBelongsToPost(Comment, Long, Long)} - Проверка принадлежности комментария посту</li>
- *   <li>{@link #validateUserById(Long)} - Проверка существования пользователя</li>
+ *   <li>{@link #validateCommentBelongsToPost(Comment, Long)} - проверяет принадлежность комментария к посту</li>
+ *   <li>{@link #validateUserById(Long)} - проверяет существование пользователя в системе</li>
+ *   <li>{@link #validatePostExists(Long)} - проверяет существование поста с указанным идентификатором</li>
  * </ul>
- *
- * @author Zhltsk-V
- * @version 1.0
  */
 @Slf4j
 @Component
@@ -32,32 +30,19 @@ public class CommentValidator {
     private final PostRepository postRepository;
 
     /**
-     * Проверяет принадлежность комментария указанному посту.
+     * Проверяет принадлежность комментария к посту.
      *
-     * @param comment   проверяемый комментарий
-     * @param postId    ожидаемый ID поста
-     * @param commentId ID комментария для сообщения об ошибке
-     * @throws DataValidationException если комментарий не принадлежит указанному посту
-     */
-    public void validateCommentBelongsToPost(Comment comment, Long postId, Long commentId) {
-        if (comment == null || !comment.belongsToPost(postId)) {
-            log.error("Comment with ID {} doesn't belong to post with ID {}", commentId, postId);
-            throw new DataValidationException("Comment with ID " + commentId
-                    + " doesn't belong to post with ID " + postId);
-        }
-    }
-
-    /**
-     * Проверяет, принадлежит ли указанный комментарий заданному посту.
-     *
-     * @param comment проверяемый комментарий
-     * @param postId  ID поста для проверки принадлежности
-     * @throws DataValidationException если комментарий не принадлежит указанному посту
-     * @see CommentService#getCommentById(Long)
-     * @see DataValidationException
+     * @param comment комментарий для проверки
+     * @param postId  идентификатор поста
+     * @throws DataValidationException если комментарий не принадлежит посту
      */
     public void validateCommentBelongsToPost(Comment comment, Long postId) {
-        if (!comment.getPost().getId().equals(postId)) {
+        if (comment == null) {
+            log.error("Comment must not be null");
+            throw new DataValidationException("Comment must not be null");
+        }
+
+        if (!comment.belongsToPost(postId)) {
             log.error("Comment with ID {} does not belong to post with ID {}", comment.getId(), postId);
             throw new DataValidationException(
                     String.format("Comment with ID %d does not belong to post with ID %d",

@@ -26,26 +26,17 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Сервис для работы с комментариями.
- * Содержит бизнес-логику для управления комментариями.
+ * Сервис для работы с комментариями к постам.
+ * Содержит методы для создания, обновления, удаления и получения комментариев.
  *
- * <p>Основные методы:</p>
+ * <p>Основные функции:</p>
  * <ul>
- *   <li>{@link #createComment(Long, CommentCreateDto)} - Создание нового комментария</li>
- *   <li>{@link #updateComment(Long, Long, CommentCreateDto)} - Обновление существующего комментария</li>
- *   <li>{@link #getCommentsByPostId(Long)} - Получение всех комментариев поста</li>
- *   <li>{@link #deleteComment(Long, Long)} - Удаление комментария</li>
+ *   <li>{@link #createComment(Long, CommentCreateDto)} - создает новый комментарий</li>
+ *   <li>{@link #updateComment(Long, Long, CommentCreateDto)} - обновляет существующий комментарий</li>
+ *   <li>{@link #getCommentsByPostId(Long)} - получает все комментарии для указанного поста</li>
+ *   <li>{@link #deleteComment(Long, Long)} - удаляет комментарий по его ID</li>
+ *   <li>{@link #moderateUnverifiedComment()} - запускает процесс модерации неподтвержденных комментариев</li>
  * </ul>
- *
- * <p>Вспомогательные методы:</p>
- * <ul>
- *   <li>{@link #getCommentById(Long)} - Получение комментария по ID</li>
- *   <li>{@link #getPostById(Long)} - Получение поста по ID</li>
- * </ul>
- *
- * @author Zhltsk-V
- * @version 1.0
- * @see CommentValidator Для методов валидации
  */
 @Slf4j
 @Service
@@ -88,19 +79,19 @@ public class CommentService {
     /**
      * Обновляет существующий комментарий.
      *
-     * @param postId           ID поста, содержащего комментарий
+     * @param postId           ID поста, к которому принадлежит комментарий
      * @param commentId        ID комментария для обновления
-     * @param commentCreateDto DTO с обновленными данными комментария
+     * @param commentCreateDto DTO с новыми данными комментария
      * @return обновленный комментарий в формате CommentViewDto
-     * @throws EntityNotFoundException если комментарий не найден
+     * @throws EntityNotFoundException если комментарий не найден или пользователь не существует
      * @throws DataValidationException если комментарий не принадлежит указанному посту
-     * @see CommentValidator#validateCommentBelongsToPost(Comment, Long, Long)
+     * @see CommentValidator#validateCommentBelongsToPost(Comment, Long)
      */
     @Transactional
     public CommentViewDto updateComment(Long postId, Long commentId, CommentCreateDto commentCreateDto) {
         log.debug("Updating comment with ID: {} for post with ID: {}", commentId, postId);
         Comment comment = getCommentById(commentId);
-        commentValidator.validateCommentBelongsToPost(comment, postId, commentId);
+        commentValidator.validateCommentBelongsToPost(comment, postId);
 
         comment.setContent(commentCreateDto.getContent());
         comment.setUpdatedAt(LocalDateTime.now());
@@ -130,35 +121,31 @@ public class CommentService {
                 .toList();
     }
 
+
     /**
-     * Удаляет указанный комментарий.
+     * Удаляет комментарий по его ID.
      *
-     * @param postId    ID поста, содержащего комментарий
+     * @param postId    ID поста, к которому принадлежит комментарий
      * @param commentId ID комментария для удаления
-     * @throws EntityNotFoundException если комментарий не найден
+     * @throws EntityNotFoundException если комментарий не найден или пользователь не существует
      * @throws DataValidationException если комментарий не принадлежит указанному посту
-     * @see CommentValidator#validateCommentBelongsToPost(Comment, Long, Long)
+     * @see CommentValidator#validateCommentBelongsToPost(Comment, Long)
      */
     @Transactional
     public void deleteComment(Long postId, Long commentId) {
         log.debug("Deleting comment with ID: {} for post with ID: {}", commentId, postId);
         Comment comment = getCommentById(commentId);
-        commentValidator.validateCommentBelongsToPost(comment, postId, commentId);
+        commentValidator.validateCommentBelongsToPost(comment, postId);
 
         commentRepository.delete(comment);
         log.debug("Comment with ID: {} successfully deleted", commentId);
     }
 
     /**
-     * Запускает процесс модерации всех неверифицированных комментариев.
-     * <p>
-     * Метод выполняет следующие действия:
-     * <ol>
-     *   <li>Находит все комментарии без даты верификации</li>
-     *   <li>Разбивает их на пакеты указанного размера</li>
-     *   <li>Запускает асинхронную проверку каждого пакета</li>
-     *   <li>Ожидает завершения всех проверок</li>
-     * </ol>
+     * Запускает процесс модерации неподтвержденных комментариев.
+     * Комментарии обрабатываются пакетами, чтобы избежать перегрузки системы.
+     *
+     * @throws ModerationException если произошла ошибка во время процесса модерации
      */
     public void moderateUnverifiedComment() {
         log.info("Moderation of unverified posts started");
@@ -169,9 +156,8 @@ public class CommentService {
             return;
         }
 
-        List<List<Comment>> batches = batches = ListUtils.partition(unverifiedComments,
+        List<List<Comment>> batches = ListUtils.partition(unverifiedComments,
                 commentModerationConfig.getBatchSize());
-
 
         List<CompletableFuture<Void>> moderationTasks = batches.stream()
                 .map(commentModerationAsyncHandler::checkForProfanity)
@@ -199,7 +185,7 @@ public class CommentService {
         return commentRepository.findById(commentId)
                 .orElseThrow(() -> {
                     log.error("Comment with ID {} not found", commentId);
-                    return new EntityNotFoundException("Comment with ID " + commentId + " not found");
+                    return new EntityNotFoundException(String.format("Comment with ID %d not found", commentId));
                 });
     }
 
@@ -214,7 +200,7 @@ public class CommentService {
         return postRepository.findById(postId)
                 .orElseThrow(() -> {
                     log.error("Post with ID {} not found", postId);
-                    return new EntityNotFoundException("Post with ID " + postId + " not found");
+                    return new EntityNotFoundException(String.format("Post with ID %d not found", postId));
                 });
     }
 

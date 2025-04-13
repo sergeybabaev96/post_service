@@ -24,6 +24,10 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 public class CommentValidatorTest {
+    private static final Long POST_ID = 1L;
+    private static final Long COMMENT_ID = 1L;
+    private static final Long AUTHOR_ID = 1L;
+    private static final Long INVALID_ID = 999L;
 
     @Mock
     private UserServiceClient userServiceClient;
@@ -40,10 +44,6 @@ public class CommentValidatorTest {
     @InjectMocks
     private CommentValidator commentValidator;
 
-    private final Long postId = 1L;
-    private final Long commentId = 1L;
-    private final Long authorId = 1L;
-
     @Nested
     @DisplayName("validateCommentBelongsToPost()")
     class ValidateCommentBelongsToPost {
@@ -51,36 +51,39 @@ public class CommentValidatorTest {
         @Test
         @DisplayName("Должен пройти успешно, когда комментарий принадлежит посту")
         void givenValidArguments_WhenValidateCommentBelongsToPost_ThenSuccess() {
-            when(comment.belongsToPost(postId)).thenReturn(true);
+            when(comment.belongsToPost(POST_ID)).thenReturn(true);
 
             assertDoesNotThrow(() ->
-                    commentValidator.validateCommentBelongsToPost(comment, postId, commentId)
+                    commentValidator.validateCommentBelongsToPost(comment, POST_ID)
             );
 
-            verify(comment, times(1)).belongsToPost(postId);
+            verify(comment).belongsToPost(POST_ID);
         }
 
         @Test
         @DisplayName("Должен выбросить исключение, когда комментарий не принадлежит посту")
         void givenInvalidArguments_WhenValidateCommentBelongsToPost_ThenThrowDataValidationException() {
-            when(comment.belongsToPost(postId)).thenReturn(false);
+            when(comment.belongsToPost(POST_ID)).thenReturn(false);
+            when(comment.getId()).thenReturn(COMMENT_ID);
 
             DataValidationException exception = assertThrows(DataValidationException.class,
-                    () -> commentValidator.validateCommentBelongsToPost(comment, postId, commentId)
+                    () -> commentValidator.validateCommentBelongsToPost(comment, POST_ID)
             );
 
-            assertEquals("Comment with ID 1 doesn't belong to post with ID 1", exception.getMessage());
-            verify(comment, times(1)).belongsToPost(postId);
+            assertEquals(
+                    String.format("Comment with ID %d does not belong to post with ID %d", COMMENT_ID, POST_ID),
+                    exception.getMessage()
+            );
         }
 
         @Test
         @DisplayName("Должен выбросить исключение, когда комментарий null")
         void givenNullComment_WhenValidateCommentBelongsToPost_ThenThrowDataValidationException() {
             DataValidationException exception = assertThrows(DataValidationException.class,
-                    () -> commentValidator.validateCommentBelongsToPost(null, postId, commentId)
+                    () -> commentValidator.validateCommentBelongsToPost(null, POST_ID)
             );
 
-            assertEquals("Comment with ID 1 doesn't belong to post with ID 1", exception.getMessage());
+            assertEquals("Comment must not be null", exception.getMessage());
         }
     }
 
@@ -91,27 +94,24 @@ public class CommentValidatorTest {
         @Test
         @DisplayName("Проверка существования пользователя")
         void givenValidUserId_WhenValidateUserById_ThenSuccess() {
-            when(userServiceClient.getUser(authorId))
-                    .thenReturn(new UserDto(1L, "username", "email@gmail.com"));
+            when(userServiceClient.getUser(AUTHOR_ID))
+                    .thenReturn(new UserDto(AUTHOR_ID, "user", "user@example.com"));
 
-            assertDoesNotThrow(() ->
-                    commentValidator.validateUserById(authorId)
-            );
-
-            verify(userServiceClient, times(1)).getUser(authorId);
+            assertDoesNotThrow(() -> commentValidator.validateUserById(AUTHOR_ID));
+            verify(userServiceClient).getUser(AUTHOR_ID);
         }
     }
 
     @Test
     @DisplayName("Должен выбросить исключение, когда пользователь не существует")
     void givenInvalidUserId_WhenValidateUserById_ThenThrowEntityNotFoundException() {
-        when(userServiceClient.getUser(authorId)).thenReturn(null);
+        when(userServiceClient.getUser(INVALID_ID)).thenReturn(null);
 
         EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-                () -> commentValidator.validateUserById(authorId)
+                () -> commentValidator.validateUserById(INVALID_ID)
         );
 
-        assertEquals("User with ID 1 not found", exception.getMessage());
+        assertEquals(String.format("User with ID %d not found", INVALID_ID), exception.getMessage());
     }
 
     @Nested
@@ -121,25 +121,22 @@ public class CommentValidatorTest {
         @Test
         @DisplayName("Должен пройти успешно, когда пост существует")
         void givenExistingPostId_WhenValidatePostExists_ThenSuccess() {
-            when(postRepository.existsById(postId)).thenReturn(true);
+            when(postRepository.existsById(POST_ID)).thenReturn(true);
 
-            assertDoesNotThrow(() ->
-                    commentValidator.validatePostExists(postId)
-            );
-
-            verify(postRepository, times(1)).existsById(postId);
+            assertDoesNotThrow(() -> commentValidator.validatePostExists(POST_ID));
+            verify(postRepository).existsById(POST_ID);
         }
 
         @Test
         @DisplayName("Должен выбросить исключение, когда пост не существует")
         void givenNonExistingPostId_WhenValidatePostExists_ThenThrowEntityNotFoundException() {
-            when(postRepository.existsById(postId)).thenReturn(false);
+            when(postRepository.existsById(INVALID_ID)).thenReturn(false);
 
             EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
-                    () -> commentValidator.validatePostExists(postId)
+                    () -> commentValidator.validatePostExists(INVALID_ID)
             );
 
-            assertEquals("Post with ID 1 not found", exception.getMessage());
+            assertEquals(String.format("Post with ID %d not found", INVALID_ID), exception.getMessage());
         }
 
         @Test

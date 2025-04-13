@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -29,15 +30,15 @@ public class CommentImageController {
     private final CommentImageService commentImageService;
 
     @Operation(
-            summary = "Upload image to comment",
+             summary = "Upload image to comment",
             description = "Uploads and attaches an image to the specified comment"
     )
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommentViewDto> uploadImage(
             @Parameter(description = "ID of the post containing the comment", required = true, example = "1")
-            @PathVariable long postId,
+            @PathVariable @NotNull Long postId,
             @Parameter(description = "ID of the comment to attach image to", required = true, example = "1")
-            @PathVariable long commentId,
+            @PathVariable @NotNull Long commentId,
             @Parameter(description = "Image file to upload (max 5MB)", required = true)
             @RequestPart("file") @Valid @Size(max = 5 * 1024 * 1024) MultipartFile file) {
 
@@ -54,9 +55,9 @@ public class CommentImageController {
     @DeleteMapping
     public ResponseEntity<CommentViewDto> deleteImage(
             @Parameter(description = "ID of the post containing the comment", required = true, example = "1")
-            @PathVariable long postId,
+            @PathVariable @NotNull Long postId,
             @Parameter(description = "ID of the comment to remove image from", required = true, example = "1")
-            @PathVariable long commentId) {
+            @PathVariable @NotNull Long commentId) {
 
         log.info("Request to delete image for comment ID: {} in post ID: {}", commentId, postId);
         CommentViewDto updatedComment = commentImageService.deleteImage(postId, commentId);

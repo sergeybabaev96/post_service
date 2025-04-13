@@ -1,6 +1,5 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.exception.ModerationException;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.repository.CommentRepository;
 import jakarta.validation.constraints.NotNull;
@@ -40,11 +39,6 @@ public class CommentModerationService {
      */
     @Transactional
     public void moderateComments(@NotNull List<Comment> comments, Set<String> profanityWords) {
-        if (comments == null) {
-            log.error("Comments list cannot be null");
-            throw new ModerationException("Comments list cannot be null");
-        }
-
         if (comments.isEmpty()) {
             return;
         }

@@ -162,7 +162,7 @@ public class CommentServiceTest {
             assertNotNull(result);
             assertEquals(commentViewDto, result);
             assertNotNull(comment.getUpdatedAt());
-            verify(commentValidator).validateCommentBelongsToPost(comment, postId, commentId);
+            verify(commentValidator).validateCommentBelongsToPost(comment, postId);
         }
 
         @Test
@@ -179,7 +179,7 @@ public class CommentServiceTest {
         void givenMismatchedPostId_WhenUpdateComment_ThenThrowDataValidationException() {
             when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
             doThrow(new DataValidationException("Invalid post ID"))
-                    .when(commentValidator).validateCommentBelongsToPost(comment, postId, commentId);
+                    .when(commentValidator).validateCommentBelongsToPost(comment, postId);
 
             assertThrows(DataValidationException.class,
                     () -> commentService.updateComment(postId, commentId, commentCreateDto));
@@ -226,7 +226,7 @@ public class CommentServiceTest {
 
             assertDoesNotThrow(() -> commentService.deleteComment(postId, commentId));
             verify(commentRepository).delete(comment);
-            verify(commentValidator).validateCommentBelongsToPost(comment, postId, commentId);
+            verify(commentValidator).validateCommentBelongsToPost(comment, postId);
         }
 
         @Test
@@ -243,7 +243,7 @@ public class CommentServiceTest {
         void givenMismatchedPostId_WhenDeleteComment_ThenThrowDataValidationException() {
             when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
             doThrow(new DataValidationException("Invalid post ID"))
-                    .when(commentValidator).validateCommentBelongsToPost(comment, postId, commentId);
+                    .when(commentValidator).validateCommentBelongsToPost(comment, postId);
 
             assertThrows(DataValidationException.class,
                     () -> commentService.deleteComment(postId, commentId));
