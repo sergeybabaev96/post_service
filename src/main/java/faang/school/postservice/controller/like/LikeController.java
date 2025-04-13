@@ -1,6 +1,5 @@
 package faang.school.postservice.controller.like;
 
-
 import faang.school.postservice.service.like.LikeService;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
