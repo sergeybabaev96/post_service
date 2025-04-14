@@ -1,7 +1,6 @@
 package faang.school.postservice.config.redis;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -15,8 +14,7 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class RedisConfiguration {
     private final RedisConfig redisConfig;
 
-    @Bean
-    @Qualifier("user-ban")
+    @Bean(name = "userBanRedisTemplate")
     public RedisTemplate<String, Long> userBanRedisTemplate(RedisConnectionFactory connectionFactory) {
         RedisTemplate<String, Long> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
@@ -30,8 +28,7 @@ public class RedisConfiguration {
         return template;
     }
 
-    @Bean
-    @Qualifier("user-ban")
+    @Bean(name = "userBanTopic")
     ChannelTopic userBanTopic() {
         return new ChannelTopic(redisConfig.getChannels().get("user_ban").name());
     }

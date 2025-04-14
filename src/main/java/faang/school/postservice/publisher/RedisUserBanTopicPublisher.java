@@ -10,9 +10,9 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class RedisUserBanTopicPublisher {
 
-    @Qualifier("user-ban")
+    @Qualifier("userBanRedisTemplate")
     private final RedisTemplate<String, Long> redisTemplate;
-    @Qualifier("user-ban")
+    @Qualifier("userBanTopic")
     private final ChannelTopic topic;
 
     public void publish(Long userIdToBan) {
