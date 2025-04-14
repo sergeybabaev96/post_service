@@ -1,14 +1,14 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.dto.analytic.AnalyticCreateEventDto;
+import faang.school.postservice.dto.analytic.AnalyticsEventCreateDto;
 import faang.school.postservice.dto.analytic.AnalyticEventDto;
-import faang.school.postservice.dto.analytic.AnalyticFilterDto;
+import faang.school.postservice.dto.analytic.AnalyticsEventFilterDto;
 
 import java.util.List;
 
 public interface AnalyticsEventService {
 
-    void saveEvent(AnalyticCreateEventDto analyticCreateEventDto);
+    void saveEvent(AnalyticsEventCreateDto analyticsEventCreateDto);
 
-    List<AnalyticEventDto> getAnalytics(AnalyticFilterDto filter);
+    List<AnalyticEventDto> getAnalytics(AnalyticsEventFilterDto filter);
 }

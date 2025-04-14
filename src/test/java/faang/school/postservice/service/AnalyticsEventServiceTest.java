@@ -1,8 +1,8 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.dto.analytic.AnalyticCreateEventDto;
+import faang.school.postservice.dto.analytic.AnalyticsEventCreateDto;
 import faang.school.postservice.dto.analytic.AnalyticEventDto;
-import faang.school.postservice.dto.analytic.AnalyticFilterDto;
+import faang.school.postservice.dto.analytic.AnalyticsEventFilterDto;
 import faang.school.postservice.filter.AnalyticsEventByIntervalFilter;
 import faang.school.postservice.filter.AnalyticsEventFromDateFilter;
 import faang.school.postservice.filter.AnalyticsEventToDateFilter;
@@ -55,7 +55,7 @@ public class AnalyticsEventServiceTest {
 
     @Test
     public void givenEventDto_whenSaveEvent_thenSuccess() {
-        AnalyticCreateEventDto dto = new AnalyticCreateEventDto(
+        AnalyticsEventCreateDto dto = new AnalyticsEventCreateDto(
                 1L,
                 2L,
                 EventType.COMMENT_ADD,
@@ -84,10 +84,10 @@ public class AnalyticsEventServiceTest {
                         .build()
         );
 
-        when(analyticsEventRepository.findByAuthorIdAndReceiverId(1L, 1L))
+        when(analyticsEventRepository.findByAuthorIdAndReceiverIdOrderByCreatedAtDesc(1L, 1L))
                 .thenReturn(analyticsEventStream);
 
-        AnalyticFilterDto filterDto = new AnalyticFilterDto(
+        AnalyticsEventFilterDto filterDto = new AnalyticsEventFilterDto(
                 1L, 1L, null,
                 null, null, null);
         List<AnalyticEventDto> actualAnalytic = analyticsEventService.getAnalytics(filterDto);

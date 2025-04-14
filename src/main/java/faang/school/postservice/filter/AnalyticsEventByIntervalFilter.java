@@ -1,6 +1,6 @@
 package faang.school.postservice.filter;
 
-import faang.school.postservice.dto.analytic.AnalyticFilterDto;
+import faang.school.postservice.dto.analytic.AnalyticsEventFilterDto;
 import faang.school.postservice.model.analytic.AnalyticsEvent;
 import org.springframework.stereotype.Component;
 
@@ -11,12 +11,12 @@ import java.util.stream.Stream;
 public class AnalyticsEventByIntervalFilter implements AnalyticsEventFilter {
 
     @Override
-    public boolean isApplicable(AnalyticFilterDto filter) {
+    public boolean isApplicable(AnalyticsEventFilterDto filter) {
         return filter.interval() != null;
     }
 
     @Override
-    public Stream<AnalyticsEvent> apply(Stream<AnalyticsEvent> stream, AnalyticFilterDto filter) {
+    public Stream<AnalyticsEvent> apply(Stream<AnalyticsEvent> stream, AnalyticsEventFilterDto filter) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime fromInterval = now.minusSeconds(filter.interval().getSeconds());
         return stream

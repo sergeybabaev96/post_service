@@ -7,5 +7,5 @@ import java.util.stream.Stream;
 
 public interface AnalyticsEventRepository extends CrudRepository<AnalyticsEvent, Long> {
 
-    Stream<AnalyticsEvent> findByAuthorIdAndReceiverId(Long authorId, Long receiverId);
+    Stream<AnalyticsEvent> findByAuthorIdAndReceiverIdOrderByCreatedAtDesc(Long authorId, Long receiverId);
 }

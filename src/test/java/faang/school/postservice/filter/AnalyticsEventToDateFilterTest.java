@@ -1,6 +1,6 @@
 package faang.school.postservice.filter;
 
-import faang.school.postservice.dto.analytic.AnalyticFilterDto;
+import faang.school.postservice.dto.analytic.AnalyticsEventFilterDto;
 import faang.school.postservice.model.analytic.AnalyticsEvent;
 import faang.school.postservice.model.analytic.EventType;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ public class AnalyticsEventToDateFilterTest {
 
     @Test
     public void givenNotApplicableFilter_whenIsApplicable_thenReturnFalse() {
-        AnalyticFilterDto filterDto = new AnalyticFilterDto(
+        AnalyticsEventFilterDto filterDto = new AnalyticsEventFilterDto(
                 1L,
                 2L,
                 EventType.COMMENT_ADD,
@@ -31,7 +31,7 @@ public class AnalyticsEventToDateFilterTest {
 
     @Test
     public void givenApplicableFilter_whenIsApplicable_thenReturnTrue() {
-        AnalyticFilterDto filterDto = new AnalyticFilterDto(
+        AnalyticsEventFilterDto filterDto = new AnalyticsEventFilterDto(
                 1L,
                 2L,
                 EventType.COMMENT_ADD,
@@ -46,7 +46,7 @@ public class AnalyticsEventToDateFilterTest {
     public void givenFilterDto_whenApply_thenReturnResult() {
         LocalDateTime createdAt = LocalDateTime.now();
 
-        AnalyticFilterDto filterDto = new AnalyticFilterDto(
+        AnalyticsEventFilterDto filterDto = new AnalyticsEventFilterDto(
                 1L,
                 2L,
                 EventType.COMMENT_ADD,

@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
  * @param eventType Тип события
  * @param createdAt Когда событие произошло
  */
-public record AnalyticCreateEventDto(
+public record AnalyticsEventCreateDto(
         @NotNull Long authorId,
         @NotNull Long receiverId,
         @NotNull EventType eventType,

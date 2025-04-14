@@ -1,6 +1,6 @@
 package faang.school.postservice.filter;
 
-import faang.school.postservice.dto.analytic.AnalyticFilterDto;
+import faang.school.postservice.dto.analytic.AnalyticsEventFilterDto;
 import faang.school.postservice.model.analytic.AnalyticsEvent;
 import faang.school.postservice.model.analytic.EventType;
 import faang.school.postservice.model.analytic.Interval;
@@ -19,7 +19,7 @@ public class AnalyticsEventByIntervalFilterTest {
 
     @Test
     public void givenNotApplicableFilter_whenIsApplicable_thenReturnFalse() {
-        AnalyticFilterDto filterDto = new AnalyticFilterDto(
+        AnalyticsEventFilterDto filterDto = new AnalyticsEventFilterDto(
                 1L,
                 2L,
                 EventType.COMMENT_ADD,
@@ -32,7 +32,7 @@ public class AnalyticsEventByIntervalFilterTest {
 
     @Test
     public void givenApplicableFilter_whenIsApplicable_thenReturnTrue() {
-        AnalyticFilterDto filterDto = new AnalyticFilterDto(
+        AnalyticsEventFilterDto filterDto = new AnalyticsEventFilterDto(
                 1L,
                 2L,
                 EventType.COMMENT_ADD,
@@ -45,7 +45,7 @@ public class AnalyticsEventByIntervalFilterTest {
 
     @Test
     public void givenFilterDto_whenApply_thenReturnResult() {
-        AnalyticFilterDto filterDto = new AnalyticFilterDto(
+        AnalyticsEventFilterDto filterDto = new AnalyticsEventFilterDto(
                 1L,
                 2L,
                 EventType.COMMENT_ADD,

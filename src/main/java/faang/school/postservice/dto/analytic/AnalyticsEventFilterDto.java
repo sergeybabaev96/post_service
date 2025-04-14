@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
  * @param from Событие создано начиная с
  * @param to Событие создано до
  */
-public record AnalyticFilterDto(
+public record AnalyticsEventFilterDto(
         @NotNull Long authorId,
         @NotNull Long receiverId,
         @NotNull EventType eventType,

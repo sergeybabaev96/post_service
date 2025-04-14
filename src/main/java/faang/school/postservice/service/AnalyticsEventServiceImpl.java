@@ -1,8 +1,8 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.dto.analytic.AnalyticCreateEventDto;
+import faang.school.postservice.dto.analytic.AnalyticsEventCreateDto;
 import faang.school.postservice.dto.analytic.AnalyticEventDto;
-import faang.school.postservice.dto.analytic.AnalyticFilterDto;
+import faang.school.postservice.dto.analytic.AnalyticsEventFilterDto;
 import faang.school.postservice.filter.AnalyticsEventFilter;
 import faang.school.postservice.mapper.AnalyticsEventMapper;
 import faang.school.postservice.model.analytic.AnalyticsEvent;
@@ -22,8 +22,8 @@ import java.util.stream.Stream;
  * <p>
  * Основные методы:
  * <ul>
- *   <li>{@link #saveEvent(AnalyticCreateEventDto)} )} - Сохраняет аналитику</li>
- *   <li>{@link #getAnalytics(AnalyticFilterDto)} - Получает аналитику по заданным параметрам</li>
+ *   <li>{@link #saveEvent(AnalyticsEventCreateDto)} )} - Сохраняет аналитику</li>
+ *   <li>{@link #getAnalytics(AnalyticsEventFilterDto)} - Получает аналитику по заданным параметрам</li>
  * </ul>
  *
  * @author takewqa
@@ -39,12 +39,12 @@ public class AnalyticsEventServiceImpl implements AnalyticsEventService {
 
     /**
      * Сохраняет аналитику
-     * @param analyticCreateEventDto Сущность для создания аналитики
+     * @param analyticsEventCreateDto Сущность для создания аналитики
      */
     @Override
-    public void saveEvent(@NotNull AnalyticCreateEventDto analyticCreateEventDto) {
-        analyticsEventRepository.save(analyticsEventMapper.toEntity(analyticCreateEventDto));
-        log.debug("Event saved {}", analyticCreateEventDto);
+    public void saveEvent(@NotNull AnalyticsEventCreateDto analyticsEventCreateDto) {
+        analyticsEventRepository.save(analyticsEventMapper.toEntity(analyticsEventCreateDto));
+        log.debug("Event saved {}", analyticsEventCreateDto);
     }
 
     /**
@@ -54,9 +54,9 @@ public class AnalyticsEventServiceImpl implements AnalyticsEventService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<AnalyticEventDto> getAnalytics(@NotNull AnalyticFilterDto filter) {
+    public List<AnalyticEventDto> getAnalytics(@NotNull AnalyticsEventFilterDto filter) {
         Stream<AnalyticsEvent> eventsStream =
-                analyticsEventRepository.findByAuthorIdAndReceiverId(filter.authorId(), filter.receiverId());
+                analyticsEventRepository.findByAuthorIdAndReceiverIdOrderByCreatedAtDesc(filter.authorId(), filter.receiverId());
 
         for (AnalyticsEventFilter eventFilter : analyticsEventFilters) {
             if (eventFilter.isApplicable(filter)){
