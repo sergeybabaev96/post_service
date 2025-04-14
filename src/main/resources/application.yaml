@@ -42,6 +42,16 @@ payment-service:
   host: localhost
   port: 9080
 
+ad-cleanup:
+  executor:
+    core-size: 3
+    max-size: 10
+    queue-capacity: 50
+    thread-name-prefix: "ad-cleanup-"
+  scheduled:
+    cron: "0 0 3 * * ?"
+    batch-size: 100
+
 services:
   s3:
     endpoint: http://192.168.0.142:9000
