@@ -37,9 +37,9 @@ import java.util.List;
  *   <li>{@link #getPostById(Long)} - Получение поста по ID</li>
  * </ul>
  *
- * @see CommentValidator Для методов валидации
  * @author Zhltsk-V
  * @version 1.0
+ * @see CommentValidator Для методов валидации
  */
 @Slf4j
 @Service
@@ -54,11 +54,10 @@ public class CommentService {
     /**
      * Создает новый комментарий к указанному посту.
      *
-     * @param postId ID поста для комментария
+     * @param postId           ID поста для комментария
      * @param commentCreateDto DTO с данными для создания комментария
      * @return созданный комментарий в формате CommentViewDto
      * @throws EntityNotFoundException если пост не найден или пользователь не существует
-     *
      * @see CommentValidator#validateUserById(Long)
      */
     @Transactional
@@ -81,13 +80,12 @@ public class CommentService {
     /**
      * Обновляет существующий комментарий.
      *
-     * @param postId ID поста, содержащего комментарий
-     * @param commentId ID комментария для обновления
+     * @param postId           ID поста, содержащего комментарий
+     * @param commentId        ID комментария для обновления
      * @param commentCreateDto DTO с обновленными данными комментария
      * @return обновленный комментарий в формате CommentViewDto
      * @throws EntityNotFoundException если комментарий не найден
      * @throws DataValidationException если комментарий не принадлежит указанному посту
-     *
      * @see CommentValidator#validateCommentBelongsToPost(Comment, Long, Long)
      */
     @Transactional
@@ -127,11 +125,10 @@ public class CommentService {
     /**
      * Удаляет указанный комментарий.
      *
-     * @param postId ID поста, содержащего комментарий
+     * @param postId    ID поста, содержащего комментарий
      * @param commentId ID комментария для удаления
      * @throws EntityNotFoundException если комментарий не найден
      * @throws DataValidationException если комментарий не принадлежит указанному посту
-     *
      * @see CommentValidator#validateCommentBelongsToPost(Comment, Long, Long)
      */
     @Transactional
@@ -168,7 +165,10 @@ public class CommentService {
      */
     public Post getPostById(Long postId) {
         return postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("Post with ID " + postId + " not found"));
+                .orElseThrow(() -> {
+                    log.error("Post with ID {} not found", postId);
+                    return new EntityNotFoundException("Post with ID " + postId + " not found");
+                });
     }
 
     /**

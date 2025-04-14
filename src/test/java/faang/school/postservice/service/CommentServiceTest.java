@@ -91,7 +91,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Успешное создание комментария")
-        void givenValidCommentDataAndExistingPost_whenCreateComment_thenReturnCommentDto() {
+        void givenValidCommentDataAndExistingPost_WhenCreateComment_ThenReturnCommentDto() {
             when(postRepository.findById(postId)).thenReturn(Optional.of(post));
             when(commentMapper.toEntity(commentCreateDto)).thenReturn(comment);
             when(commentRepository.save(comment)).thenReturn(comment);
@@ -107,7 +107,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Ошибка при несуществующем посте")
-        void givenNonExistentPost_whenCreateComment_thenThrowEntityNotFoundException() {
+        void givenNonExistentPost_WhenCreateComment_ThenThrowEntityNotFoundException() {
             when(postRepository.findById(postId)).thenReturn(Optional.empty());
 
             assertThrows(EntityNotFoundException.class,
@@ -116,7 +116,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Ошибка при несуществующем авторе")
-        void givenNonExistentAuthor_whenCreateComment_thenThrowEntityNotFoundException() {
+        void givenNonExistentAuthor_WhenCreateComment_ThenThrowEntityNotFoundException() {
             doNothing().when(commentValidator).validatePostExists(postId);
             doThrow(new EntityNotFoundException("User with ID " + authorId + " not found"))
                     .when(commentValidator).validateUserById(authorId);
@@ -137,7 +137,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Успешное обновление комментария")
-        void givenValidCommentData_whenUpdateComment_thenReturnUpdatedCommentDto() {
+        void givenValidCommentData_WhenUpdateComment_ThenReturnUpdatedCommentDto() {
             when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
             when(commentRepository.save(comment)).thenReturn(comment);
             when(commentMapper.toViewDto(comment)).thenReturn(commentViewDto);
@@ -152,7 +152,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Ошибка при несуществующем комментарии")
-        void givenNonExistentComment_whenUpdateComment_thenThrowEntityNotFoundException() {
+        void givenNonExistentComment_WhenUpdateComment_ThenThrowEntityNotFoundException() {
             when(commentRepository.findById(commentId)).thenReturn(Optional.empty());
 
             assertThrows(EntityNotFoundException.class,
@@ -161,7 +161,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Ошибка при несоответствии postId")
-        void givenMismatchedPostId_whenUpdateComment_thenThrowDataValidationException() {
+        void givenMismatchedPostId_WhenUpdateComment_ThenThrowDataValidationException() {
             when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
             doThrow(new DataValidationException("Invalid post ID"))
                     .when(commentValidator).validateCommentBelongsToPost(comment, postId, commentId);
@@ -177,7 +177,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Успешное получение списка комментариев")
-        void givenPostWithComments_whenGetComments_thenReturnCommentDtoList() {
+        void givenPostWithComments_WhenGetComments_ThenReturnCommentDtoList() {
             when(commentRepository.findAllByPostId(postId)).thenReturn(List.of(comment));
             when(commentMapper.toViewDto(comment)).thenReturn(commentViewDto);
 
@@ -190,7 +190,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Получение пустого списка комментариев")
-        void givenPostWithoutComments_whenGetComments_thenReturnEmptyList() {
+        void givenPostWithoutComments_WhenGetComments_ThenReturnEmptyList() {
             when(commentRepository.findAllByPostId(postId)).thenReturn(Collections.emptyList());
 
             List<CommentViewDto> result = commentService.getCommentsByPostId(postId);
@@ -206,7 +206,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Успешное удаление комментария")
-        void givenValidPostAndCommentIds_whenDeleteComment_thenSuccess() {
+        void givenValidPostAndCommentIds_WhenDeleteComment_ThenSuccess() {
             when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
 
             assertDoesNotThrow(() -> commentService.deleteComment(postId, commentId));
@@ -216,7 +216,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Ошибка при несуществующем комментарии")
-        void givenNonExistentComment_whenDeleteComment_thenThrowEntityNotFoundException() {
+        void givenNonExistentComment_WhenDeleteComment_ThenThrowEntityNotFoundException() {
             when(commentRepository.findById(commentId)).thenReturn(Optional.empty());
 
             assertThrows(EntityNotFoundException.class,
@@ -225,7 +225,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Ошибка при несоответствии postId")
-        void givenMismatchedPostId_whenDeleteComment_thenThrowDataValidationException() {
+        void givenMismatchedPostId_WhenDeleteComment_ThenThrowDataValidationException() {
             when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
             doThrow(new DataValidationException("Invalid post ID"))
                     .when(commentValidator).validateCommentBelongsToPost(comment, postId, commentId);
@@ -241,7 +241,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Успешное получение комментария по ID")
-        void givenExistingCommentId_whenGetCommentById_thenReturnComment() {
+        void givenExistingCommentId_WhenGetCommentById_ThenReturnComment() {
             when(commentRepository.findById(commentId)).thenReturn(Optional.of(comment));
 
             Comment result = commentService.getCommentById(commentId);
@@ -253,7 +253,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Ошибка при получении несуществующего комментария")
-        void givenNonExistentCommentId_whenGetCommentById_thenThrowEntityNotFoundException() {
+        void givenNonExistentCommentId_WhenGetCommentById_ThenThrowEntityNotFoundException() {
             when(commentRepository.findById(commentId)).thenReturn(Optional.empty());
 
             EntityNotFoundException exception = assertThrows(EntityNotFoundException.class,
@@ -265,7 +265,7 @@ public class CommentServiceTest {
 
         @Test
         @DisplayName("Ошибка при передаче null в качестве ID")
-        void givenNullCommentId_whenGetCommentById_thenThrowIllegalArgumentException() {
+        void givenNullCommentId_WhenGetCommentById_ThenThrowIllegalArgumentException() {
             assertThrows(EntityNotFoundException.class,
                     () -> commentService.getCommentById(null));
         }
