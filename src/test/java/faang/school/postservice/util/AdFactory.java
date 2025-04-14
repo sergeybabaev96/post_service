@@ -10,9 +10,7 @@ import java.util.List;
 public class AdFactory {
     public static List<Ad> createTwentyAds() {
         List<Ad> ads = new ArrayList<>();
-
         for (int i = 1; i <= 20; i++) {
-            // Создаем пост
             Post post = Post.builder()
                     .id((long) i)
                     .content("Content of post " + i)
@@ -26,16 +24,12 @@ public class AdFactory {
                     .updatedAt(LocalDateTime.now().minusDays(i))
                     .build();
 
-            // Логика:
-            // - Каждая чётная реклама уже истекла (endDate < now)
-            // - Каждая 3-я реклама израсходовала показы (appearancesLeft = 0)
             boolean isExpired = i % 3 == 0;
             boolean isExhausted = i % 7 == 0;
-
             LocalDateTime startDate = LocalDateTime.now().minusDays(10);
             LocalDateTime endDate = isExpired
-                    ? LocalDateTime.now().minusDays(1)      // просрочена
-                    : LocalDateTime.now().plusDays(5);      // ещё активна
+                    ? LocalDateTime.now().minusDays(1)
+                    : LocalDateTime.now().plusDays(5);
 
             long appearancesLeft = isExhausted ? 0 : 10 + i;
 
@@ -50,7 +44,6 @@ public class AdFactory {
 
             ads.add(ad);
         }
-
         return ads;
     }
 }
