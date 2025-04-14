@@ -14,7 +14,7 @@ import java.util.List;
 public class AdCleanupTaskService {
     private final AdRepository adRepository;
 
-    @Async
+    @Async("adRemoverPool")
     public void deleteExpiredAdsBatch(List<Long> ids) {
         log.info("Thread: {}, deleting: {}", Thread.currentThread().getName(), ids);
         adRepository.deleteAllById(ids);
