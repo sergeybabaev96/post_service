@@ -7,7 +7,8 @@ import faang.school.postservice.dto.post.PostDto;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.Post;
-import faang.school.postservice.publisher.PostEventPublisher;
+import faang.school.postservice.model.event.EventType;
+import faang.school.postservice.publisher.EventPublisher;
 import faang.school.postservice.repository.PostRepository;
 import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
@@ -23,7 +24,7 @@ import java.util.function.Predicate;
 @Service
 @RequiredArgsConstructor
 public class PostService {
-    private final PostEventPublisher postEventPublisher;
+    private final EventPublisher eventPublisher;
     private final ProjectServiceClient projectServiceClient;
     private final UserServiceClient userServiceClient;
     private final PostRepository postRepository;
@@ -47,14 +48,15 @@ public class PostService {
         validateDeleted(post);
         validatePublished(post, false);
 
-        post.setPublished(true);
+//        post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
 
         long authorId = post.getAuthorId() == null ? post.getProjectId() : post.getAuthorId();
 
-        postEventPublisher.publish(EventDto.builder()
+        eventPublisher.publish(EventDto.builder()
                 .eventId(postId)
                 .authorId(authorId)
+                .eventType(EventType.PUBLISHED_POST)
                 .build());
 
         return postMapper.toDto(post);

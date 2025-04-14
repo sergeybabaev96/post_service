@@ -1,7 +1,7 @@
 package faang.school.postservice.config;
 
 import faang.school.postservice.dto.event.EventDto;
-import faang.school.postservice.properties.RedisConnectionProperties;
+import faang.school.postservice.properties.RedisProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -16,12 +16,12 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @Configuration
 @RequiredArgsConstructor
 public class RedisConf {
-    private final RedisConnectionProperties redisConnectionProperties;
+    private final RedisProperties redisProperties;
 
     @Bean
     public JedisConnectionFactory jedisConnectionFactory() {
         RedisStandaloneConfiguration redisConfig =
-                new RedisStandaloneConfiguration(redisConnectionProperties.getHost(), redisConnectionProperties.getPort());
+                new RedisStandaloneConfiguration(redisProperties.getHost(), redisProperties.getPort());
 
         JedisConnectionFactory factory = new JedisConnectionFactory(redisConfig);
         factory.afterPropertiesSet();

@@ -1,5 +1,6 @@
 package faang.school.postservice.dto.event;
 
+import faang.school.postservice.model.event.EventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,5 +13,5 @@ import lombok.NoArgsConstructor;
 public class EventDto {
     private long eventId;
     private long authorId;
-    private String channel;
+    private EventType eventType;
 }

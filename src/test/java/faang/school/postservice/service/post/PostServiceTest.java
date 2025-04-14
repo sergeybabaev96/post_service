@@ -8,7 +8,8 @@ import faang.school.postservice.dto.post.PostDto;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.mapper.post.PostMapperImpl;
 import faang.school.postservice.model.Post;
-import faang.school.postservice.publisher.PostEventPublisher;
+import faang.school.postservice.model.event.EventType;
+import faang.school.postservice.publisher.EventPublisher;
 import faang.school.postservice.repository.PostRepository;
 import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
@@ -36,7 +37,7 @@ class PostServiceTest {
     private PostService postService;
 
     @Mock
-    private PostEventPublisher postEventPublisher;
+    private EventPublisher eventPublisher;
 
     @Mock
     private ProjectServiceClient projectServiceClient;
@@ -55,13 +56,17 @@ class PostServiceTest {
     private final long projectId= 3;
     private final Post post = new Post();
     private final PostDto postDto = new PostDto();
-    private final EventDto eventDto = EventDto.builder().eventId(postId).authorId(authorId).build();
     private final Post post1 = Post.builder().id(1L).published(true).createdAt(LocalDateTime.now().minusDays(1)).build();
     private final Post post2 = Post.builder().id(2L).published(true).createdAt(LocalDateTime.now().minusDays(2)).build();
     private final Post post3 = Post.builder().id(3L).published(true).createdAt(LocalDateTime.now().minusDays(3)).build();
     private final Post draftPost1 = Post.builder().id(4L).createdAt(LocalDateTime.now().minusDays(4)).build();
     private final Post draftPost2 = Post.builder().id(5L).createdAt(LocalDateTime.now().minusDays(5)).build();
     private final Post draftPost3 = Post.builder().id(6L).createdAt(LocalDateTime.now().minusDays(6)).build();
+    private final EventDto eventDto = EventDto.builder()
+            .eventId(postId)
+            .authorId(authorId)
+            .eventType(EventType.PUBLISHED_POST)
+            .build();
 
     private final List<Post> foundList = List.of(
             post1,
@@ -171,7 +176,7 @@ class PostServiceTest {
         assertNotNull(createDto.getPublishedAt());
         verify(postRepository, times(1)).findById(postId);
         verify(postMapper, times(1)).toDto(post);
-        verify(postEventPublisher, times(1)).publish(eventDto);
+        verify(eventPublisher, times(1)).publish(eventDto);
     }
 
     @Test

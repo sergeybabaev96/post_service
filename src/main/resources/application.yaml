@@ -22,8 +22,7 @@ spring:
       port: 6379
       host: localhost
       topics:
-        post: post_channel
-        calculations: calculations_channel
+        publishedPost: published_post_topic
 
 server:
   port: 8081
