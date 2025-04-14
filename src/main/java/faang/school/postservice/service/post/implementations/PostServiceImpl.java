@@ -22,8 +22,6 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
@@ -177,6 +175,7 @@ public class PostServiceImpl implements PostService {
         return post;
     }
 
+    @Transactional(readOnly = true)
     public void correctUnpublishedPosts() {
         List<Post> unpublishedPosts = postRepository.findReadyToPublish();
         log.info("Starting correction for {} unpublished posts", unpublishedPosts.size());
@@ -184,10 +183,8 @@ public class PostServiceImpl implements PostService {
             return;
         }
 
-        ExecutorService executor = Executors.newFixedThreadPool(
-                PostServiceConstants.EXECUTOR_POOL_THREAD_NUMBER);
         List<CompletableFuture<Post>> futures = unpublishedPosts.stream()
-                .map(post -> postCorrectService.correctPost(post, executor))
+                .map(postCorrectService::correctPost)
                 .toList();
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
@@ -199,22 +196,5 @@ public class PostServiceImpl implements PostService {
                     }
                 })
                 .join();
-
-        shutdownExecutor(executor);
-    }
-
-    private void shutdownExecutor(ExecutorService executor) {
-        executor.shutdown();
-        try {
-            if (!executor.awaitTermination(
-                    PostServiceConstants.EXECUTOR_AWAIT_TERMINATION, TimeUnit.SECONDS)) {
-                executor.shutdownNow();
-                log.warn("Executor did not terminate in the specified time.");
-            }
-        } catch (InterruptedException e) {
-            executor.shutdownNow();
-            Thread.currentThread().interrupt();
-            log.error("Executor shutdown interrupted", e);
-        }
     }
 }

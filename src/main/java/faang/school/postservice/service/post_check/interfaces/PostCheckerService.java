@@ -3,12 +3,11 @@ package faang.school.postservice.service.post_check.interfaces;
 import faang.school.postservice.model.Post;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 
 public interface PostCheckerService {
-    CompletableFuture<Post> correctPost(Post post, ExecutorService executor);
+    CompletableFuture<Post> correctPost(Post post);
 
-    CompletableFuture<String> checkSpellingWithRetry(String content, ExecutorService executor);
+    CompletableFuture<String> checkSpellingWithRetry(String content);
 
     String parseCorrectedContent(String responseBody, String originalContent);
 }

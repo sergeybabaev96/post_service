@@ -13,7 +13,6 @@ import faang.school.postservice.exception.PostNotFoundException;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.post_check.interfaces.PostCheckerService;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.retry.annotation.Backoff;
@@ -39,7 +38,6 @@ import java.util.regex.Matcher;
 
 @Service
 @RequiredArgsConstructor
-@Getter
 @Slf4j
 public class PostCheckerServiceImpl implements PostCheckerService {
     private final PostRepository postRepository;
@@ -47,14 +45,15 @@ public class PostCheckerServiceImpl implements PostCheckerService {
     private final ObjectMapper objectMapper;
     private final HttpClient webSpellHttpClient;
     private final WebSpellHttpConfig webSpellHttpConfig;
+    private final ExecutorService executor;
 
     @Override
-    public CompletableFuture<Post> correctPost(Post post, ExecutorService executor) {
+    public CompletableFuture<Post> correctPost(Post post) {
         if (Objects.isNull(post) || Objects.isNull(post.getContent())) {
             return CompletableFuture.failedFuture(new IllegalArgumentException("Post or its content cannot be null"));
         }
 
-        return checkSpellingWithRetry(post.getContent(), executor)
+        return checkSpellingWithRetry(post.getContent())
                 .orTimeout(PostServiceConstants.CHECK_SPELLING_TIMEOUT, TimeUnit.SECONDS)
                 .thenCompose(correctedContent -> {
                     log.info("Received corrected content: {}", correctedContent);
@@ -81,10 +80,7 @@ public class PostCheckerServiceImpl implements PostCheckerService {
     }
 
     @Override
-    @Retryable(retryFor = {AIIntegrationException.class}, maxAttempts = PostServiceConstants.MAX_RETRIES,
-            backoff = @Backoff(maxDelay = PostServiceConstants.MAX_BACKOFF_DELAY,
-                    multiplier = PostServiceConstants.RETRY_MULTIPLIER))
-    public CompletableFuture<String> checkSpellingWithRetry(String content, ExecutorService executor) {
+    public CompletableFuture<String> checkSpellingWithRetry(String content) {
         if (content == null) {
             String exceptionMessage = "Content cannot be null.";
             DataValidationException e = new DataValidationException(exceptionMessage);
@@ -101,7 +97,7 @@ public class PostCheckerServiceImpl implements PostCheckerService {
         }
 
         if (content.length() < PostServiceConstants.SIZE_IN_BYTES_FOR_SINGLE_PROCESSING) {
-            return processSingleSegment(content, executor);
+            return processSingleSegment(content);
         }
 
         List<String> segments = splitIntoSegments(content);
@@ -110,7 +106,7 @@ public class PostCheckerServiceImpl implements PostCheckerService {
         }
 
         List<CompletableFuture<String>> segmentFutures = segments.stream()
-                .map(segment -> processSingleSegment(segment, executor))
+                .map(this::processSingleSegment)
                 .toList();
 
         return CompletableFuture.allOf(segmentFutures.toArray(new CompletableFuture[0]))
@@ -184,7 +180,10 @@ public class PostCheckerServiceImpl implements PostCheckerService {
         return segments;
     }
 
-    private CompletableFuture<String> processSingleSegment(String segment, ExecutorService executor) {
+    @Retryable(retryFor = {AIIntegrationException.class}, maxAttempts = PostServiceConstants.MAX_RETRIES,
+            backoff = @Backoff(maxDelay = PostServiceConstants.MAX_BACKOFF_DELAY,
+                    multiplier = PostServiceConstants.RETRY_MULTIPLIER))
+    private CompletableFuture<String> processSingleSegment(String segment) {
         Map<String, String> requestBody = Map.of(
                 "cmd", PostServiceConstants.CORRECTION_COMMAND,
                 "lang", PostServiceConstants.DEFAULT_LANGUAGE,
@@ -244,12 +243,12 @@ public class PostCheckerServiceImpl implements PostCheckerService {
 
     private HttpRequest getWebSpellHttpRequest(String jsonRequest) {
         String apiUrl = webSpellHttpConfig.getWebSpellApiUrl();
-        URI uri = URI.create(apiUrl);
+        URI uri = getUriByApiUrl(apiUrl);
         String contentType = webSpellHttpConfig.getWebSpellApiContentType();
         String apiKey = webSpellHttpConfig.getWebSpellApiKey();
         String apiHost = webSpellHttpConfig.getWebSpellApiHost();
 
-        validateWebSpellHttpRequest(jsonRequest, apiUrl, uri, contentType, apiKey, apiHost);
+        validateWebSpellHttpRequest(jsonRequest, apiUrl, contentType, apiKey, apiHost);
 
         return HttpRequest.newBuilder()
                 .uri(uri)
@@ -260,7 +259,7 @@ public class PostCheckerServiceImpl implements PostCheckerService {
                 .build();
     }
 
-    private void validateWebSpellHttpRequest(String jsonRequest, String apiUrl, URI uri, String contentType,
+    private void validateWebSpellHttpRequest(String jsonRequest, String apiUrl, String contentType,
                                              String apiKey, String apiHost) {
 
         Objects.requireNonNull(jsonRequest, "JSON request body must not be null");
@@ -270,8 +269,7 @@ public class PostCheckerServiceImpl implements PostCheckerService {
         }
 
         try {
-            uri = URI.create(apiUrl);
-            if (!uri.isAbsolute() || !uri.getScheme().matches("https?")) {
+            if (!getUriByApiUrl(apiUrl).isAbsolute() || !getUriByApiUrl(apiUrl).getScheme().matches("https?")) {
                 throw new AIIntegrationException("URL must be absolute and use HTTP/HTTPS: " + apiUrl);
             }
         } catch (IllegalArgumentException ex) {
@@ -300,5 +298,9 @@ public class PostCheckerServiceImpl implements PostCheckerService {
     private AIIntegrationException logAndThrowAIIntegrationException(String message, Exception cause) {
         log.error(message, cause);
         return new AIIntegrationException(message, cause);
+    }
+
+    private URI getUriByApiUrl(String apiUrl) {
+        return URI.create(apiUrl);
     }
 }

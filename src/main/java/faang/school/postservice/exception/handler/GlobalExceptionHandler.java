@@ -98,12 +98,6 @@ public class GlobalExceptionHandler {
         return buildResponse(e);
     }
 
-    @ExceptionHandler(PostDtoValidationException.class)
-    public ResponseEntity<String> handleValidationException(PostDtoValidationException e) {
-        log.warn("Post dto validation exception: {}", e.getMessage());
-        return ResponseEntity.badRequest().body(e.getMessage());
-    }
-
     @ExceptionHandler(PostNotCorrectedException.class)
     public ErrorResponse handlePostNotCorrectedException(PostNotCorrectedException e) {
         log.error("PostNotCorrectedException", e);

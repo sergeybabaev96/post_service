@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutorService;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -435,18 +434,16 @@ class PostServiceImplTest {
         verify(postMapper, times(2)).toDto(any(Post.class));
     }
 
-
     @Test
     void testCorrectUnpublishedPostsSuccessfully() {
         List<Post> unpublishedPosts = List.of(new Post(), new Post());
         when(postRepository.findReadyToPublish()).thenReturn(unpublishedPosts);
-        when(postCorrectService.correctPost(any(Post.class), any(ExecutorService.class)))
+        when(postCorrectService.correctPost(any(Post.class)))
                 .thenReturn(CompletableFuture.completedFuture(null));
 
         postService.correctUnpublishedPosts();
 
-        verify(postCorrectService, times(2)).correctPost(any(Post.class),
-                any(ExecutorService.class));
+        verify(postCorrectService, times(2)).correctPost(any(Post.class));
     }
 
     @Test
@@ -455,7 +452,7 @@ class PostServiceImplTest {
 
         postService.correctUnpublishedPosts();
 
-        verify(postCorrectService, never()).correctPost(any(Post.class), any(ExecutorService.class));
+        verify(postCorrectService, never()).correctPost(any(Post.class));
     }
 
     @Test
@@ -464,11 +461,11 @@ class PostServiceImplTest {
         when(postRepository.findReadyToPublish()).thenReturn(unpublishedPosts);
         CompletableFuture<Post> failedFuture = new CompletableFuture<>();
         failedFuture.completeExceptionally(new RuntimeException("Correction failed"));
-        when(postCorrectService.correctPost(any(Post.class), any(ExecutorService.class)))
+        when(postCorrectService.correctPost(any(Post.class)))
                 .thenReturn(failedFuture);
 
         assertThrows(CompletionException.class, () -> postService.correctUnpublishedPosts());
 
-        verify(postCorrectService).correctPost(any(Post.class), any(ExecutorService.class));
+        verify(postCorrectService).correctPost(any(Post.class));
     }
 }

@@ -10,13 +10,11 @@ import faang.school.postservice.exception.PostNotCorrectedException;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -29,6 +27,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -48,7 +47,7 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @Slf4j
-class PostCorrectServiceImplTest {
+class PostCheckerServiceImplTest {
     @Mock
     private PostRepository postRepository;
 
@@ -64,43 +63,45 @@ class PostCorrectServiceImplTest {
     @Mock
     private WebSpellHttpConfig webSpellHttpConfig;
 
-    @Spy
+    private ExecutorService executor;
+
     @InjectMocks
     private PostCheckerServiceImpl postCheckerService;
 
     private Post post;
-    private ExecutorService executorService;
 
     @BeforeEach
     void setUp() {
         post = new Post();
         post.setId(1L);
         post.setContent("Posssst");
-        executorService = Executors.newFixedThreadPool(10);
-    }
-
-    @AfterEach
-    void tearDown(){
-        shutdownExecutor(executorService);
+        executor = Executors.newFixedThreadPool(10);
+        postCheckerService = new PostCheckerServiceImpl(
+                postRepository, transactionTemplate, objectMapper, webSpellHttpClient,
+                webSpellHttpConfig, executor);
     }
 
     @Test
-    void testCorrectPostSuccessfully() throws Exception {
+    void testCorrectPostSuccessfully() throws IOException, ExecutionException, InterruptedException {
         String correctedContent = "Post";
+
         HttpResponse<String> mockResponse = mock(HttpResponse.class);
         when(mockResponse.statusCode()).thenReturn(200);
         when(mockResponse.body()).thenReturn("{\"corrected\":\"Post\"}");
+
         JsonNode mockJsonNode = mock(JsonNode.class);
         JsonNode correctedNode = mock(JsonNode.class);
         when(mockJsonNode.path("corrected")).thenReturn(correctedNode);
         when(correctedNode.isMissingNode()).thenReturn(false);
         when(correctedNode.getNodeType()).thenReturn(JsonNodeType.STRING);
         when(correctedNode.asText()).thenReturn(correctedContent);
+
         when(webSpellHttpConfig.getWebSpellApiUrl())
                 .thenReturn("https://webspellchecker-webspellcheckernet.p.rapidapi.com/api");
         when(webSpellHttpConfig.getWebSpellApiContentType()).thenReturn("application/json");
         when(webSpellHttpConfig.getWebSpellApiKey()).thenReturn("348d2925famsh95c7436e81d45c0p1eeb4ajsn1347b2ce620a");
         when(webSpellHttpConfig.getWebSpellApiHost()).thenReturn("webspellchecker-webspellcheckernet.p.rapidapi.com");
+
         when(postRepository.findById(1L)).thenReturn(Optional.of(post));
         when(postRepository.save(any(Post.class))).thenReturn(post);
         when(transactionTemplate.execute(argThat(Objects::nonNull))).thenAnswer(invocation -> {
@@ -109,16 +110,16 @@ class PostCorrectServiceImplTest {
         });
         when(webSpellHttpClient.send(any(HttpRequest.class), eq(HttpResponse.BodyHandlers.ofString())))
                 .thenReturn(mockResponse);
-        when(objectMapper.writeValueAsString(any())).thenReturn("{\"text\": \"" + post.getContent() + "\"}");
+        when(objectMapper.writeValueAsString(any())).thenReturn("{\"text\":\"Posssst\"}");
         when(objectMapper.readTree(anyString())).thenReturn(mockJsonNode);
 
-        CompletableFuture<Post> future = postCheckerService.correctPost(post, executorService);
+        CompletableFuture<Post> future = postCheckerService.correctPost(post);
         future.get();
 
         verify(postRepository).save(any(Post.class));
         assertEquals(correctedContent, post.getContent());
         assertNotNull(post.getUpdatedAt());
-        shutdownExecutor(executorService);
+        shutdownExecutor(executor);
     }
 
     @Test
@@ -136,7 +137,7 @@ class PostCorrectServiceImplTest {
         when(webSpellHttpClient.send(any(HttpRequest.class), eq(HttpResponse.BodyHandlers.ofString())))
                 .thenReturn(httpResponse);
 
-        CompletableFuture<Post> result = postCheckerService.correctPost(post, executorService);
+        CompletableFuture<Post> result = postCheckerService.correctPost(post);
 
         CompletionException completionException = assertThrows(CompletionException.class, result::join,
                 "Expected CompletionException to be thrown");
@@ -155,7 +156,7 @@ class PostCorrectServiceImplTest {
                 "Suppressed exception message should match");
         System.out.println("Suppressed exception: " + suppressed[0].getClass().getSimpleName()
                 + " - " + suppressed[0].getMessage());
-        shutdownExecutor(executorService);
+        shutdownExecutor(executor);
     }
 
     @Test
@@ -177,11 +178,11 @@ class PostCorrectServiceImplTest {
         JsonNode expectedJsonNode = realObjectMapper.readTree("{\"corrected\":\"Post\"}");
         when(objectMapper.readTree("{\"corrected\":\"Post\"}")).thenReturn(expectedJsonNode);
 
-        CompletableFuture<String> future = postCheckerService.checkSpellingWithRetry(content, executorService);
+        CompletableFuture<String> future = postCheckerService.checkSpellingWithRetry(content);
         String result = future.join();
 
         assertEquals(correctedContent, result);
-        executorService.shutdown();
+        shutdownExecutor(executor);
     }
 
     @Test
@@ -200,14 +201,14 @@ class PostCorrectServiceImplTest {
         when(webSpellHttpClient.send(any(HttpRequest.class), eq(HttpResponse.BodyHandlers.ofString())))
                 .thenReturn(failResponse);
 
-        CompletableFuture<String> future = postCheckerService.checkSpellingWithRetry(content, executorService);
+        CompletableFuture<String> future = postCheckerService.checkSpellingWithRetry(content);
 
         CompletionException exception = assertThrows(CompletionException.class, future::join);
         assertInstanceOf(AIIntegrationException.class, exception.getCause());
         assertEquals("Unexpected code 500 received from the proofreader", exception.getCause().getMessage());
         verify(webSpellHttpClient, times(1))
                 .send(any(HttpRequest.class), eq(HttpResponse.BodyHandlers.ofString()));
-        shutdownExecutor(executorService);
+        shutdownExecutor(executor);
     }
 
     @Test
