@@ -12,7 +12,6 @@ import faang.school.postservice.mapper.CommentCreateMapper;
 import faang.school.postservice.mapper.CommentResponseMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
-import faang.school.postservice.dto.comment.BanAuthorByCommentsDto;
 import faang.school.postservice.dto.comment.UserUnverifiedCommentsDto;
 import faang.school.postservice.repository.CommentRepository;
 import org.junit.jupiter.api.DisplayName;
