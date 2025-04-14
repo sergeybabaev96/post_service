@@ -53,4 +53,4 @@ app:
 ads:
   cleanup:
     cron: "0 0 12 * * *"
-    num-chunks: 5
+    num-chunks: 3
