@@ -38,7 +38,6 @@ import static org.springframework.http.ResponseEntity.ok;
 @RequiredArgsConstructor
 @Validated
 public class PostController {
-
     private final PostService postService;
     private final PostFileService postFileService;
 

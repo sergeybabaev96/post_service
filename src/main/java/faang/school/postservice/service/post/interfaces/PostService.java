@@ -3,10 +3,14 @@ package faang.school.postservice.service.post.interfaces;
 import faang.school.postservice.dto.post.PostDto;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import faang.school.postservice.model.Post;
 
 public interface PostService {
+
+    CompletableFuture<Void> publishScheduledPosts();
+
     PostDto createPostDraft(PostDto postDto);
 
     PostDto publishPost(PostDto postDto);
