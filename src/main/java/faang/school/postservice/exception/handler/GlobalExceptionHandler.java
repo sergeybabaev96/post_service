@@ -89,7 +89,7 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    @ExceptionHandler(InvalidFileException.class)
+    @ExceptionHandler(BucketNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleBucketNotFoundException(BucketNotFoundException e) {
         return ErrorResponse.builder()
@@ -100,7 +100,7 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    @ExceptionHandler(InvalidFileException.class)
+    @ExceptionHandler(MinioRemovingFileException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleMinioRemovingFileException(MinioRemovingFileException e) {
         return ErrorResponse.builder()
@@ -111,7 +111,7 @@ public class GlobalExceptionHandler {
                 .build();
     }
 
-    @ExceptionHandler(InvalidFileException.class)
+    @ExceptionHandler(MinioUploadingFileException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponse handleMinioUploadingFileException(MinioUploadingFileException e) {
         return ErrorResponse.builder()
