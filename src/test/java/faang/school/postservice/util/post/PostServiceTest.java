@@ -45,9 +45,9 @@ public class PostServiceTest {
 
     @BeforeEach
     void setUp() {
-        ExecutorService immediateExecutor = Executors.newSingleThreadExecutor();
-        postService = new PostService(postRepository, perspectiveAPI, immediateExecutor);
         ReflectionTestUtils.setField(postService, "pageSize", pageSize);
+        ReflectionTestUtils.setField(postService, "threadPoolSize", 2);
+        ReflectionTestUtils.setField(postService, "moderationExecutor", Executors.newSingleThreadExecutor());
     }
 
     @Test

@@ -56,7 +56,6 @@ public class PostService {
     private final PostMapper postMapper;
     private final PostRepository postRepository;
     private final LanguageToolClient languageToolClient;
-    private final LikeRepository likeRepository;
     private final HashtagService hashtagService;
     private final PerspectiveAPI perspectiveAPI;
     private final ExecutorService moderationExecutor;
