@@ -25,4 +25,22 @@ public interface PostRepository extends CrudRepository<Post, Long> {
     List<Post> findReadyToPublish();
 
     Page<Post> findByVerifiedDateIsNull(Pageable pageable);
+
+    @Query("SELECT p FROM Post p WHERE p.authorId = :authorId AND p.published = false AND p.deleted = false")
+    List<Post> findDraftsByAuthorId(long authorId);
+
+    @Query("SELECT p FROM Post p WHERE p.projectId = :projectId AND p.published = false AND p.deleted = false")
+    List<Post> findDraftsByProjectId(long projectId);
+
+    @Query("SELECT p FROM Post p WHERE p.authorId = :authorId AND p.published = true AND p.deleted = false")
+    List<Post> findPublishedByAuthorId(long authorId);
+
+    @Query("SELECT p FROM Post p WHERE p.projectId = :projectId AND p.published = true AND p.deleted = false")
+    List<Post> findPublishedByProjectId(long projectId);
+
+    @Query("SELECT p FROM Post p WHERE p.isCorrected = false")
+    Page<Post> findUncorrectedPosts(Pageable pageable);
+
+    @Query("SELECT p FROM Post p JOIN p.hashtags h WHERE h.tag = :tag AND p.deleted = false ORDER BY p.publishedAt DESC")
+    Page<Post> findPostsByHashtag(Pageable pageable, String tag);
 }

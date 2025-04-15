@@ -1,3 +1,9 @@
+app:
+  hashtags:
+    max-cached-posts-per-hashtag: 100
+    thread-pool-size: 8
+    top-hashtags-cache: 1000
+
 spring:
   datasource:
     driver-class-name: org.postgresql.Driver
@@ -12,7 +18,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -27,6 +33,10 @@ spring:
       channels:
         calculations_channel:
           name: calculations_channel
+  retry:
+    language-tool:
+      max-attempts: 4
+      backoff-delay: 500
 
 server:
   port: 8081
@@ -45,6 +55,15 @@ payment-service:
   host: localhost
   port: 9080
 
+servers:
+  language-tool:
+    base-url: https://api.languagetool.org/v2
+
+posts:
+  correction:
+    cron: "0 5 * * * *"
+    batch-size: 100000
+    thread-poop-size: 16
 
 perspective-api:
   key: "AIzaSyDSLgf8qagfMyfjnvfxAVOmpgGLkNfWB-Y"
@@ -60,4 +79,3 @@ moderation:
     delay: "1000"
     multiplier: "2"
     max-attempts: "3"
-
