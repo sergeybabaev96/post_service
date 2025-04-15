@@ -39,18 +39,6 @@ public class ModerationScheduler {
             log.error("Moderation job interrupted", e);
             Thread.currentThread().interrupt();
             moderationExecutor.shutdownNow();
-        } finally {
-            if (moderationExecutor != null && !moderationExecutor.isTerminated()) {
-                moderationExecutor.shutdownNow();
-            }
-        }
-    }
-
-    @PreDestroy
-    public void shutdown() {
-        if (moderationExecutor != null && !moderationExecutor.isShutdown()) {
-            moderationExecutor.shutdownNow();
-            log.info("Forced executor shutdown on application exit");
         }
     }
 }
