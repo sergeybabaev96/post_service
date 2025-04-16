@@ -47,7 +47,7 @@ cron:
   correct_post: "0 0 0 * * *" # ежедневно в 00:00
 
 scheduled:
-  publish-cron: "0 * * * * *" #запускаем каждую менуту
+  publish-cron: "0 * * * * *" # запускаем каждую минуту
 
 postservice:
   thread-pool:
