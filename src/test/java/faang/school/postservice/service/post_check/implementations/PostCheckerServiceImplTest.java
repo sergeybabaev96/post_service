@@ -29,7 +29,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -75,7 +76,14 @@ class PostCheckerServiceImplTest {
         post = new Post();
         post.setId(1L);
         post.setContent("Posssst");
-        executor = Executors.newFixedThreadPool(10);
+        executor = new ThreadPoolExecutor(
+                10,
+                10,
+                0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(100),
+                new ThreadPoolExecutor.AbortPolicy()
+        );
+
         postCheckerService = new PostCheckerServiceImpl(
                 postRepository, transactionTemplate, objectMapper, webSpellHttpClient,
                 webSpellHttpConfig, executor);

@@ -243,7 +243,7 @@ public class PostCheckerServiceImpl implements PostCheckerService {
 
     private HttpRequest getWebSpellHttpRequest(String jsonRequest) {
         String apiUrl = webSpellHttpConfig.getWebSpellApiUrl();
-        URI uri = getUriByApiUrl(apiUrl);
+        URI uri = URI.create(apiUrl);
         String contentType = webSpellHttpConfig.getWebSpellApiContentType();
         String apiKey = webSpellHttpConfig.getWebSpellApiKey();
         String apiHost = webSpellHttpConfig.getWebSpellApiHost();
@@ -268,14 +268,6 @@ public class PostCheckerServiceImpl implements PostCheckerService {
             throw logAndThrowAIIntegrationException("WebSpell API URL is null or empty");
         }
 
-        try {
-            if (!getUriByApiUrl(apiUrl).isAbsolute() || !getUriByApiUrl(apiUrl).getScheme().matches("https?")) {
-                throw new AIIntegrationException("URL must be absolute and use HTTP/HTTPS: " + apiUrl);
-            }
-        } catch (IllegalArgumentException ex) {
-            throw logAndThrowAIIntegrationException("Invalid WebSpell API URL: " + apiUrl, ex);
-        }
-
         if (contentType == null || contentType.trim().isEmpty()) {
             log.warn("WebSpell API Content-Type is null or empty, using default: application/json");
             contentType = "application/json";
@@ -293,14 +285,5 @@ public class PostCheckerServiceImpl implements PostCheckerService {
     private AIIntegrationException logAndThrowAIIntegrationException(String message) {
         log.error(message);
         return new AIIntegrationException(message);
-    }
-
-    private AIIntegrationException logAndThrowAIIntegrationException(String message, Exception cause) {
-        log.error(message, cause);
-        return new AIIntegrationException(message, cause);
-    }
-
-    private URI getUriByApiUrl(String apiUrl) {
-        return URI.create(apiUrl);
     }
 }
