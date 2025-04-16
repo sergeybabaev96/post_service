@@ -352,6 +352,7 @@ class PostServiceTest {
 
         verify(postRepository, times(1)).saveAll(posts);
     }
+
     @Test
     void publishScheduledPosts_shouldDoNothing_whenNoPosts(){
         when(postRepository.findReadyToPublish()).thenReturn(List.of());
