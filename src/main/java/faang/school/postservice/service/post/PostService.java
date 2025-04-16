@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
@@ -99,15 +101,10 @@ public class PostService {
         return getAllFilterAndSortedPosts(postRepository.findByProjectId(projectId), Post::isPublished);
     }
 
-    public List<PostDto> getAllPosts() {
-        List<Post> posts = new ArrayList<>();
-        postRepository.findAll().forEach(posts::add);
-
-        return posts.stream()
-                .filter(Predicate.not(Post::isDeleted))
-                .filter(Predicate.not(Post::isPublished))
-                .map(postMapper::toDto)
-                .toList();
+    public List<PostDto> getAllDraftPosts() {
+        List<Post> posts = StreamSupport.stream(postRepository.findAll().spliterator(), false)
+                .collect(Collectors.toList());
+        return getAllFilterAndSortedPosts(posts, Predicate.not(Post::isPublished));
     }
 
     private List<PostDto> getAllFilterAndSortedPosts(List<Post> posts, Predicate<Post> publishedFilter) {

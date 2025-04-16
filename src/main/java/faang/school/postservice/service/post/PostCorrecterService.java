@@ -4,6 +4,7 @@ import faang.school.postservice.client.speller.YandexSpellerClient;
 import faang.school.postservice.dto.post.PostDto;
 import faang.school.postservice.dto.speller.SpellerDto;
 import feign.FeignException;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.retry.annotation.Backoff;
@@ -23,17 +24,18 @@ public class PostCorrecterService {
     private final PostService postService;
 
     @Retryable(retryFor = { FeignException.class }, backoff = @Backoff(delay = 1000, multiplier = 2))
-    public void correctingSpellingPost(PostDto postDto) {
+    public void correctingSpellingPost(@NonNull PostDto postDto) {
         log.info(CORRECTING_POST_FORM, "Start", postDto);
-        StringBuilder builder = new StringBuilder(postDto.getContent());
 
         List<SpellerDto> spellers = yandexSpellerClient.checkSpelling(postDto.getContent());
+        StringBuilder builder = new StringBuilder(postDto.getContent());
+
         log.info("get spells {}", spellers);
         Collections.reverse(spellers);
         log.info("reverse spells {}", spellers);
 
         spellers.forEach(speller ->
-                builder.replace(speller.getPos(), speller.getLen(), speller.getS().get(0)));
+                builder.replace(speller.getPos(), speller.getPos() + speller.getLen(), speller.getS().get(0)));
 
         postDto.setContent(builder.toString());
         postService.updatePost(postDto.getId(), postDto);

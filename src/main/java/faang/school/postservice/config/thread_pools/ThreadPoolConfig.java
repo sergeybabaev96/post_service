@@ -11,6 +11,6 @@ public class ThreadPoolConfig {
 
     @Bean
     public ExecutorService postSpellingCorrecter() {
-        return Executors.newFixedThreadPool(5);
+        return Executors.newSingleThreadExecutor();
     }
 }

@@ -1,4 +1,4 @@
-package faang.school.postservice.correcer;
+package faang.school.postservice.correcter;
 
 import faang.school.postservice.service.post.PostCorrecterService;
 import faang.school.postservice.service.post.PostService;
@@ -21,7 +21,7 @@ public class PostCorrecter {
     @Scheduled(cron = "${cron.correct_post}")
     public void correctingSpellingOfPosts() {
         log.info(CORRECTING_POSTS_FORM, "Start");
-        postService.getAllPosts().forEach(postCorrecterService::correctingSpellingPost);
+        postService.getAllDraftPosts().forEach(postCorrecterService::correctingSpellingPost);
         log.info(CORRECTING_POSTS_FORM, "Finish");
     }
 
