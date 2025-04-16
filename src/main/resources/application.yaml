@@ -26,7 +26,7 @@ spring:
           name: calculations_channel
 
 cron:
-  correct_post: "0 0 0 * * *"
+  correct_post: "0 0 0 * * *" # ежедневно в 00:00
 
 server:
   port: 8081
