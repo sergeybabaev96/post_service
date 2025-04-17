@@ -161,6 +161,7 @@ class   PostServiceTest {
 
     @Test
     void publishPost_ShouldPublish() {
+        post.setAuthorId(authorId);
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
 
         createDto = postService.publishPost(postId);
