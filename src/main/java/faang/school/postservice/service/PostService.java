@@ -4,4 +4,5 @@ import faang.school.postservice.model.Post;
 
 public interface PostService {
     Post findPostById(long postId);
+    void banUsersIfRequired();
 }

@@ -24,6 +24,8 @@ spring:
       channels:
         calculations_channel:
           name: calculations_channel
+        user_ban:
+          name: user_ban
 
 server:
   port: 8081
@@ -43,8 +45,11 @@ payment-service:
   port: 9080
 
 app:
-  rude-words-analyzer-schedule: 0 * * * * 0
+  rude-words-analyzer-schedule: 0 * * * * *
+  ban-users-action-schedule: 0 * * * * *
   comments-processing-batch-size: 1000
+  moderation:
+    post-count-threshold: 5
   rude-words:
     - плохое_слово_1
     - плохое_слово_2
