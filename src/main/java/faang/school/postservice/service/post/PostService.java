@@ -48,7 +48,7 @@ public class PostService {
         validateDeleted(post);
         validatePublished(post, false);
 
-//        post.setPublished(true);
+        post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
 
         long authorId = post.getAuthorId() == null ? post.getProjectId() : post.getAuthorId();

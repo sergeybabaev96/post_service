@@ -2,6 +2,7 @@ package faang.school.postservice.properties;
 
 import faang.school.postservice.model.event.EventType;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,7 @@ public class RedisProperties {
     private int port;
     private Map<String, String> topics;
 
-    public String getTopic(EventType eventType) {
+    public String getTopic(@NonNull EventType eventType) {
         return topics.get(eventType.getKey());
     }
 }
