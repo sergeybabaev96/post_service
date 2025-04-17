@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.kafka.support.Acknowledgment;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -42,6 +43,9 @@ public class KafkaPostConsumerTest {
     private FeedService feedService;
 
     @Mock
+    private Acknowledgment acknowledgment;
+
+    @Mock
     private ObjectMapper objectMapper;
 
     @InjectMocks
@@ -64,7 +68,7 @@ public class KafkaPostConsumerTest {
     @Test
     void listenTest_allSubscribersProcessedSuccessfully() throws JsonProcessingException {
         when(objectMapper.readValue(validPostEventString, PostEvent.class)).thenReturn(validPostEvent);
-        kafkaPostConsumer.listen(validPostEventString);
+        kafkaPostConsumer.listen(validPostEventString, acknowledgment);
 
         verify(feedService, times(SUBSCRIBER_IDS.size())).addPostToFeed(anyLong(), eq(validPostEvent));
     }
@@ -80,7 +84,7 @@ public class KafkaPostConsumerTest {
 
         SubscriberProcessingException exception = assertThrows(
                 SubscriberProcessingException.class,
-                () -> kafkaPostConsumer.listen(validPostEventString)
+                () -> kafkaPostConsumer.listen(validPostEventString, acknowledgment)
         );
 
         String expectedMessage = SUBSCRIBER_PROCESSING_ERROR_MESSAGE + "[" + failedSubscriberId + "]";
@@ -92,7 +96,7 @@ public class KafkaPostConsumerTest {
     void listenTest_postEventIsInvalid() {
         InvalidPostEventException exception = assertThrows(
                 InvalidPostEventException.class,
-                () -> kafkaPostConsumer.listen(null)
+                () -> kafkaPostConsumer.listen(null, acknowledgment)
         );
 
         assertEquals(INVALID_POST_EVENT_MESSAGE, exception.getMessage());
@@ -111,7 +115,7 @@ public class KafkaPostConsumerTest {
                 .thenReturn(postEventWithNullSubscribers);
 
         InvalidPostEventException exception = assertThrows(InvalidPostEventException.class,
-                () -> kafkaPostConsumer.listen(postEventWithNullSubscribersString)
+                () -> kafkaPostConsumer.listen(postEventWithNullSubscribersString, acknowledgment)
         );
 
         assertEquals(INVALID_POST_EVENT_MESSAGE, exception.getMessage());
@@ -125,7 +129,7 @@ public class KafkaPostConsumerTest {
                 .addPostToFeed(anyLong(), any(PostEvent.class));
 
         SubscriberProcessingException exception = assertThrows(SubscriberProcessingException.class,
-                () -> kafkaPostConsumer.listen(validPostEventString)
+                () -> kafkaPostConsumer.listen(validPostEventString, acknowledgment)
         );
 
         assertEquals(SUBSCRIBER_PROCESSING_ERROR_MESSAGE + SUBSCRIBER_IDS, exception.getMessage());
@@ -142,7 +146,7 @@ public class KafkaPostConsumerTest {
         when(objectMapper.readValue(validPostEventString, PostEvent.class)).thenReturn(validPostEvent);
 
         SubscriberProcessingException exception = assertThrows(SubscriberProcessingException.class,
-                () -> kafkaPostConsumer.listen(validPostEventString)
+                () -> kafkaPostConsumer.listen(validPostEventString, acknowledgment)
         );
 
         String expectedMessage = SUBSCRIBER_PROCESSING_ERROR_MESSAGE + "[" + failedSubscriberId + "]";
