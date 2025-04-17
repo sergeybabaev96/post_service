@@ -24,6 +24,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -149,12 +150,13 @@ public class PostService {
         log.info("✅ Все посты успешно опубликованы!");
     }
 
+
     public List<PostDto> getAllDraftPosts() {
         List<Post> posts = StreamSupport.stream(postRepository.findAll().spliterator(), false)
                 .collect(Collectors.toList());
         return getAllFilterAndSortedPosts(posts, Predicate.not(Post::isPublished));
     }
-
+  
     private List<PostDto> getAllFilterAndSortedPosts(List<Post> posts, Predicate<Post> publishedFilter) {
         return posts.stream()
                 .filter(Predicate.not(Post::isDeleted))

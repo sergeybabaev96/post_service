@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class PostServiceTest {
+class   PostServiceTest {
 
     @InjectMocks
     private PostService postService;
@@ -352,7 +352,7 @@ class PostServiceTest {
 
         verify(postRepository, times(1)).saveAll(posts);
     }
-
+  
     @Test
     void publishScheduledPosts_shouldDoNothing_whenNoPosts(){
         when(postRepository.findReadyToPublish()).thenReturn(List.of());
@@ -362,7 +362,7 @@ class PostServiceTest {
         verify(postRepository, never()).saveAll(any());
         verify(postPublishingExecutor, never()).execute(any());
     }
-
+  
     @Test
     void getAllDraftPosts_ShouldGet() {
         when(postRepository.findAll()).thenReturn(foundList);
