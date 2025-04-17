@@ -77,7 +77,7 @@ class   PostServiceTest {
     private List<PostDto> draftPosts;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         post.setContent("content");
         postDto.setContent("content");
         posts = List.of(
@@ -92,12 +92,8 @@ class   PostServiceTest {
                 postMapper.toDto(draftPost3));
     }
 
-    /**
-     * createDraftPost
-     */
-
     @Test
-    public void testCreateAuthorDraftPost() {
+    void createDraftPost_ShouldAuthorCreate() {
         postDto.setAuthorId(authorId);
         post.setAuthorId(authorId);
         when(postRepository.save(post)).thenReturn(post);
@@ -109,7 +105,7 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testCreateProjectDraftPost() {
+    void createDraftPost_ShouldProjectCreate() {
         postDto.setProjectId(projectId);
         post.setProjectId(projectId);
         when(postRepository.save(post)).thenReturn(post);
@@ -121,7 +117,7 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testNotCreateDraftPostWhenAuthorNotExists() {
+    void createDraftPost_ShouldNotCreateWhenAuthorNotExists() {
         postDto.setAuthorId(authorId);
         post.setAuthorId(authorId);
         when(userServiceClient.getUser(authorId)).thenThrow(FeignException.class);
@@ -131,7 +127,7 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testNotCreateDraftPostWhenProjectNotExists() {
+    void createDraftPost_ShouldNotCreateWhenProjectNotExists() {
         postDto.setProjectId(projectId);
         post.setProjectId(projectId);
         when(projectServiceClient.getProject(projectId)).thenThrow(FeignException.class);
@@ -141,23 +137,19 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testNotCreateDraftPostWhenAuthorAndProjectNull() {
+    void createDraftPost_ShouldNotCreateWhenAuthorAndProjectNull() {
         assertThrows(DataValidationException.class, () -> postService.createDraftPost(postDto));
     }
 
     @Test
-    public void testNotCreateDraftPostWhenAuthorAndProjectNotNull() {
+    void createDraftPost_ShouldNotCreateWhenAuthorAndProjectNotNull() {
         postDto.setAuthorId(authorId);
         postDto.setProjectId(projectId);
         assertThrows(DataValidationException.class, () -> postService.createDraftPost(postDto));
     }
 
-    /**
-     * publishPost
-     */
-
     @Test
-    public void testPublishPost() {
+    void publishPost_ShouldPublish() {
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
 
         createDto = postService.publishPost(postId);
@@ -169,7 +161,7 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testNotPublishPostWhenPostNotExists() {
+    void publishPost_ShouldNotPublishWhenPostNotExists() {
         when(postRepository.findById(postId)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> postService.publishPost(postId));
@@ -177,7 +169,7 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testNotPublishPostWhenPostDeleted() {
+    void publishPost_ShouldNotPublishWhenPostDeleted() {
         post.setDeleted(true);
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
 
@@ -186,7 +178,7 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testNotPublishPostWhenPostPublished() {
+    void publishPost_ShouldNotPublishWhenPostPublished() {
         post.setPublished(true);
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
 
@@ -194,12 +186,8 @@ class   PostServiceTest {
         verify(postRepository, times(1)).findById(postId);
     }
 
-    /**
-     * updatePost
-     */
-
     @Test
-    public void testUpdatePost() {
+    void updatePost_ShouldUpdate() {
         String updatedContent = "updatedContent";
         postDto.setContent(updatedContent);
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
@@ -213,7 +201,7 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testNotUpdateWhenPostNotExists() {
+    void updatePost_ShouldNotWhenPostNotExists() {
         when(postRepository.findById(postId)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> postService.updatePost(postId, postDto));
@@ -221,7 +209,7 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testNotUpdateWhenPostDeleted() {
+    void updatePost_ShouldNotWhenPostDeleted() {
         post.setDeleted(true);
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
 
@@ -229,12 +217,8 @@ class   PostServiceTest {
         verify(postRepository, times(1)).findById(postId);
     }
 
-    /**
-     * deletePost
-     */
-
     @Test
-    public void testDeletePost() {
+    void deletePost_ShouldDelete() {
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
 
         assertDoesNotThrow(() -> postService.deletePost(postId));
@@ -242,7 +226,7 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testNotDeleteWhenPostNotExists() {
+    void deletePost_ShouldNotWhenPostNotExists() {
         when(postRepository.findById(postId)).thenReturn(Optional.empty());
 
         assertThrows(EntityNotFoundException.class, () -> postService.deletePost(postId));
@@ -250,7 +234,7 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testNotDeleteWhenPostDeleted() {
+    void deletePost_ShouldNotWhenPostDeleted() {
         post.setDeleted(true);
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
 
@@ -258,12 +242,8 @@ class   PostServiceTest {
         verify(postRepository, times(1)).findById(postId);
     }
 
-    /**
-     * getPost
-     */
-
     @Test
-    public void testGetPost() {
+    void getPost_ShouldGet() {
         post.setId(1L);
         post.setPublished(true);
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
@@ -276,7 +256,7 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testNotGetWhenPostNotExists() {
+    void getPost_ShouldNotWhenPostNotExists() {
         post.setPublished(true);
         when(postRepository.findById(postId)).thenReturn(Optional.empty());
 
@@ -285,7 +265,7 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testNotGetWhenPostDeleted() {
+    void getPost_ShouldNotWhenPostDeleted() {
         post.setPublished(true);
         post.setDeleted(true);
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
@@ -295,7 +275,7 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testNotGetWhenPostNotPublished() {
+    void getPost_ShouldNotWhenPostNotPublished() {
         when(postRepository.findById(postId)).thenReturn(Optional.of(post));
 
         assertThrows(DataValidationException.class, () -> postService.getPost(postId));
@@ -303,49 +283,49 @@ class   PostServiceTest {
     }
 
     @Test
-    public void testGetAllAuthorDraftPosts() {
+    void getAllAuthorDraftPosts_ShouldGet() {
         when(postRepository.findByAuthorId(authorId)).thenReturn(foundList);
         assertEquals(draftPosts, postService.getAllAuthorDraftPosts(authorId));
     }
 
     @Test
-    public void testNotGetAllDraftPostsWhenAuthorNotExists() {
+    void getAllAuthorDraftPosts_ShouldNotWhenAuthorNotExists() {
         when(userServiceClient.getUser(authorId)).thenThrow(FeignException.class);
         assertThrows(EntityNotFoundException.class, () -> postService.getAllAuthorDraftPosts(authorId));
     }
 
     @Test
-    public void testGetAllAuthorPosts() {
+    void getAllAuthorPosts_ShouldGet() {
         when(postRepository.findByAuthorId(authorId)).thenReturn(foundList);
         assertEquals(posts, postService.getAllAuthorPosts(authorId));
     }
 
     @Test
-    public void testNotGetAllPostsWhenAuthorNotExists() {
+    void getAllAuthorPosts_ShouldNotWhenAuthorNotExists() {
         when(userServiceClient.getUser(authorId)).thenThrow(FeignException.class);
         assertThrows(EntityNotFoundException.class, () -> postService.getAllAuthorPosts(authorId));
     }
 
     @Test
-    public void testGetAllProjectDraftPosts() {
+    void getAllProjectDraftPosts_ShouldGet() {
         when(postRepository.findByProjectId(projectId)).thenReturn(foundList);
         assertEquals(draftPosts, postService.getAllProjectDraftPosts(projectId));
     }
 
     @Test
-    public void testNotGetAllDraftPostsWhenProjectNotExists() {
+    void getAllProjectDraftPosts_ShouldNotWhenProjectNotExists() {
         when(projectServiceClient.getProject(projectId)).thenThrow(FeignException.class);
         assertThrows(EntityNotFoundException.class, () -> postService.getAllProjectDraftPosts(projectId));
     }
 
     @Test
-    public void testGetAllProjectPosts() {
+    void getAllProjectPosts_ShouldGet() {
         when(postRepository.findByProjectId(projectId)).thenReturn(foundList);
         assertEquals(posts, postService.getAllProjectPosts(projectId));
     }
 
     @Test
-    public void testNotGetAllPostsWhenProjectNotExists() {
+    void getAllProjectPosts_ShouldNotWhenProjectNotExists() {
         when(projectServiceClient.getProject(projectId)).thenThrow(FeignException.class);
         assertThrows(EntityNotFoundException.class, () -> postService.getAllProjectPosts(projectId));
     }
@@ -372,6 +352,7 @@ class   PostServiceTest {
 
         verify(postRepository, times(1)).saveAll(posts);
     }
+  
     @Test
     void publishScheduledPosts_shouldDoNothing_whenNoPosts(){
         when(postRepository.findReadyToPublish()).thenReturn(List.of());
@@ -380,5 +361,11 @@ class   PostServiceTest {
 
         verify(postRepository, never()).saveAll(any());
         verify(postPublishingExecutor, never()).execute(any());
+    }
+  
+    @Test
+    void getAllDraftPosts_ShouldGet() {
+        when(postRepository.findAll()).thenReturn(foundList);
+        assertEquals(draftPosts, postService.getAllDraftPosts());
     }
 }

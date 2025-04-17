@@ -31,15 +31,23 @@ server:
 user-service:
   host: localhost
   port: 8080
+
 project-service:
   host: localhost
   port: 8082
+
 payment-service:
   host: localhost
   port: 9080
 
-scheduled: #запускаем каждую менуту
-  publish-cron: "0 * * * * *"
+yandex-speller:
+  url: https://speller.yandex.net
+
+cron:
+  correct_post: "0 0 0 * * *" # ежедневно в 00:00
+
+scheduled:
+  publish-cron: "0 * * * * *" # запускаем каждую минуту
 
 postservice:
   thread-pool:

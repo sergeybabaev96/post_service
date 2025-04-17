@@ -1,8 +1,8 @@
 plugins {
     java
+    jacoco
     id("org.springframework.boot") version "3.0.6"
     id("io.spring.dependency-management") version "1.1.0"
-    id("jacoco")
 }
 
 group = "faang.school"
@@ -22,6 +22,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
+    implementation("org.springframework.retry:spring-retry:2.0.5")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign:4.0.2")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
@@ -59,16 +60,77 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }
 
-tasks.test {
+tasks.withType<Test> {
     useJUnitPlatform()
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+tasks.test {
+    finalizedBy(tasks.jacocoTestReport)
+    finalizedBy(tasks.jacocoTestCoverageVerification)
+}
+
+tasks.build {
+    dependsOn(tasks.jacocoTestCoverageVerification)
 }
 
 val test by tasks.getting(Test::class) { testLogging.showStandardStreams = true }
 
 tasks.bootJar {
     archiveFileName.set("service.jar")
+}
+
+/**
+ * JaCoCo settings
+ */
+
+jacoco {
+    toolVersion = "0.8.12"
+    reportsDirectory.set(layout.buildDirectory.dir("reports/jacoco"))
+}
+
+val testClasses = sourceSets.main.get().output.asFileTree.matching {
+    include(listOf(
+        "**/controller/**",
+        "**/service/**",
+        "**/correcter/**",
+        "**/filter/**",
+        "**/validator/**"))
+    exclude(listOf(
+        "**/UserServiceApplication*",
+        "**/repository/**",
+        "**/model/**",
+        "**/GlobalExceptionHandler.class/**",
+        "**/entity/**",
+        "**/dto/**",
+        "**/mapper/**",
+        "**/exception/**",
+        "**/com/json/**",
+        "**/client/**",
+        "**/config/**"))
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+
+    classDirectories.setFrom(testClasses)
+
+    reports {
+        xml.required.set(false)
+        csv.required.set(false)
+        html.required.set(true)
+        html.outputLocation.set(layout.buildDirectory.dir("jacocoHtml"))
+    }
+}
+
+tasks.jacocoTestCoverageVerification {
+    classDirectories.setFrom(testClasses)
+    violationRules {
+        rule {
+            element = "CLASS"
+            enabled = false
+            limit {
+                minimum = 0.7.toBigDecimal()
+            }
+        }
+    }
 }
