@@ -6,46 +6,37 @@ import faang.school.postservice.exception.ImageProcessingException;
 import faang.school.postservice.model.Comment;
 
 import faang.school.postservice.service.util.ImageProcessor;
+import faang.school.postservice.service.util.ProcessedImages;
 import faang.school.postservice.validation.CommentValidator;
 import faang.school.postservice.validation.ValidateImage;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.UUID;
 
-
 /**
- * Сервис для управления изображениями комментариев.
- * Координирует процессы загрузки, обработки и хранения изображений, прикрепленных к комментариям.
+ * Сервис для работы с изображениями комментариев.
+ * Предоставляет методы для загрузки и удаления изображений, а также валидации данных.
  *
  * <p>Основные функции:</p>
  * <ul>
- *   <li>{@link #uploadImage} - Полный цикл обработки изображения от валидации до сохранения</li>
- *   <li>{@link #deleteImage} - Удаление изображений комментария с очисткой ссылок</li>
+ *   <li>{@link #uploadImage(Long, Long, MultipartFile)} - загрузка изображения</li>
+ *   <li>{@link #deleteImage(Long, Long)} - удаление изображения</li>
  * </ul>
- *
- * <p>Используемые компоненты:</p>
- * <ul>
- *   <li>{@link ImageProcessor} - для обработки и конвертации изображений</li>
- *   <li>{@link S3StorageService} - для работы с объектным хранилищем</li>
- *   <li>{@link ValidateImage} - для валидации входящих файлов</li>
- *   <li>{@link CommentValidator} - для проверки бизнес-правил</li>
- * </ul>
- *
- * @author Zhltsk-V
- * @version 1.0
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommentImageService {
     private static final String IMAGE_CONTENT_TYPE = "image/jpeg";
-    private static final String KEY_PREFIX = "comments/";
+    private static final String KEY_TEMPLATE = "comments/%s/%s";
+    private static final String LARGE_FILE_NAME_TEMPLATE = "%s-large.jpg";
+    private static final String SMALL_FILE_NAME_TEMPLATE = "%s-small.jpg";
 
     private final CommentService commentService;
     private final S3StorageService storageService;
@@ -54,15 +45,13 @@ public class CommentImageService {
     private final CommentValidator commentValidator;
 
     /**
-     * Загружает и обрабатывает изображение для комментария.
+     * Загружает изображение, прикрепленное к комментарию.
      *
      * @param postId    ID поста, к которому относится комментарий
-     * @param commentId ID комментария для прикрепления изображения
-     * @param file      загружаемый файл изображения
+     * @param commentId ID комментария для загрузки изображения
+     * @param file      файл изображения
      * @return DTO комментария с обновленными ссылками на изображения
-     * @throws DataValidationException  если файл не проходит валидацию
-     * @throws EntityNotFoundException  если комментарий или пост не найдены
-     * @throws ImageProcessingException при ошибках обработки изображения
+     * @throws EntityNotFoundException если комментарий или пост не найдены
      */
     @Transactional
     public CommentViewDto uploadImage(Long postId, Long commentId, MultipartFile file) {
@@ -73,19 +62,19 @@ public class CommentImageService {
         try {
             originalImage = imageProcessor.convertToBufferedImage(file);
         } catch (IOException exception) {
-            log.error("Failed to convert image: {}", exception.getMessage());
+            log.error("Failed to convert image", exception);
             throw new ImageProcessingException("Failed to convert image");
         }
-        ImageProcessor.ProcessedImages processedImages = imageProcessor.processImage(originalImage);
 
-        String baseKey = generateFileKey(commentId);
+        ProcessedImages processedImages = imageProcessor.processImage(originalImage);
+        String baseKey = String.format(KEY_TEMPLATE, commentId, UUID.randomUUID());
         uploadProcessedImages(baseKey, processedImages);
 
         return updateCommentWithImages(comment, baseKey);
     }
 
     /**
-     * Удаляет изображения, прикрепленные к комментарию.
+     * Удаляет изображения комментария и очищает ссылки на них.
      *
      * @param postId    ID поста, к которому относится комментарий
      * @param commentId ID комментария для удаления изображений
@@ -98,20 +87,20 @@ public class CommentImageService {
 
         try {
             deleteCommentImages(comment);
-        } catch (ImageProcessingException e) {
-            log.warn("Failed to delete images from storage: {}", e.getMessage());
+        } catch (ImageProcessingException exception) {
+            log.warn("Failed to delete images from storage", exception);
         }
+
         return clearImageReferences(comment);
     }
 
     /**
-     * Получает и валидирует комментарий.
+     * Получает комментарий и проверяет его принадлежность к посту.
      *
-     * @param postId    ID поста для проверки принадлежности
-     * @param commentId ID комментария
-     * @return найденный комментарий
-     * @throws EntityNotFoundException если комментарий не существует
-     * @throws DataValidationException если комментарий не принадлежит указанному посту
+     * @param postId    ID поста, к которому относится комментарий
+     * @param commentId ID комментария для проверки
+     * @return DTO комментария
+     * @throws EntityNotFoundException если комментарий или пост не найдены
      */
     private Comment getValidatedComment(Long postId, Long commentId) {
         Comment comment = commentService.getCommentById(commentId);
@@ -120,49 +109,46 @@ public class CommentImageService {
     }
 
     /**
-     * Генерирует уникальный ключ для хранения изображений.
-     *
-     * @param commentId ID комментария
-     * @return сгенерированный ключ в формате "comments/{commentId}/{uuid}"
-     */
-    private String generateFileKey(Long commentId) {
-        return KEY_PREFIX + commentId + "/" + UUID.randomUUID();
-    }
-
-    /**
-     * Загружает обработанные изображения в хранилище.
+     * Загружает обработанные изображения в S3-хранилище.
      *
      * @param baseKey базовый ключ для формирования имен файлов
-     * @param images  обработанные версии изображения
-     * @throws ImageProcessingException при ошибках загрузки
+     * @param images  объект ProcessedImages с изображениями
      */
-    private void uploadProcessedImages(String baseKey, ImageProcessor.ProcessedImages images) {
+    private void uploadProcessedImages(String baseKey, ProcessedImages images) {
         try {
-            storageService.uploadToS3(baseKey + "-large.jpg", images.largeImage(), IMAGE_CONTENT_TYPE);
-            storageService.uploadToS3(baseKey + "-small.jpg", images.smallImage(), IMAGE_CONTENT_TYPE);
+            storageService.uploadToS3(
+                    String.format(LARGE_FILE_NAME_TEMPLATE, baseKey),
+                    images.largeImage(),
+                    IMAGE_CONTENT_TYPE
+            );
+            storageService.uploadToS3(
+                    String.format(SMALL_FILE_NAME_TEMPLATE, baseKey),
+                    images.smallImage(),
+                    IMAGE_CONTENT_TYPE
+            );
         } catch (IOException exception) {
-            log.error("Failed to upload processed images: {}", exception.getMessage());
+            log.error("Failed to upload processed images", exception);
             throw new ImageProcessingException("Failed to upload processed images");
         }
     }
 
     /**
-     * Обновляет комментарий ссылками на изображения.
+     * Обновляет комментарий с новыми ссылками на изображения.
      *
      * @param comment комментарий для обновления
-     * @param baseKey базовый ключ для формирования ссылок
+     * @param baseKey базовый ключ для формирования имен файлов
      * @return обновленный DTO комментария
      */
     private CommentViewDto updateCommentWithImages(Comment comment, String baseKey) {
-        comment.setLargeImageFileKey(baseKey + "-large.jpg");
-        comment.setSmallImageFileKey(baseKey + "-small.jpg");
+        comment.setLargeImageFileKey(String.format(LARGE_FILE_NAME_TEMPLATE, baseKey));
+        comment.setSmallImageFileKey(String.format(SMALL_FILE_NAME_TEMPLATE, baseKey));
         return commentService.updateCommentEntity(comment);
     }
 
     /**
-     * Удаляет изображения комментария из хранилища.
+     * Удаляет изображения комментария из S3-хранилища.
      *
-     * @param comment комментарий с изображениями
+     * @param comment комментарий для удаления изображений
      */
     private void deleteCommentImages(Comment comment) {
         if (comment.getLargeImageFileKey() != null) {
@@ -174,9 +160,9 @@ public class CommentImageService {
     }
 
     /**
-     * Очищает ссылки на изображения в комментарии.
+     * Очищает ссылки на изображения в комментарии и обновляет его.
      *
-     * @param comment комментарий для очистки
+     * @param comment комментарий для обновления
      * @return обновленный DTO комментария
      */
     private CommentViewDto clearImageReferences(Comment comment) {

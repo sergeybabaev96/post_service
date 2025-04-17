@@ -5,41 +5,38 @@ import faang.school.postservice.dto.comment.CommentCreateDto;
 import faang.school.postservice.dto.comment.CommentViewDto;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
+import faang.school.postservice.exception.ModerationException;
 import faang.school.postservice.mapper.CommentMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.config.moderation.ModerationConfig;
+import faang.school.postservice.service.util.CommentModerationAsyncHandler;
 import faang.school.postservice.validation.CommentValidator;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.ListUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 /**
- * Сервис для работы с комментариями.
- * Содержит бизнес-логику для управления комментариями.
+ * Сервис для работы с комментариями к постам.
+ * Содержит методы для создания, обновления, удаления и получения комментариев.
  *
- * <p>Основные методы:</p>
+ * <p>Основные функции:</p>
  * <ul>
- *   <li>{@link #createComment(Long, CommentCreateDto)} - Создание нового комментария</li>
- *   <li>{@link #updateComment(Long, Long, CommentCreateDto)} - Обновление существующего комментария</li>
- *   <li>{@link #getCommentsByPostId(Long)} - Получение всех комментариев поста</li>
- *   <li>{@link #deleteComment(Long, Long)} - Удаление комментария</li>
+ *   <li>{@link #createComment(Long, CommentCreateDto)} - создает новый комментарий</li>
+ *   <li>{@link #updateComment(Long, Long, CommentCreateDto)} - обновляет существующий комментарий</li>
+ *   <li>{@link #getCommentsByPostId(Long)} - получает все комментарии для указанного поста</li>
+ *   <li>{@link #deleteComment(Long, Long)} - удаляет комментарий по его ID</li>
+ *   <li>{@link #moderateUnverifiedComment()} - запускает процесс модерации неподтвержденных комментариев</li>
  * </ul>
- *
- * <p>Вспомогательные методы:</p>
- * <ul>
- *   <li>{@link #getCommentById(Long)} - Получение комментария по ID</li>
- *   <li>{@link #getPostById(Long)} - Получение поста по ID</li>
- * </ul>
- *
- * @author Zhltsk-V
- * @version 1.0
- * @see CommentValidator Для методов валидации
  */
 @Slf4j
 @Service
@@ -50,6 +47,8 @@ public class CommentService {
     private final CommentMapper commentMapper;
     private final UserServiceClient userServiceClient;
     private final CommentValidator commentValidator;
+    private final ModerationConfig commentModerationConfig;
+    private final CommentModerationAsyncHandler commentModerationAsyncHandler;
 
     /**
      * Создает новый комментарий к указанному посту.
@@ -80,19 +79,19 @@ public class CommentService {
     /**
      * Обновляет существующий комментарий.
      *
-     * @param postId           ID поста, содержащего комментарий
+     * @param postId           ID поста, к которому принадлежит комментарий
      * @param commentId        ID комментария для обновления
-     * @param commentCreateDto DTO с обновленными данными комментария
+     * @param commentCreateDto DTO с новыми данными комментария
      * @return обновленный комментарий в формате CommentViewDto
-     * @throws EntityNotFoundException если комментарий не найден
+     * @throws EntityNotFoundException если комментарий не найден или пользователь не существует
      * @throws DataValidationException если комментарий не принадлежит указанному посту
-     * @see CommentValidator#validateCommentBelongsToPost(Comment, Long, Long)
+     * @see CommentValidator#validateCommentBelongsToPost(Comment, Long)
      */
     @Transactional
     public CommentViewDto updateComment(Long postId, Long commentId, CommentCreateDto commentCreateDto) {
         log.debug("Updating comment with ID: {} for post with ID: {}", commentId, postId);
         Comment comment = getCommentById(commentId);
-        commentValidator.validateCommentBelongsToPost(comment, postId, commentId);
+        commentValidator.validateCommentBelongsToPost(comment, postId);
 
         comment.setContent(commentCreateDto.getContent());
         comment.setUpdatedAt(LocalDateTime.now());
@@ -122,23 +121,57 @@ public class CommentService {
                 .toList();
     }
 
+
     /**
-     * Удаляет указанный комментарий.
+     * Удаляет комментарий по его ID.
      *
-     * @param postId    ID поста, содержащего комментарий
+     * @param postId    ID поста, к которому принадлежит комментарий
      * @param commentId ID комментария для удаления
-     * @throws EntityNotFoundException если комментарий не найден
+     * @throws EntityNotFoundException если комментарий не найден или пользователь не существует
      * @throws DataValidationException если комментарий не принадлежит указанному посту
-     * @see CommentValidator#validateCommentBelongsToPost(Comment, Long, Long)
+     * @see CommentValidator#validateCommentBelongsToPost(Comment, Long)
      */
     @Transactional
     public void deleteComment(Long postId, Long commentId) {
         log.debug("Deleting comment with ID: {} for post with ID: {}", commentId, postId);
         Comment comment = getCommentById(commentId);
-        commentValidator.validateCommentBelongsToPost(comment, postId, commentId);
+        commentValidator.validateCommentBelongsToPost(comment, postId);
 
         commentRepository.delete(comment);
         log.debug("Comment with ID: {} successfully deleted", commentId);
+    }
+
+    /**
+     * Запускает процесс модерации неподтвержденных комментариев.
+     * Комментарии обрабатываются пакетами, чтобы избежать перегрузки системы.
+     *
+     * @throws ModerationException если произошла ошибка во время процесса модерации
+     */
+    public void moderateUnverifiedComment() {
+        log.info("Moderation of unverified posts started");
+        List<Comment> unverifiedComments = commentRepository.findAllByVerifiedAtIsNull();
+
+        if (unverifiedComments.isEmpty()) {
+            log.info("No unverified comments found");
+            return;
+        }
+
+        List<List<Comment>> batches = ListUtils.partition(unverifiedComments,
+                commentModerationConfig.getBatchSize());
+
+        List<CompletableFuture<Void>> moderationTasks = batches.stream()
+                .map(commentModerationAsyncHandler::checkForProfanity)
+                .toList();
+
+        try {
+            CompletableFuture.allOf(moderationTasks.toArray(new CompletableFuture[0]))
+                    .get(1, TimeUnit.HOURS);
+            log.info("Moderation completed successfully. Total comments processed: {}",
+                    unverifiedComments.size());
+        } catch (Exception exception) {
+            log.error("Error during moderation process", exception);
+            throw new ModerationException("Failed to complete moderation process");
+        }
     }
 
     /**
@@ -152,7 +185,7 @@ public class CommentService {
         return commentRepository.findById(commentId)
                 .orElseThrow(() -> {
                     log.error("Comment with ID {} not found", commentId);
-                    return new EntityNotFoundException("Comment with ID " + commentId + " not found");
+                    return new EntityNotFoundException(String.format("Comment with ID %d not found", commentId));
                 });
     }
 
@@ -167,7 +200,7 @@ public class CommentService {
         return postRepository.findById(postId)
                 .orElseThrow(() -> {
                     log.error("Post with ID {} not found", postId);
-                    return new EntityNotFoundException("Post with ID " + postId + " not found");
+                    return new EntityNotFoundException(String.format("Post with ID %d not found", postId));
                 });
     }
 

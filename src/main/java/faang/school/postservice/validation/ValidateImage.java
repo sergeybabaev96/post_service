@@ -18,12 +18,11 @@ import org.springframework.web.multipart.MultipartFile;
  *
  * @see DataValidationException
  * <p>
- * * @author Zhltsk-V
- * * @version 1.0
  */
 @Slf4j
 @Component
 public class ValidateImage {
+    private static final long MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
     /**
      * Проверяет валидность файла изображения.
@@ -36,7 +35,7 @@ public class ValidateImage {
             log.error("Uploaded file is empty");
             throw new DataValidationException("Uploaded file is empty");
         }
-        if (file.getSize() > 5 * 1024 * 1024) {
+        if (file.getSize() > MAX_FILE_SIZE_BYTES) {
             log.error("File size exceeds 5MB");
             throw new DataValidationException("File size must not exceed 5MB");
         }

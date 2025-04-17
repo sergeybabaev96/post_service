@@ -7,6 +7,7 @@ import faang.school.postservice.exception.ImageProcessingException;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.service.util.ImageProcessor;
+import faang.school.postservice.service.util.ProcessedImages;
 import faang.school.postservice.validation.CommentValidator;
 import faang.school.postservice.validation.ValidateImage;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,7 +60,7 @@ public class CommentImageServiceTest {
     private Comment comment;
     private CommentViewDto commentViewDto;
     private BufferedImage testImage;
-    private ImageProcessor.ProcessedImages processedImages;
+    private ProcessedImages processedImages;
 
     @BeforeEach
     void setUp() throws IOException {
@@ -67,7 +68,7 @@ public class CommentImageServiceTest {
                 "file", "test.jpg", "image/jpeg", new byte[1024]);
 
         testImage = new BufferedImage(100, 100, BufferedImage.TYPE_INT_RGB);
-        processedImages = new ImageProcessor.ProcessedImages(testImage, testImage);
+        processedImages = new ProcessedImages(testImage, testImage);
 
         Post post = new Post();
         post.setId(postId);

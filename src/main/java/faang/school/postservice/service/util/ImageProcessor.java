@@ -14,60 +14,50 @@ import java.util.Objects;
 
 /**
  * Сервис для обработки изображений.
- * Выполняет преобразование и подготовку изображений перед сохранением.
+ * Создает уменьшенные копии изображения и конвертирует MultipartFile в BufferedImage.
  *
  * <p>Основные функции:</p>
  * <ul>
- *   <li>{@link #processImage} - Создание уменьшенных копий изображения</li>
- *   <li>{@link #convertToBufferedImage} - Конвертация MultipartFile в BufferedImage</li>
+ *   <li>{@link #processImage(BufferedImage)} - обрабатывает изображение, создавая его уменьшенные копии</li>
+ *   <li>{@link #convertToBufferedImage(MultipartFile)} - конвертирует MultipartFile в BufferedImage</li>
  * </ul>
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class ImageProcessor {
+    private static final int LARGE_IMAGE_SIZE = 1080;
+    private static final int SMALL_IMAGE_SIZE = 170;
+
     private final ImageResizer imageResizer;
 
     /**
-     * Контейнер для хранения обработанных версий изображения.
-     * Содержит:
-     * <ul>
-     *   <li>largeImage - изображение с максимальной стороной 1080px</li>
-     *   <li>smallImage - изображение с максимальной стороной 170px</li>
-     * </ul>
-     */
-    public record ProcessedImages(BufferedImage largeImage, BufferedImage smallImage) {
-    }
-
-    /**
-     * Создает уменьшенные копии изображения.
+     * Обрабатывает изображение, создавая его уменьшенные копии.
      *
-     * @param originalImage исходное изображение для обработки
-     * @return контейнер с обработанными изображениями
-     * @throws NullPointerException если originalImage равен null
-     * @see ImageResizer#resize(BufferedImage, int)
+     * @param originalImage оригинальное изображение
+     * @return объект ProcessedImages с уменьшенными копиями
      */
     public ProcessedImages processImage(BufferedImage originalImage) {
         Objects.requireNonNull(originalImage, "Original image cannot be null");
 
         return new ProcessedImages(
-                imageResizer.resize(originalImage, 1080),
-                imageResizer.resize(originalImage, 170)
+                imageResizer.resize(originalImage, LARGE_IMAGE_SIZE),
+                imageResizer.resize(originalImage, SMALL_IMAGE_SIZE)
         );
     }
 
     /**
      * Конвертирует MultipartFile в BufferedImage.
      *
-     * @param file загруженный файл изображения
-     * @return объект BufferedImage
-     * @throws IOException             если произошла ошибка чтения файла
-     * @throws DataValidationException если файл не является валидным изображением
+     * @param file файл для конвертации
+     * @return конвертированное изображение
+     * @throws IOException если произошла ошибка при чтении файла
      */
     public BufferedImage convertToBufferedImage(MultipartFile file) throws IOException {
         try (InputStream inputStream = file.getInputStream()) {
             BufferedImage image = ImageIO.read(inputStream);
             if (image == null) {
+                log.error("Invalid image file: {}", file.getOriginalFilename());
                 throw new DataValidationException("Invalid image file");
             }
             return image;

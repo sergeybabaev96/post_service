@@ -3,6 +3,7 @@ package faang.school.postservice.controller;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.exception.ImageProcessingException;
+import faang.school.postservice.exception.ModerationException;
 import feign.FeignException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

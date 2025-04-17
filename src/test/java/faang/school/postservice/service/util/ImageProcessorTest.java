@@ -49,7 +49,7 @@ class ImageProcessorTest {
             when(imageResizer.resize(originalImage, 1080)).thenReturn(largeImage);
             when(imageResizer.resize(originalImage, 170)).thenReturn(smallImage);
 
-            ImageProcessor.ProcessedImages result = imageProcessor.processImage(originalImage);
+            ProcessedImages result = imageProcessor.processImage(originalImage);
 
             assertNotNull(result);
             assertEquals(largeImage, result.largeImage());
