@@ -3,6 +3,7 @@ package faang.school.postservice.service.like.implementations;
 import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.like.LikeDto;
+import faang.school.postservice.dto.publisher.LikeEvent;
 import faang.school.postservice.exception.AuthorNotFoundException;
 import faang.school.postservice.exception.CommentNotFoundException;
 import faang.school.postservice.exception.LikeAlreadyExistException;
@@ -12,6 +13,7 @@ import faang.school.postservice.mapper.like.LikeMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.publisher.LikeEventPublisher;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.LikeRepository;
 import faang.school.postservice.repository.PostRepository;
@@ -38,6 +40,7 @@ public class LikeServiceImpl implements LikeService {
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserContext userContext;
+    private final LikeEventPublisher likeEventPublisher;
 
     private void checkLikeExistence(long entityId, long userId,
                                     BiFunction<Long, Long, Optional<Like>> findLikeEntityFunction,
@@ -67,7 +70,9 @@ public class LikeServiceImpl implements LikeService {
         checkAuthor(userId);
         checkLikeExistence(postId, userId, likeRepository::findByPostIdAndUserId, "post");
         Like like = Like.builder().userId(userId).post(post).build();
-        return likeMapper.toDto(likeRepository.save(like));
+        LikeDto likeDto = likeMapper.toDto(likeRepository.save(like));
+        likeEventPublisher.publish(new LikeEvent(post.getAuthorId(), postId, userId));
+        return likeDto;
     }
 
     @Override
