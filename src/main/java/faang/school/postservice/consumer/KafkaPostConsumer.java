@@ -9,6 +9,7 @@ import faang.school.postservice.service.FeedService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -20,8 +21,9 @@ public class KafkaPostConsumer {
     private final ObjectMapper objectMapper;
     private final FeedService feedService;
 
-    @KafkaListener(topics = "posts", groupId = "feed-group")
-    public void listen(String postEventString) {
+    @KafkaListener(topics = "${spring.data.kafka.topic.post.name}",
+            groupId = "${spring.data.kafka.topic.post.group}")
+    public void listen(String postEventString, Acknowledgment ack) {
         try {
             PostEvent postEvent = objectMapper.readValue(postEventString, PostEvent.class);
             validatePostEvent(postEvent);
@@ -30,6 +32,7 @@ public class KafkaPostConsumer {
                     .toList();
 
             checkFailedSubscribers(failedSubscribers);
+            ack.acknowledge();
         } catch (JsonProcessingException e) {
             log.error("Произошла ошибка при десериализации ивента PostEvent", e);
         }

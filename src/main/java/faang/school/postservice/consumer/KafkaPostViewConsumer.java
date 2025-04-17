@@ -17,7 +17,8 @@ public class KafkaPostViewConsumer {
     private final ObjectMapper objectMapper;
     private final PostService postService;
 
-    @KafkaListener(topics = "post.views", groupId = "post-view-group")
+    @KafkaListener(topics = "${spring.data.kafka.topic.post-views.name}",
+            groupId = "${spring.data.kafka.topic.post-views.group}")
     public void listen(String postViewEventString, Acknowledgment ack) {
         try {
             PostViewEvent postViewEvent = objectMapper.readValue(postViewEventString, PostViewEvent.class);

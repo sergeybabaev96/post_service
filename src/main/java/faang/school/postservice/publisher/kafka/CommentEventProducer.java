@@ -14,9 +14,4 @@ public class CommentEventProducer extends AbstractEventProducer<CommentCreatedEv
                                 @Value(value = "${spring.data.kafka.topic.comments.name}") String topicName) {
         super(kafkaTemplate, objectMapper, topicName);
     }
-
-    @Override
-    public void sendEvent(CommentCreatedEvent event) {
-        super.sendEvent(event);
-    }
 }
