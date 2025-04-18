@@ -3,7 +3,6 @@ package faang.school.postservice.controller;
 import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.service.like.LikeServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,20 +20,12 @@ public class LikeController {
     @GetMapping("/post/{postId}")
     public ResponseEntity<List<UserDto>> getLikesByPostId(@PathVariable("postId") Long postId) {
         List<UserDto> users = likeServiceImpl.getUserLikedPost(postId);
-        if (users.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(users);
-        }
         return ResponseEntity.ok(users);
     }
 
     @GetMapping("/comment/{commentId}")
     public ResponseEntity<List<UserDto>> getLikesByCommentId(@PathVariable("commentId") Long commentId) {
         List<UserDto> users = likeServiceImpl.getUserLikedComment(commentId);
-        if (users.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(users);
-        }
         return ResponseEntity.ok(users);
     }
 }
