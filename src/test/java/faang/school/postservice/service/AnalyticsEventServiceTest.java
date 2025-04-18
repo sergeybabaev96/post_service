@@ -95,7 +95,7 @@ public class AnalyticsEventServiceTest {
         verify(analyticsEventByIntervalFilter, times(1)).isApplicable(filterDto);
         verify(analyticsEventFromDateFilter, times(1)).isApplicable(filterDto);
         verify(analyticsEventToDateFilter, times(1)).isApplicable(filterDto);
-        verify(analyticsEventMapper, times(1)).toAnalyticsEventDtoList(any());
+        verify(analyticsEventMapper, times(2)).toAnalyticEventDto(any());
 
         assertFalse(actualAnalytic.isEmpty());
         assertEquals(2, actualAnalytic.size());
