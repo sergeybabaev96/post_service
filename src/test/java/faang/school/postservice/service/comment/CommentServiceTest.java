@@ -9,6 +9,7 @@ import faang.school.postservice.dto.commentAnalyzer.response.AttributeScoreDto;
 import faang.school.postservice.dto.commentAnalyzer.response.SpanScoreDto;
 import faang.school.postservice.dto.commentAnalyzer.response.SummaryScoreDto;
 import faang.school.postservice.dto.commentAnalyzer.response.ToxicityScoreDto;
+import faang.school.postservice.dto.user.UserBanDto;
 import faang.school.postservice.enums.CommentToxicityType;
 import faang.school.postservice.mapper.CommentRequestMapper;
 import faang.school.postservice.mapper.CommentResponseMapper;
@@ -16,6 +17,7 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.service.kafka.publisher.KafkaPublisher;
 import feign.FeignException;
 import feign.Request;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,11 +33,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.util.ReflectionTestUtils;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -63,12 +67,6 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CommentServiceTest {
-    private static final Long POST_ID = 1L;
-    private static final Long COMMENT_ID = 2L;
-    private static final Long AUTHOR_ID = 3L;
-
-    private static final String CONTENT = "Content";
-    private static final String UPDATE_CONTENT = "Update content";
 
     @InjectMocks
     private CommentServiceImpl commentService;
@@ -90,6 +88,16 @@ class CommentServiceTest {
 
     @Spy
     private CommentRequestMapper commentRequestMapper = Mappers.getMapper(CommentRequestMapper.class);
+
+    @Mock
+    private KafkaPublisher kafkaPublisher;
+
+    private static final Long POST_ID = 1L;
+    private static final Long COMMENT_ID = 2L;
+    private static final Long AUTHOR_ID = 3L;
+
+    private static final String CONTENT = "Content";
+    private static final String UPDATE_CONTENT = "Update content";
 
     private CommentRequestDto commentRequestDto;
     private CommentResponseDto commentResponseDto;
@@ -123,6 +131,12 @@ class CommentServiceTest {
         commentUpdateDto = new CommentUpdateDto();
         commentUpdateDto.setAuthorId(AUTHOR_ID);
         commentUpdateDto.setContent(UPDATE_CONTENT);
+
+        ReflectionTestUtils.setField(commentService, "banBatchSize", commentModerationBatchSize);
+        ReflectionTestUtils.setField(commentService, "userBanThreshold", 1);
+        ReflectionTestUtils.setField(commentService, "userBanThreadPoolSize", 1);
+        ReflectionTestUtils.setField(commentService, "userBanTimeoutHours", 1);
+        commentService.setUp();
 
         ReflectionTestUtils.setField(commentService, "commentModerationTimeoutHours", 1);
         ReflectionTestUtils.setField(commentService, "commentModerationBatchSize", commentModerationBatchSize);
@@ -414,5 +428,18 @@ class CommentServiceTest {
         assertEquals(1, capturedComments.size());
         assertTrue(capturedComments.containsAll(comments));
         assertFalse(capturedComments.stream().allMatch(Comment::isVerified));
+    }
+
+    @Test
+    void testBanUsersForComments_published() {
+        when(commentRepository.count()).thenReturn(1L);
+        comment.setVerified(false);
+        comment.setVerifiedDate(LocalDateTime.now());
+        when(commentRepository.findUnverifiedComments(any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(comment)));
+
+        commentService.banUsersForComments();
+
+        verify(kafkaPublisher, times(1)).send(new UserBanDto(comment.getAuthorId()));
     }
 }

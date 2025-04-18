@@ -6,6 +6,7 @@ import faang.school.postservice.contants.ErrorMessage;
 import faang.school.postservice.dto.comment.CommentRequestDto;
 import faang.school.postservice.dto.comment.CommentResponseDto;
 import faang.school.postservice.dto.comment.CommentUpdateDto;
+import faang.school.postservice.dto.user.UserBanDto;
 import faang.school.postservice.exception.CommentAnalyzerException;
 import faang.school.postservice.exception.EntityNotFoundException;
 import faang.school.postservice.exception.InvalidCommentContentException;
@@ -17,7 +18,9 @@ import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.service.kafka.publisher.KafkaPublisher;
 import feign.FeignException;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,10 +34,20 @@ import reactor.util.retry.Retry;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
 
 import static faang.school.postservice.contants.ErrorMessage.ERROR_NOT_AUTHOR_COMMENT;
 import static faang.school.postservice.contants.ErrorMessage.ERROR_NULL_AUTHOR_ID;
@@ -45,7 +58,6 @@ import static faang.school.postservice.contants.InfoMessage.INFO_CREATE_COMMENT;
 import static faang.school.postservice.contants.InfoMessage.INFO_DELETE_COMMENT;
 import static faang.school.postservice.contants.InfoMessage.INFO_GET_COMMENTS;
 import static faang.school.postservice.contants.InfoMessage.INFO_UPDATE_COMMENT;
-
 
 @Service
 @Slf4j
@@ -63,15 +75,40 @@ public class CommentServiceImpl implements CommentService {
     @Value("${moderation.comments.timeout-hours}")
     private int commentModerationTimeoutHours;
 
+    @Value("${moderation.comments.batch-size}")
+    private int banBatchSize;
+
+    @Value("${moderation.comments.max-attempts}")
+    private int userBanMaxAttempts;
+
+    @Value("${moderation.comments.backoff-delay}")
+    private int userBanBackoffDelay;
+
+    @Value("${moderation.comments.thread-pool-size}")
+    private int userBanThreadPoolSize;
+
+    @Value("${moderation.comments.timeout-hours}")
+    private int userBanTimeoutHours;
+
+    @Value("${moderation.comments.ban-threshold}")
+    private int userBanThreshold;
+
     private static final double TOXICITY_THRESHOLD = 0.35;
     private static final int MAX_LENGTH_CHARACTER = 4096;
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final CommentAnalyzer commentAnalyzer;
+    private final KafkaPublisher kafkaPublisher;
     private final CommentRequestMapper commentRequestMapper;
     private final CommentResponseMapper commentResponseMapper;
     private final UserServiceClient userServiceClient;
+    private ExecutorService executor;
+
+    @PostConstruct
+    public void setUp() {
+        executor = Executors.newFixedThreadPool(userBanThreadPoolSize);
+    }
 
     public Mono<Void> moderateComments() {
         log.info("Comment moderation started");
@@ -95,6 +132,37 @@ public class CommentServiceImpl implements CommentService {
                 .doOnError(e -> log.error("Error while moderating comments", e));
     }
 
+    public void banUsersForComments() {
+        log.info("User ban process started");
+
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+        int commentCount = (int) commentRepository.count();
+        int batches = (commentCount + banBatchSize - 1) / banBatchSize;
+
+        IntStream.range(0, batches).forEach(batchNumber -> {
+            Pageable pageable = PageRequest.of(batchNumber, banBatchSize);
+            futures.add(CompletableFuture.runAsync(() -> {
+                processUsersBan(commentRepository.findUnverifiedComments(pageable).getContent());
+            }, executor));
+        });
+
+        try {
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).get(userBanTimeoutHours, TimeUnit.HOURS);
+            log.info("User ban process completed");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Thread interrupted while waiting for user ban execution", e);
+            executor.shutdownNow();
+            log.warn("User ban process was interrupted and may not have completed");
+        } catch (ExecutionException e) {
+            log.error("Execution exception while submitting posts for review. ", e);
+        } catch (TimeoutException e) {
+            log.warn("User ban process did not complete within timeout: {} hours", userBanTimeoutHours, e);
+        } finally {
+            executor.shutdown();
+        }
+    }
+
     public void createComment(CommentRequestDto commentRequestDto) {
         validateCreateComment(commentRequestDto);
         Post post = getPost(commentRequestDto.getPostId());
@@ -108,10 +176,13 @@ public class CommentServiceImpl implements CommentService {
     public void updateComment(Long id, CommentUpdateDto commentUpdateDto) {
         validateContent(commentUpdateDto.getContent());
         validateId(commentUpdateDto.getAuthorId(), ERROR_NULL_AUTHOR_ID);
+
         Comment comment = getComment(id);
         isAuthorComment(comment, commentUpdateDto);
         comment.setContent(commentUpdateDto.getContent());
         commentRepository.save(comment);
+        comment.setVerified(false);
+        comment.setVerifiedDate(null);
         log.info(INFO_UPDATE_COMMENT, id, commentUpdateDto.getAuthorId());
     }
 
@@ -191,6 +262,18 @@ public class CommentServiceImpl implements CommentService {
             log.error(errorMessage);
             return new EntityNotFoundException(errorMessage);
         });
+    }
+
+    private void processUsersBan(List<Comment> comments) {
+        Map<Long, Integer> unverifiedComments = new HashMap<>();
+        comments.stream()
+                .filter(comment -> comment.getVerifiedDate() != null && !comment.isVerified())
+                .forEach(comment -> unverifiedComments.merge(comment.getAuthorId(), 1, Integer::sum));
+
+        unverifiedComments.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue() >= userBanThreshold)
+                .forEach(entry -> kafkaPublisher.send(new UserBanDto(entry.getKey())));
     }
 
     private Mono<Void> moderateComment(Comment comment) {

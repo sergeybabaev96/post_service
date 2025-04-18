@@ -35,6 +35,17 @@ spring:
       max-attempts: 4
       backoff-delay: 500
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      retries: 5
+      acks: all
+      linger-ms: 5
+      batch-size: 16384
+      max-in-flight-requests-per-connection: 10
+      topics:
+        user-ban: "user-ban-topic"
+
 server:
   port: 8081
 
@@ -64,6 +75,8 @@ moderation:
     max-attempts: 3
     backoff-delay: 1000
     timeout-hours: 5
+    thread-pool-size: 16
+    ban-threshold: 5
 
   language-tool:
     base-url: https://api.languagetool.org/v2
