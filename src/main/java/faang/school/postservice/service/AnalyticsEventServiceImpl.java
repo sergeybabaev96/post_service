@@ -1,7 +1,7 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.dto.analytic.AnalyticsEventCreateDto;
 import faang.school.postservice.dto.analytic.AnalyticEventDto;
+import faang.school.postservice.dto.analytic.AnalyticsEventCreateDto;
 import faang.school.postservice.dto.analytic.AnalyticsEventFilterDto;
 import faang.school.postservice.filter.AnalyticsEventFilter;
 import faang.school.postservice.mapper.AnalyticsEventMapper;
@@ -39,9 +39,11 @@ public class AnalyticsEventServiceImpl implements AnalyticsEventService {
 
     /**
      * Сохраняет аналитику
+     *
      * @param analyticsEventCreateDto Сущность для создания аналитики
      */
     @Override
+    @Transactional
     public void saveEvent(@NotNull AnalyticsEventCreateDto analyticsEventCreateDto) {
         analyticsEventRepository.save(analyticsEventMapper.toEntity(analyticsEventCreateDto));
         log.debug("Event saved {}", analyticsEventCreateDto);
@@ -49,6 +51,7 @@ public class AnalyticsEventServiceImpl implements AnalyticsEventService {
 
     /**
      * Получение аналитики по заданным параметрам
+     *
      * @param filter Фильтр для поиска
      * @return {@link List<AnalyticEventDto>} Отфильтрованный список с аналитикой
      */
@@ -59,11 +62,11 @@ public class AnalyticsEventServiceImpl implements AnalyticsEventService {
                 analyticsEventRepository.findByAuthorIdAndReceiverIdOrderByCreatedAtDesc(filter.authorId(), filter.receiverId());
 
         for (AnalyticsEventFilter eventFilter : analyticsEventFilters) {
-            if (eventFilter.isApplicable(filter)){
+            if (eventFilter.isApplicable(filter)) {
                 eventsStream = eventFilter.apply(eventsStream, filter);
             }
         }
 
-        return analyticsEventMapper.toAnalyticsEventDtoList(eventsStream);
+        return eventsStream.map(analyticsEventMapper::toAnalyticEventDto).toList();
     }
 }
