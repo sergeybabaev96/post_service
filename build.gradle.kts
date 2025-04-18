@@ -24,7 +24,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.cloud:spring-cloud-starter-openfeign:4.0.2")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
 
     /**
      * Swagger
@@ -48,6 +47,7 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.26")
     implementation("org.mapstruct:mapstruct:1.5.3.Final")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.5.3.Final")
+    implementation ("org.imgscalr:imgscalr-lib:4.2")
 
     /**
      * Test containers
@@ -64,6 +64,11 @@ dependencies {
     testImplementation("org.assertj:assertj-core:3.24.2")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.mockito:mockito-inline:5.2.0")
+
+    /**
+     * AWS S3
+     */
+    implementation("com.amazonaws:aws-java-sdk-s3:1.12.566")
 }
 
 tasks.withType<Test> {
@@ -82,7 +87,8 @@ tasks.bootJar {
 val jacocoInclude = listOf(
     "**/service/**",
     "**/controller/**",
-    "**/validation/**"
+    "**/validation/**",
+    "**/scheduler/**"
 )
 
 jacoco {
