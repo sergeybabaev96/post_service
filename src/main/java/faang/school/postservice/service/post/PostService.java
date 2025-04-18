@@ -2,10 +2,13 @@ package faang.school.postservice.service.post;
 
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.dto.event.EventDto;
 import faang.school.postservice.dto.post.PostDto;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.model.event.EventType;
+import faang.school.postservice.publisher.EventPublisher;
 import faang.school.postservice.repository.PostRepository;
 import feign.FeignException;
 import jakarta.persistence.EntityNotFoundException;
@@ -28,6 +31,7 @@ import java.util.stream.StreamSupport;
 @RequiredArgsConstructor
 @Slf4j
 public class PostService {
+    private final EventPublisher eventPublisher;
     private final ProjectServiceClient projectServiceClient;
     private final UserServiceClient userServiceClient;
     private final PostRepository postRepository;
@@ -56,6 +60,15 @@ public class PostService {
 
         post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
+
+        long authorId = post.getAuthorId() == null ? post.getProjectId() : post.getAuthorId();
+
+        eventPublisher.publish(EventDto.builder()
+                .eventId(postId)
+                .authorId(authorId)
+                .eventType(EventType.PUBLISHED_POST)
+                .build());
+
         return postMapper.toDto(post);
     }
 
