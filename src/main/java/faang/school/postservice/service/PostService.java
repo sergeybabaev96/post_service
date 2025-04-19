@@ -39,6 +39,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 @Slf4j
@@ -55,6 +57,7 @@ public class PostService {
     private final LikeRepository likeRepository;
     private final HashtagService hashtagService;
     private final KafkaTemplate<String, PostEvent> kafkaTemplate;
+    private final ExecutorService threadPoolExecutor;
 
     @Value("${posts.correction.batch-size}")
     int batchSize;
@@ -203,6 +206,19 @@ public class PostService {
         log.debug("After correcting errors in the text: {}", text);
     }
 
+    public void publishScheduledPosts() {
+        List<Post> readyToPublishPosts = postRepository.findReadyToPublish();
+        log.info("Found {} posts ready to publish", readyToPublishPosts.size());
+
+        for (Post post: readyToPublishPosts) {
+            CompletableFuture.runAsync(() -> publishPost(post), threadPoolExecutor)
+                    .exceptionally(ex -> {
+                        log.error("Error while publishing post with ID: {}", post.getId(), ex);
+                        return null;
+                    });
+        }
+    }
+
     private void validatePostOptional(Optional<Post> postOptional, Long id) {
         if (postOptional.isEmpty()) {
             String message = String.format(NO_POST_FOUND, id);
@@ -235,5 +251,11 @@ public class PostService {
     private void recoverSendPostContentChecking(LanguageToolException e, Post post) {
         log.error("Failed to correct text after retries. ", e);
         log.error("Post with ID could not be corrected: {}", post.getId());
+    }
+
+    private void publishPost(Post post) {
+        post.setPublished(true);
+        post.setPublishedAt(LocalDateTime.now());
+        log.info("Post with ID {} published successfully", post.getId());
     }
 }
