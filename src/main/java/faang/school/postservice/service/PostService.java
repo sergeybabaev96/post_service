@@ -82,22 +82,11 @@ public class PostService {
         post.setPublishedAt(LocalDateTime.now());
         postRepository.save(post);
 
-        log.info("Start creating post event");
         PostEvent event = new PostEvent(post.getAuthorId(), post.getId());
-        log.info("Post event created, send event");
         kafkaTemplate.send(postEventTopicName, event);
-        log.info("Event send successfully");
 
         hashtagService.extractHashtagsFromPost(post);
         return postMapper.toPostResponseDto(post);
-    }
-
-    public void publishPostTest() {
-        log.info("Start creating post event");
-        PostEvent event = new PostEvent((long) 1.0, (long) 1.0);
-        log.info("Post event created, send event");
-        kafkaTemplate.send(postEventTopicName, event);
-        log.info("Event send successfully");
     }
 
     public PostResponseDto updatePost(PostRequestDto postRequestDto) {
