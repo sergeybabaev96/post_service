@@ -39,11 +39,13 @@ spring:
     bootstrap-servers: "localhost:9092"
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    properties:
+      spring.json.trusted.packages: "faang.school.postservice.dto"
     topics:
       post:
         achievement:
-          post-event-topic: "post_event"
+          post-event-topic: "post-topic"
 
 server:
   port: 8081
