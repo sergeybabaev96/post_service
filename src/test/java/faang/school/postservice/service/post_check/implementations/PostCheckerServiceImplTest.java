@@ -3,7 +3,6 @@ package faang.school.postservice.service.post_check.implementations;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
-import faang.school.postservice.config.post.PostServiceConstants;
 import faang.school.postservice.config.webclient.WebSpellHttpConfig;
 import faang.school.postservice.exception.AIIntegrationException;
 import faang.school.postservice.exception.PostNotCorrectedException;
@@ -16,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.support.TransactionCallback;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -28,10 +28,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -64,7 +61,7 @@ class PostCheckerServiceImplTest {
     @Mock
     private WebSpellHttpConfig webSpellHttpConfig;
 
-    private ExecutorService executor;
+    private ThreadPoolTaskExecutor executor;
 
     @InjectMocks
     private PostCheckerServiceImpl postCheckerService;
@@ -76,13 +73,13 @@ class PostCheckerServiceImplTest {
         post = new Post();
         post.setId(1L);
         post.setContent("Posssst");
-        executor = new ThreadPoolExecutor(
-                10,
-                10,
-                0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(100),
-                new ThreadPoolExecutor.AbortPolicy()
-        );
+        executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(10);
+        executor.setMaxPoolSize(10);
+        executor.setKeepAliveSeconds(0);
+        executor.setQueueCapacity(100);
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.AbortPolicy());
+        executor.initialize();
 
         postCheckerService = new PostCheckerServiceImpl(
                 postRepository, transactionTemplate, objectMapper, webSpellHttpClient,
@@ -127,7 +124,7 @@ class PostCheckerServiceImplTest {
         verify(postRepository).save(any(Post.class));
         assertEquals(correctedContent, post.getContent());
         assertNotNull(post.getUpdatedAt());
-        shutdownExecutor(executor);
+        executor.shutdown();
     }
 
     @Test
@@ -164,7 +161,7 @@ class PostCheckerServiceImplTest {
                 "Suppressed exception message should match");
         System.out.println("Suppressed exception: " + suppressed[0].getClass().getSimpleName()
                 + " - " + suppressed[0].getMessage());
-        shutdownExecutor(executor);
+        executor.shutdown();
     }
 
     @Test
@@ -190,7 +187,7 @@ class PostCheckerServiceImplTest {
         String result = future.join();
 
         assertEquals(correctedContent, result);
-        shutdownExecutor(executor);
+        executor.shutdown();
     }
 
     @Test
@@ -216,7 +213,7 @@ class PostCheckerServiceImplTest {
         assertEquals("Unexpected code 500 received from the proofreader", exception.getCause().getMessage());
         verify(webSpellHttpClient, times(1))
                 .send(any(HttpRequest.class), eq(HttpResponse.BodyHandlers.ofString()));
-        shutdownExecutor(executor);
+        executor.shutdown();
     }
 
     @Test
@@ -231,18 +228,5 @@ class PostCheckerServiceImplTest {
         String result = postCheckerService.parseCorrectedContent(responseBody, originalContent);
 
         assertEquals(correctedContent, result);
-    }
-
-    private void shutdownExecutor(ExecutorService executor) {
-        executor.shutdown();
-        try {
-            if (!executor.awaitTermination(
-                    PostServiceConstants.EXECUTOR_AWAIT_TERMINATION, TimeUnit.SECONDS)) {
-                executor.shutdownNow();
-            }
-        } catch (InterruptedException e) {
-            executor.shutdownNow();
-            Thread.currentThread().interrupt();
-        }
     }
 }

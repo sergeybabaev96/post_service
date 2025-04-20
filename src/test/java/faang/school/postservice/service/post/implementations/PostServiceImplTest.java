@@ -484,8 +484,7 @@ class PostServiceImplTest {
 
         verify(postCheckerService).correctPost(any(Post.class));
     }
-}
-=======
+
     /***************************************************************************************/
     private void setUpPublishScheduledPosts() {
         postPublishPool = new ThreadPoolExecutor(

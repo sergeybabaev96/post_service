@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -31,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -45,7 +45,7 @@ public class PostCheckerServiceImpl implements PostCheckerService {
     private final ObjectMapper objectMapper;
     private final HttpClient webSpellHttpClient;
     private final WebSpellHttpConfig webSpellHttpConfig;
-    private final ExecutorService executor;
+    private final ThreadPoolTaskExecutor executor;
 
     @Override
     public CompletableFuture<Post> correctPost(Post post) {

@@ -35,7 +35,6 @@ import java.util.function.Predicate;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class PostServiceImpl implements PostService {
     private final ProjectServiceClient projectServiceClient;
     private final UserServiceClient userServiceClient;
