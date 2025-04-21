@@ -13,7 +13,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -33,7 +32,6 @@ class AdCleanupTaskServiceTest {
     @DisplayName("Delete expired ad list when list has elements")
     void deleteExpiredAdsBatchShouldInvokeDeleteAllByIdMethod() throws InterruptedException {
         List<Long> adIds = List.of(1L, 2L, 3L);
-        doNothing().when(adRepository).deleteAllById(adIds);
 
         adCleanupTaskService.deleteExpiredAdsBatch(adIds);
 

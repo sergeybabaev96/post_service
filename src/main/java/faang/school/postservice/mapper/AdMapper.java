@@ -11,8 +11,7 @@ import java.util.List;
 
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface AdMapper {
-   /* @Mapping(target = "post", ignore = true)
-    Ad toEntity(AdDto dto);*/
+
 
     @Mapping(target = "postId", source = "post.id")
     AdDto toDto(Ad entity);
