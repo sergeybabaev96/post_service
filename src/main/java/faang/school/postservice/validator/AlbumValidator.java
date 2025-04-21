@@ -17,7 +17,7 @@ public class AlbumValidator {
             throw new NotUniqueAlbumException("Album with the same title and author already exists.");
         } else {
             return albumDto;
-
+    
         }
     }
 

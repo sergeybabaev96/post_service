@@ -45,8 +45,8 @@ public class AlbumService {
     }
 
     @Transactional
-    public AlbumDto addPostToAlbum(long userId, long albumId, long postId) {
-        Post post = postService.getPostsByIds(postId);
+    public AlbumDto addPostToAlbum(long userId, long albumId, List<Long> postId) {
+        Post post = (Post) postService.getPostsByIds(postId);
         Album album = findAlbumForUser(userId, albumId);
         album.addPost(post);
         albumRepository.save(album);

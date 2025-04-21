@@ -35,9 +35,9 @@ dependencies {
     /** Utils & Logging */
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     implementation("com.fasterxml.jackson.core:jackson-databind")
-    implementation("org.projectlombok:lombok:1.18.0")
-    compileOnly ("org.projectlombok:lombok:1.18.0")
-    annotationProcessor("org.projectlombok:lombok:1.18.0")
+    implementation("org.projectlombok:lombok")
+    compileOnly ("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
     implementation("org.mapstruct:mapstruct:1.5.5.Final")
     annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
 

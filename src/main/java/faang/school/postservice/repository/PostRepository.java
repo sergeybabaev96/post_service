@@ -1,9 +1,9 @@
 package faang.school.postservice.repository;
 
 import faang.school.postservice.model.Post;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -28,5 +28,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("SELECT p FROM Post p WHERE p.published = false AND p.deleted = false AND p.scheduledAt <= CURRENT_TIMESTAMP")
     List<Post> findReadyToPublish();
 
-    List<Post> findAllByVerifiedDateIsNull();
+    List<Post> findAllByVerifiedDateIsNull(Specification<Post> readyToPublish);
+
+    @Query("SELECT p.authorId, COUNT(p) FROM Post p WHERE p.verified = false and p.authorId IS NOT NULL GROUP BY p.authorId")
+    List<Object[]> findUnverifiedPostsGroupedByAuthor();
 }

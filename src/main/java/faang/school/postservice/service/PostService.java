@@ -10,9 +10,10 @@ import faang.school.postservice.utils.PostSpecifications;
 import faang.school.postservice.validator.PostServiceValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.data.redis.core.RedisTemplate;
 
 
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -33,6 +35,8 @@ public class PostService {
     private final EventsGenerator eventsGenerator;
     private final AuthorCacheService authorCacheService;
     private final ExecutorService executorService;
+    private final RedisTemplate<String, Object> redisTemplate;
+
 
     @Value("${spring.data.redis.channel.user-bans-channel}")
     private String userBansChannelName;
@@ -106,7 +110,7 @@ public class PostService {
 
     @Transactional
     public void checkAndVerifyPosts() {
-        List<Post> postsToVerify = postRepository.findAllByVerifiedDateIsNull();
+        List<Post> postsToVerify = postRepository.findAllByVerifiedDateIsNull(PostSpecifications.isReadyToPublish());
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         for (int i = 0; i < postsToVerify.size(); i += batchSize) {
@@ -118,6 +122,14 @@ public class PostService {
         }
 
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+    }
+
+    private List<AuthorPostCount> getUnverifiedPostsGroupedByAuthor() {
+        List<Object[]> rawResults = postRepository.findUnverifiedPostsGroupedByAuthor();
+
+        return rawResults.stream()
+                .map(result -> new AuthorPostCount((Long) result[0], (Long) result[1]))
+                .collect(Collectors.toList());
     }
 
     public void banOffensiveAuthors() {
@@ -136,7 +148,8 @@ public class PostService {
     }
 
     public void publishScheduledPosts() {
-        List<Post> postsToPublish = postRepository.findAll(PostSpecifications.isReadyToPublish());
+        //List<Post> postsToPublish = postRepository.findAll(PostSpecifications.isReadyToPublish());
+        List<Post> postsToPublish = postRepository.findAllByVerifiedDateIsNull(PostSpecifications.isReadyToPublish());
 
         if (postsToPublish.isEmpty()) {
             log.info("No posts to publish at this time");
