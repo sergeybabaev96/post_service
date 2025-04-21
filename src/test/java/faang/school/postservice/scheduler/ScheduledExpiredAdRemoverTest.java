@@ -22,7 +22,6 @@ class ScheduledExpiredAdRemoverTest {
 
     @Test
     void runDailyAdCleanup() {
-        doNothing().when(adService).cleanupExpiredAds();
 
         scheduledExpiredAdRemover.runDailyAdCleanup();
 

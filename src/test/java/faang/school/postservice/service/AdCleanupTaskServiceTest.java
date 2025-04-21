@@ -33,7 +33,6 @@ class AdCleanupTaskServiceTest {
     @DisplayName("Delete expired ad list when list has elements")
     void deleteExpiredAdsBatchShouldInvokeDeleteAllByIdMethod() throws InterruptedException {
         List<Long> adIds = List.of(1L, 2L, 3L);
-        doNothing().when(adRepository).deleteAllById(adIds);
 
         adCleanupTaskService.deleteExpiredAdsBatch(adIds);
 
