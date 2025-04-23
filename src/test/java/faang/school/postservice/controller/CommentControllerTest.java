@@ -66,7 +66,7 @@ public class CommentControllerTest {
 
         @Test
         @DisplayName("Должен успешно создать комментарий и вернуть CommentViewDto со статусом 200 OK")
-        void givenValidRequest_whenCreateComment_thenReturnOkWithCommentData() throws Exception {
+        void givenValidRequest_WhenCreateComment_ThenReturnOkWithCommentData() throws Exception {
             Mockito.when(commentService.createComment(VALID_ID, commentCreateDto))
                     .thenReturn(commentViewDto);
 
@@ -78,7 +78,7 @@ public class CommentControllerTest {
 
         @Test
         @DisplayName("Должен вернуть 404 Not Found при несуществующем postId")
-        void givenNonExistentPostId_whenCreateComment_thenReturnNotFound() throws Exception {
+        void givenNonExistentPostId_WhenCreateComment_ThenReturnNotFound() throws Exception {
             Mockito.when(commentService.createComment(VALID_ID, commentCreateDto))
                     .thenThrow(new EntityNotFoundException("Post with id 1 not found"));
 
@@ -90,7 +90,7 @@ public class CommentControllerTest {
 
         @Test
         @DisplayName("Должен вернуть 400 Bad Request при null-содержимом")
-        void givenNullContent_whenCreateComment_thenReturnBadRequest() throws Exception {
+        void givenNullContent_WhenCreateComment_ThenReturnBadRequest() throws Exception {
             commentCreateDto.setContent(null);
 
             mockMvc.perform(post("/posts/{postId}/comments", VALID_ID)
@@ -101,7 +101,7 @@ public class CommentControllerTest {
 
         @Test
         @DisplayName("Должен вернуть 404 Not Found при несуществующем authorId")
-        void givenNonExistentAuthorId_whenCreateComment_thenReturnNotFound() throws Exception {
+        void givenNonExistentAuthorId_WhenCreateComment_ThenReturnNotFound() throws Exception {
             Mockito.when(commentService.createComment(VALID_ID, commentCreateDto))
                     .thenThrow(new EntityNotFoundException("Author with id 1 not found"));
 
@@ -118,7 +118,7 @@ public class CommentControllerTest {
 
         @Test
         @DisplayName("Должен успешно обновить комментарий и вернуть CommentViewDto со статусом 200 OK")
-        void givenValidRequest_whenUpdateComment_thenReturnOkWithUpdatedComment() throws Exception {
+        void givenValidRequest_WhenUpdateComment_ThenReturnOkWithUpdatedComment() throws Exception {
             Mockito.when(commentService.updateComment(VALID_ID, VALID_ID, commentCreateDto))
                     .thenReturn(commentViewDto);
 
@@ -132,7 +132,7 @@ public class CommentControllerTest {
 
         @Test
         @DisplayName("Должен вернуть 404 Not Found при несуществующем commentId")
-        void givenNonExistentCommentId_whenUpdateComment_thenReturnNotFound() throws Exception {
+        void givenNonExistentCommentId_WhenUpdateComment_ThenReturnNotFound() throws Exception {
             Mockito.when(commentService.updateComment(VALID_ID, INVALID_ID, commentCreateDto))
                     .thenThrow(new EntityNotFoundException("Comment not found"));
 
@@ -144,7 +144,7 @@ public class CommentControllerTest {
 
         @Test
         @DisplayName("Должен вернуть 400 Bad Request при null-содержимом")
-        void givenNullContent_whenUpdateComment_thenReturnBadRequest() throws Exception {
+        void givenNullContent_WhenUpdateComment_ThenReturnBadRequest() throws Exception {
             commentCreateDto.setContent(null);
 
             mockMvc.perform(put("/posts/{postId}/comments/{commentId}", VALID_ID, VALID_ID)
@@ -160,7 +160,7 @@ public class CommentControllerTest {
 
         @Test
         @DisplayName("Должен вернуть список комментариев со статусом 200 OK")
-        void givenExistingPostId_whenGetComments_thenReturnOkWithCommentsList() throws Exception {
+        void givenExistingPostId_WhenGetComments_ThenReturnOkWithCommentsList() throws Exception {
             List<CommentViewDto> comments = List.of(commentViewDto);
             Mockito.when(commentService.getCommentsByPostId(VALID_ID))
                     .thenReturn(comments);
@@ -174,7 +174,7 @@ public class CommentControllerTest {
 
         @Test
         @DisplayName("Должен вернуть 404 Not Found при несуществующем postId")
-        void givenNonExistentPostId_whenGetComments_thenReturnNotFound() throws Exception {
+        void givenNonExistentPostId_WhenGetComments_ThenReturnNotFound() throws Exception {
             Mockito.when(commentService.getCommentsByPostId(VALID_ID))
                     .thenThrow(new EntityNotFoundException("Post not found"));
 
@@ -189,7 +189,7 @@ public class CommentControllerTest {
 
         @Test
         @DisplayName("Должен успешно удалить комментарий и вернуть 204 No Content")
-        void givenValidCommentId_whenDeleteComment_thenReturnNoContent() throws Exception {
+        void givenValidCommentId_WhenDeleteComment_ThenReturnNoContent() throws Exception {
             Mockito.doNothing().when(commentService).deleteComment(VALID_ID, VALID_ID);
 
             mockMvc.perform(delete("/posts/{postId}/comments/{commentId}", VALID_ID, VALID_ID))
@@ -198,7 +198,7 @@ public class CommentControllerTest {
 
         @Test
         @DisplayName("Должен вернуть 404 Not Found при несуществующем commentId")
-        void givenNonExistentCommentId_whenDeleteComment_thenReturnNotFound() throws Exception {
+        void givenNonExistentCommentId_WhenDeleteComment_ThenReturnNotFound() throws Exception {
             Mockito.doThrow(new EntityNotFoundException("Comment not found"))
                     .when(commentService).deleteComment(VALID_ID, INVALID_ID);
 
@@ -208,7 +208,7 @@ public class CommentControllerTest {
 
         @Test
         @DisplayName("Должен вернуть 404 Not Found при несуществующем postId")
-        void givenNonExistentPostId_whenDeleteComment_thenReturnNotFound() throws Exception {
+        void givenNonExistentPostId_WhenDeleteComment_ThenReturnNotFound() throws Exception {
             Mockito.doThrow(new EntityNotFoundException("Post not found"))
                     .when(commentService).deleteComment(INVALID_ID, VALID_ID);
 

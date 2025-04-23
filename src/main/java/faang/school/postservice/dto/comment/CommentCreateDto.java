@@ -1,6 +1,7 @@
 package faang.school.postservice.dto.comment;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -8,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * DTO для создания нового комментария.
@@ -51,4 +53,11 @@ public class CommentCreateDto {
     )
     @NotNull(message = "Post ID cannot be null")
     private Long postId;
+
+    @Schema(
+            description = "Image file to attach (max 5MB)",
+            format = "binary"
+    )
+    @Transient
+    private MultipartFile imageFile;
 }
