@@ -36,7 +36,7 @@ spring:
       backoff-delay: 500
 
   kafka:
-    bootstrap-servers: "localhost:9092"
+    bootstrap-servers: localhost:9092
     producer:
       retries: 5
       acks: all
@@ -58,6 +58,31 @@ server:
 logging:
   level:
     root: info
+
+services:
+  user-service:
+    host: localhost
+    port: 8080
+  project-service:
+    host: localhost
+    port: 8082
+  payment-service:
+    host: localhost
+    port: 9080
+  comment-analyzer:
+    endpoint: https://commentanalyzer.googleapis.com/v1alpha1
+    api-key: "AIzaSyDNS2DzSDuUQI_FLdY4dSmA5Bgj397kwK8"
+    path: "/comments:analyze"
+
+moderation:
+  comments:
+    cron: "0 0 * * * *"
+    batch-size: 250000
+    max-attempts: 3
+    backoff-delay: 1000
+    timeout-hours: 5
+    thread-pool-size: 16
+    ban-threshold: 5
 
 user-service:
   host: localhost

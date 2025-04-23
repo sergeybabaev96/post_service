@@ -87,6 +87,8 @@ public class PostService {
 
         PostEvent event = new PostEvent(post.getAuthorId(), post.getId());
         kafkaTemplate.send(postEventTopicName, event);
+        log.info("Send post event with author id = {} and post id = {}",
+                post.getAuthorId(), post.getId());
 
         hashtagService.extractHashtagsFromPost(post);
         return postMapper.toPostResponseDto(post);
