@@ -1,6 +1,6 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.config.moderation.PostModerationConfig;
+import faang.school.postservice.config.moderation.ModerationConfig;
 import faang.school.postservice.dto.post.PostCreateDto;
 import faang.school.postservice.dto.post.PostUpdateDto;
 import faang.school.postservice.dto.post.PostViewDto;
@@ -51,7 +51,7 @@ public class PostService {
     private final PostMapper postMapper;
     private final PostValidator postValidator;
     private final PostModerationAsyncHandler postModerationAsyncHandler;
-    private final PostModerationConfig postModerationConfig;
+    private final ModerationConfig postModerationConfig;
 
     /**
      * Создает черновик поста на основе переданного DTO.

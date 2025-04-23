@@ -1,14 +1,17 @@
 package faang.school.postservice.scheduler;
 
+import faang.school.postservice.service.CommentService;
 import faang.school.postservice.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.concurrent.CompletableFuture;
+
 /**
- * Компонент для периодической модерации постов по расписанию.
+ * Компонент для периодической модерации по расписанию.
  * <p>
- * Использует Spring Scheduling для автоматического вызова модерации неверифицированных постов
+ * Использует Spring Scheduling для автоматического вызова модерации неверифицированных постов и комментариев
  * согласно заданному cron-выражению. Cron-выражение настраивается через свойство
  * {@code moderation.cron.expression} в конфигурации приложения.
  * </p>
@@ -17,18 +20,11 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ModerationScheduler {
     private final PostService postService;
+    private final CommentService commentService;
 
-    /**
-     * Метод для периодической модерации неверифицированных постов.
-     * <p>
-     * Запускается автоматически по расписанию, определенному в свойстве {@code moderation.cron.expression}.
-     * Логика модерации делегируется сервису {@link PostService}.
-     * </p>
-     *
-     * @see PostService#moderateUnverifiedPost()
-     */
     @Scheduled(cron = "${moderation.cron.expression}")
-    public void moderatePost() {
-        postService.moderateUnverifiedPost();
+    public void moderate() {
+        CompletableFuture.runAsync(postService::moderateUnverifiedPost);
+        CompletableFuture.runAsync(commentService::moderateUnverifiedComment);
     }
 }

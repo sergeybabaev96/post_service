@@ -1,6 +1,6 @@
 package faang.school.postservice.service.util;
 
-import faang.school.postservice.dictionary.comment.ModerationDictionary;
+import faang.school.postservice.dictionary.ModerationDictionary;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.service.CommentModerationService;
 import org.junit.jupiter.api.BeforeEach;

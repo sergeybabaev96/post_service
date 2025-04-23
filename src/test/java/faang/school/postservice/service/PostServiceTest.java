@@ -1,6 +1,6 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.config.moderation.PostModerationConfig;
+import faang.school.postservice.config.moderation.ModerationConfig;
 import faang.school.postservice.dto.post.PostCreateDto;
 import faang.school.postservice.dto.post.PostUpdateDto;
 import faang.school.postservice.dto.post.PostViewDto;
@@ -50,7 +50,7 @@ public class PostServiceTest {
     @Mock
     private PostModerationAsyncHandler postModerationAsyncHandler;
     @Mock
-    private PostModerationConfig postModerationConfig;
+    private ModerationConfig postModerationConfig;
 
     @InjectMocks
     private PostService postService;

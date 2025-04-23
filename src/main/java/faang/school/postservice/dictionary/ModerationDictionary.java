@@ -1,6 +1,6 @@
 package faang.school.postservice.dictionary;
 
-import faang.school.postservice.config.moderation.PostModerationConfig;
+import faang.school.postservice.config.moderation.ModerationConfig;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,15 +26,10 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 public class ModerationDictionary {
-    private final PostModerationConfig postModerationConfig;
+    private final ModerationConfig moderationConfig;
 
     private final Set<String> profanityWords = new HashSet<>();
 
-    /**
-     * Инициализирует словарь, загружая слова из файла.
-     * Принудительно завершает загрузку программы если не может подтянуть словарь
-     *
-     */
     @PostConstruct
     public void init() {
         try {
@@ -44,16 +39,9 @@ public class ModerationDictionary {
         }
     }
 
-    /**
-     * Загружает слова из файла словаря в множество profanityWord.
-     * Каждая строка файла представляет собой отдельное слово.
-     * Пустые строки и пробелы игнорируются.
-     *
-     * @throws IOException если произошла ошибка при чтении файла
-     */
     private void loadDictionary() throws IOException {
         log.info("Loading moderation dictionary");
-        ClassPathResource resource = new ClassPathResource(postModerationConfig.getDictionaryPath());
+        ClassPathResource resource = new ClassPathResource(moderationConfig.getDictionaryPath());
         try (BufferedReader reader =
                      new BufferedReader(new InputStreamReader(resource.getInputStream()))) {
             String line;
@@ -66,11 +54,6 @@ public class ModerationDictionary {
         log.info("Loaded {} profanity word", profanityWords.size());
     }
 
-    /**
-     * Возвращает копию множества нецензурных слов.
-     *
-     * @return неизменяемое множество нецензурных слов
-     */
     @Cacheable(value = "profanityDictionary", sync = true)
     public Set<String> getProfanityWords() {
         return Set.copyOf(profanityWords);
