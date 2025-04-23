@@ -1,11 +1,14 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.dto.LikeViewDto;
+import faang.school.postservice.dto.like.LikeViewDto;
 import faang.school.postservice.mapper.LikeMapper;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.LikeRepository;
+import faang.school.postservice.service.comment.CommentService;
+import faang.school.postservice.service.like.LikeService;
+import faang.school.postservice.service.post.PostService;
 import faang.school.postservice.validation.LikeValidator;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

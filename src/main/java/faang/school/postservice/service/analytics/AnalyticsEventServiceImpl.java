@@ -1,4 +1,4 @@
-package faang.school.postservice.service;
+package faang.school.postservice.service.analytics;
 
 import faang.school.postservice.dto.analytic.AnalyticEventDto;
 import faang.school.postservice.dto.analytic.AnalyticsEventCreateDto;

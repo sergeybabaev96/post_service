@@ -1,4 +1,4 @@
-package faang.school.postservice.service;
+package faang.school.postservice.service.post;
 
 import faang.school.postservice.dictionary.ModerationDictionary;
 import faang.school.postservice.model.Post;
