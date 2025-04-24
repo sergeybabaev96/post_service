@@ -1,8 +1,8 @@
 package faang.school.postservice.controller;
 
 import faang.school.postservice.config.context.UserContext;
-import faang.school.postservice.dto.LikeViewDto;
-import faang.school.postservice.service.LikeService;
+import faang.school.postservice.dto.like.LikeViewDto;
+import faang.school.postservice.service.like.LikeService;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

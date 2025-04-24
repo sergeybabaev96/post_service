@@ -10,6 +10,7 @@ import faang.school.postservice.mapper.AnalyticsEventMapper;
 import faang.school.postservice.model.analytic.AnalyticsEvent;
 import faang.school.postservice.model.analytic.EventType;
 import faang.school.postservice.repository.AnalyticsEventRepository;
+import faang.school.postservice.service.analytics.AnalyticsEventServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

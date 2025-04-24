@@ -1,8 +1,7 @@
-package faang.school.postservice.service.util;
+package faang.school.postservice.service.post;
 
 import faang.school.postservice.dictionary.ModerationDictionary;
-import faang.school.postservice.model.Comment;
-import faang.school.postservice.service.comment.CommentModerationService;
+import faang.school.postservice.model.Post;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,10 +13,10 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Сервис для модерации комментариев на наличие нецензурной лексики(промежуточный этап).
+ * Сервис для модерации постов на наличие нецензурной лексики(промежуточный этап).
  * <p>
- * Обеспечивает асинхронную проверку комментариев с использованием словаря запрещенных слов.
- * Каждый комментарий проходит верификацию и помечается соответствующим статусом.
+ * Обеспечивает асинхронную проверку постов с использованием словаря запрещенных слов.
+ * Каждый пост проходит верификацию и помечается соответствующим статусом.
  *
  * <h3>Основные функции:</h3>
  * <ul>
@@ -26,37 +25,38 @@ import java.util.concurrent.CompletableFuture;
  *   <li>Фиксация времени проверки</li>
  *   <li>Асинхронная обработка с транзакционной поддержкой</li>
  * </ul>
+ *
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class CommentModerationAsyncHandler {
+public class PostModerationAsyncHandler {
     private final ModerationDictionary moderationDictionary;
-    private final CommentModerationService commentModerationService;
+    private final PostModerationService postModerationService;
 
     /**
-     * Проверяет пакет комментариев на наличие нецензурной лексики.
+     * Проверяет пакет постов на наличие нецензурной лексики.
      * <p>
      * Выполняется асинхронно в отдельной транзакции. Для каждого поста:
      * <ol>
      *   <li>Проверяет содержание на наличие слов из словаря</li>
      *   <li>Устанавливает дату верификации</li>
-     *   <li>Помечает комментарий как верифицированный/не прошедший проверку</li>
+     *   <li>Помечает пост как верифицированный/не прошедший проверку</li>
      * </ol>
      *
-     * @param comments пакет постов для проверки
+     * @param posts пакет постов для проверки
      * @return CompletableFuture<Void> для отслеживания завершения операции
      */
     @Async
-    public CompletableFuture<Void> checkForProfanity(@NotNull List<Comment> comments) {
+    public CompletableFuture<Void> checkForProfanity(@NotNull List<Post> posts) {
         try {
             Set<String> words = moderationDictionary.getProfanityWords();
-            commentModerationService.moderateComments(comments, words);
+            postModerationService.moderatePosts(posts, words);
             return CompletableFuture.completedFuture(null);
-        } catch (Exception exception) {
-            log.error("Error processing batch of posts", exception);
+        } catch (Exception e) {
+            log.error("Error processing batch of posts: {}", e.getMessage(), e);
             CompletableFuture<Void> failedFuture = new CompletableFuture<>();
-            failedFuture.completeExceptionally(exception);
+            failedFuture.completeExceptionally(e);
             return failedFuture;
         }
     }
