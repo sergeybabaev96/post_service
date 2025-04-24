@@ -36,6 +36,16 @@ dependencies {
     runtimeOnly("org.postgresql:postgresql")
 
     /**
+     * Minio
+     */
+    implementation("io.minio:minio:8.5.10")
+
+    /**
+     * Thumbnailator
+     */
+    implementation ("net.coobird:thumbnailator:0.4.20")
+
+    /**
      * Utils & Logging
      */
     implementation("com.fasterxml.jackson.core:jackson-databind:2.14.2")

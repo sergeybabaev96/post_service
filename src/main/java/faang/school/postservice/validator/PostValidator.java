@@ -2,6 +2,7 @@ package faang.school.postservice.validator;
 
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.post.PostDTO;
 import faang.school.postservice.exception.DataUpdateException;
 import faang.school.postservice.exception.RequiredOwnerException;
@@ -15,6 +16,7 @@ import java.util.Objects;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.params.shadow.com.univocity.parsers.common.DataValidationException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Component;
@@ -26,6 +28,7 @@ public class PostValidator {
     private final UserServiceClient userServiceClient;
     private final ProjectServiceClient projectServiceClient;
     private final PostRepositoryAdapter postRepositoryAdapter;
+    private final UserContext userContext;
 
     public void validatedOwnerPost(PostDTO postDTO) {
         if (postDTO.authorId() == null && postDTO.projectId() == null) {
@@ -69,7 +72,7 @@ public class PostValidator {
         }
     }
 
-    public Post findPostWithId(long postId) {
+    public Post findPostWithId(Long postId) {
         return postRepositoryAdapter.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("This post not found"));
     }
@@ -81,6 +84,16 @@ public class PostValidator {
 
         if (post.getProjectId() != null && !Objects.equals(post.getProjectId(), updatePost.projectId())) {
             throw new DataUpdateException("Can not deleted or change the author of the post");
+        }
+    }
+
+    public void postAuthorValidation(Post post) {
+        Long authorId = post.getAuthorId();
+        Long projectId = post.getProjectId();
+
+        if ((post.getAuthorId() != null && userContext.getRequesterId() != authorId) ||
+                (post.getProjectId() != null && userContext.getRequesterId() != projectId)) {
+            throw new DataValidationException("Adding files by post can only an author post");
         }
     }
 }
