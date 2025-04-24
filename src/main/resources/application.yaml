@@ -26,11 +26,27 @@ spring:
       port: 6379
       host: localhost
       channels:
+        user-bans-channel: "user-bans"
         calculations_channel:
           name: calculations_channel
 
 server:
   port: 8081
+
+ad:
+  batch:
+    size: 10
+
+webspell:
+  api:
+    url: "https://webspellchecker-webspellcheckernet.p.rapidapi.com/api"
+    content-type: "application/json"
+    key: "348d2925famsh95c7436e81d45c0p1eeb4ajsn1347b2ce620a"
+    host: "webspellchecker-webspellcheckernet.p.rapidapi.com"
+
+scheduler:
+  post-correction:
+    cron: "0 0 2 * * *"
 
 logging:
   level:

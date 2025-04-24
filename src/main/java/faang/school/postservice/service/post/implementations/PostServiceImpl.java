@@ -2,6 +2,7 @@ package faang.school.postservice.service.post.implementations;
 
 import faang.school.postservice.client.ProjectServiceClient;
 import faang.school.postservice.client.UserServiceClient;
+import faang.school.postservice.config.post.PostServiceConstants;
 import faang.school.postservice.dto.post.PostDto;
 import faang.school.postservice.dto.project.ProjectDto;
 import faang.school.postservice.dto.user.UserDto;
@@ -12,6 +13,7 @@ import faang.school.postservice.mapper.post.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.service.post.interfaces.PostService;
+import faang.school.postservice.service.post_check.interfaces.PostCheckerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
@@ -25,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
@@ -35,6 +38,7 @@ import java.util.function.Predicate;
 public class PostServiceImpl implements PostService {
     private final ProjectServiceClient projectServiceClient;
     private final UserServiceClient userServiceClient;
+    private final PostCheckerService postCorrectService;
     private final PostRepository postRepository;
     private final PostMapper postMapper;
     private final ExecutorService postPublishPool;
@@ -266,5 +270,28 @@ public class PostServiceImpl implements PostService {
         }
 
         return post;
+    }
+
+    @Transactional(readOnly = true)
+    public void correctUnpublishedPosts() {
+        List<Post> unpublishedPosts = postRepository.findReadyToPublish();
+        log.info("Starting correction for {} unpublished posts", unpublishedPosts.size());
+        if (unpublishedPosts.isEmpty()) {
+            return;
+        }
+
+        List<CompletableFuture<Post>> futures = unpublishedPosts.stream()
+                .map(postCorrectService::correctPost)
+                .toList();
+
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .orTimeout(PostServiceConstants.CORRECT_POSTS_FUTURES_TIMEOUT, TimeUnit.SECONDS)
+                .thenRun(() -> log.info("Finished correcting unpublished posts"))
+                .whenComplete((result, throwable) -> {
+                    if (throwable != null) {
+                        log.error("Correction unpublished posts process failed", throwable);
+                    }
+                })
+                .join();
     }
 }
