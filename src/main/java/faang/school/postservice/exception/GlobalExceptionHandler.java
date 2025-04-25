@@ -1,48 +1,131 @@
 package faang.school.postservice.exception;
 
+import lombok.extern.slf4j.Slf4j;
 import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.params.shadow.com.univocity.parsers.common.DataValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Object> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error -> {
+            errors.put(error.getField(), error.getDefaultMessage());
+        });
+        log.error("Validation failed: {}", errors);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, "Validation failed", errors);
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<Object> handleBadRequestException(BadRequestException ex) {
+        String message = ex.getMessage();
+        log.error("Bad request: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
+    }
+
+    @ExceptionHandler(DataAlreadyDeletedException.class)
+    public ResponseEntity<Object> handleDataAlreadyDeletedException(DataAlreadyDeletedException ex) {
+        String message = ex.getMessage();
+        log.error("Data already deleted: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
+    }
+
+    @ExceptionHandler(DataAlreadyExistException.class)
+    public ResponseEntity<Object> handleDataAlreadyExistException(DataAlreadyExistException ex) {
+        String message = ex.getMessage();
+        log.error("Data already exist: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
+    }
+
+    @ExceptionHandler(DataUpdateException.class)
+    public ResponseEntity<Object> handleDataUpdateException(DataUpdateException ex) {
+        String message = ex.getMessage();
+        log.error("Data update: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
+    }
+
     @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<Object> handleEntityNotFound(EntityNotFoundException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), 404);
-        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    public ResponseEntity<Object> handleEntityNotFoundException(EntityNotFoundException ex) {
+        String message = ex.getMessage();
+        log.error("Entity not found: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.NOT_FOUND, message, null);
+    }
+
+    @ExceptionHandler(RequiredOwnerException.class)
+    public ResponseEntity<Object> handleRequiredOwnerException(RequiredOwnerException ex) {
+        String message = ex.getMessage();
+        log.error("Required owner: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
     }
 
     @ExceptionHandler(DataValidationException.class)
     public ResponseEntity<Object> handleDataValidation(DataValidationException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), 400);
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        String message = ex.getMessage();
+        log.error("Validation failed: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
+    }
+
+    @ExceptionHandler(SinglePostAuthorException.class)
+    public ResponseEntity<Object> handleSinglePostAuthorException(SinglePostAuthorException ex) {
+        String message = ex.getMessage();
+        log.error("Single post author: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
     }
 
     @ExceptionHandler(UploadFileException.class)
     public ResponseEntity<Object> handleUploadFileException(UploadFileException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), 400);
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        String message = ex.getMessage();
+        log.error("File upload error: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
+    }
+
+    @ExceptionHandler(UnpublishedPostException.class)
+    public ResponseEntity<Object> handleUnpublishedPostException(UnpublishedPostException ex) {
+        String message = ex.getMessage();
+        log.error("Unpublished post: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
     }
 
     @ExceptionHandler(InvalidFileTypeException.class)
     public ResponseEntity<Object> handleInvalidFileTypeException(InvalidFileTypeException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), 400);
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        String message = ex.getMessage();
+        log.error("Invalid type file: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> handleException(Exception ex) {
+        log.error("Internal server error: {}", ex.getMessage(), ex);
+        return buildErrorResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", null);
     }
 
     @ExceptionHandler(ResizeImageException.class)
     public ResponseEntity<Object> handleResizeImageException(ResizeImageException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), 400);
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        String message = ex.getMessage();
+        log.error("Resize image error: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, message, null);
     }
 
     @ExceptionHandler(ReadingImageException.class)
     public ResponseEntity<Object> handleReadingImageException(ReadingImageException ex) {
-        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), 400);
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        String message = ex.getMessage();
+        log.error("Read image error: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, message, null);
+    }
+
+    private ResponseEntity<Object> buildErrorResponseEntity(
+            HttpStatus status, String message, Map<String, String> errors) {
+        ErrorResponse apiError = new ErrorResponse(status.value(), message, errors);
+        return ResponseEntity.status(status).body(apiError);
     }
 }

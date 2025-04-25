@@ -81,7 +81,8 @@ class PostImageControllerIT extends AbstractIntegrationTest {
                         .file(IMAGES_FOR_POST.get(1))
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("This post not found"))
+                .andExpect(jsonPath("$.message")
+                        .value("Post with ID "  + NON_EXISTENT_POST_ID + " not found"))
                 .andExpect(jsonPath("$.status").value(404));
     }
 
@@ -167,7 +168,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
                         NON_EXISTENT_RESOURCE_ID, NON_EXISTENT_POST_ID))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message")
-                        .value("This post not found"))
+                        .value("Post with ID "  + NON_EXISTENT_POST_ID + " not found"))
                 .andExpect(jsonPath("$.status").value(404));
     }
 

@@ -2,10 +2,10 @@ package faang.school.postservice.repository.adapter;
 
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -13,19 +13,13 @@ import java.util.Optional;
 public class PostRepositoryAdapter {
     private final PostRepository postRepository;
 
-    public Post save(Post post) {
-        return postRepository.save(post);
+    public Post getById(long id) {
+        return postRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Post with ID " + id + " not found"));
     }
 
-    public Optional<Post> findById(long postId) {
-        return postRepository.findById(postId);
-    }
-
-    public List<Post> findByAuthorId(long authorId) {
-        return postRepository.findByAuthorId(authorId);
-    }
-
-    public List<Post> findByProjectId(long projectId) {
-        return postRepository.findByProjectId(projectId);
+    public Post getByIdWithLikes(long id) {
+        return postRepository.findByIdWithLikes(id)
+                .orElseThrow(() -> new EntityNotFoundException("Post with ID " + id + " not found"));
     }
 }
