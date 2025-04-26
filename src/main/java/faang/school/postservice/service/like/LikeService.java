@@ -1,4 +1,4 @@
-package faang.school.postservice.service;
+package faang.school.postservice.service.like;
 
 import faang.school.postservice.dto.like.LikeViewDto;
 import faang.school.postservice.mapper.LikeMapper;
@@ -7,6 +7,8 @@ import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.LikeRepository;
 import faang.school.postservice.service.like.LikeNotificationService;
+import faang.school.postservice.service.post.PostService;
+import faang.school.postservice.service.comment.CommentService;
 import faang.school.postservice.validation.LikeValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

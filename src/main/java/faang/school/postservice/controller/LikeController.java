@@ -2,7 +2,7 @@ package faang.school.postservice.controller;
 
 import faang.school.postservice.config.context.UserContext;
 import faang.school.postservice.dto.like.LikeViewDto;
-import faang.school.postservice.service.LikeService;
+import faang.school.postservice.service.like.LikeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.NotNull;
