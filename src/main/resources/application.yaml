@@ -36,11 +36,14 @@ spring:
       publish-post-topic:
         name: publish_post_topic
         subscribers-batch-size: 1000
+      publish-post-view-topic:
+        name: public_post_view_topic
 
   data:
     redis:
       port: 6379
       host: localhost
+      ttl-days: 1
       channels:
         calculations_channel:
           name: calculations_channel

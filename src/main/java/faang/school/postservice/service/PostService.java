@@ -1,5 +1,6 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.annotations.PublishPostViewEvent;
 import faang.school.postservice.exception.DataValidationException;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.repository.PostRepository;
@@ -91,6 +92,8 @@ public class PostService {
         postCacheService.removePostFromCache(postId);
     }
 
+    @PublishPostViewEvent
+    @Transactional(readOnly = true)
     public Post get(Long postId) {
         Optional<Post> cachedPost = postCacheService.getCachedPost(postId);
 
