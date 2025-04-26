@@ -13,13 +13,14 @@ import lombok.NoArgsConstructor;
  *     <li>Идентификатор поста, которому был поставлен лайк ({@link #postId})</li>
  * </ul>
  * </p>
+ *
  * @author gulnaz21
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class LikePostEvent {
-    private long postAuthorId;
-    private long likerId;
-    private long postId;
+    private Long postAuthorId;
+    private Long likerId;
+    private Long postId;
 }

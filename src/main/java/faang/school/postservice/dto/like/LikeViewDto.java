@@ -15,7 +15,7 @@ import lombok.Data;
 @Schema(description = "Информация о лайке пользователя")
 public class LikeViewDto {
     @Schema(description = "Уникальный идентификатор лайка", example = "123", requiredMode = Schema.RequiredMode.REQUIRED)
-    private long id;
+    private Long id;
 
     @Schema(description = "ID пользователя, поставившего лайк", example = "456", requiredMode = Schema.RequiredMode.REQUIRED)
     private Long userId;
