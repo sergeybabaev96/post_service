@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @Setter
 @Configuration
 @ConfigurationProperties(prefix = "image-for-post")
-public class MinioPropertiesToPostImages {
+public class PostsImagesMinioProperties {
     private int maxHorizontalHeight;
     private int maxHorizontalWidth;
     private int maxSquareDimensions;

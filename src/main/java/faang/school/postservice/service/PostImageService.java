@@ -1,11 +1,12 @@
 package faang.school.postservice.service;
 
-import faang.school.postservice.config.minio.MinioPropertiesToPostImages;
+import faang.school.postservice.config.minio.PostsImagesMinioProperties;
 import faang.school.postservice.exception.InvalidFileTypeException;
 import faang.school.postservice.exception.ReadingImageException;
 import faang.school.postservice.exception.UploadFileException;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
+import faang.school.postservice.repository.adapter.PostRepositoryAdapter;
 import faang.school.postservice.repository.adapter.ResourceRepositoryAdapter;
 import faang.school.postservice.validator.PostValidator;
 import lombok.RequiredArgsConstructor;
@@ -29,24 +30,24 @@ import java.util.Map;
 public class PostImageService {
 
     private final PostValidator postValidator;
-    private final MinioPropertiesToPostImages minioPropertiesToPostImages;
+    private final PostsImagesMinioProperties postsImagesMinioProperties;
     private final MinioService minioService;
     private final ResourceRepositoryAdapter resourceRepositoryAdapter;
+    private final PostRepositoryAdapter postRepositoryAdapter;
 
     @Transactional
     public void addingImagesToAPost(Long postId, List<MultipartFile> images) {
         Post post = findPostAndAuthorValidation(postId);
 
-        log.info("Список файлов = {} ", images);
+        log.info("List files = {} ", images);
         if (images.size() > 10) {
             throw new UploadFileException("You can add at least 1 and no more than 10 photos to a post");
         }
 
+        images.forEach(this::validateImage);
+
         images.stream()
-                .map(image -> {
-                    imageSizeValidation(image);
-                    return uploadImage(image, post);
-                })
+                .map(image -> uploadImage(image, post))
                 .forEach(resourceRepositoryAdapter::save);
     }
 
@@ -57,7 +58,7 @@ public class PostImageService {
         Resource resource = resourceRepositoryAdapter.findResourceById(resourceId);
         checkingIfAResourceExistForAPost(resource, postId);
 
-        minioService.deleteFile(resource.getKey(), minioPropertiesToPostImages.getBucketName());
+        minioService.deleteFile(resource.getKey(), postsImagesMinioProperties.getBucketName());
         resourceRepositoryAdapter.delete(resource);
     }
 
@@ -65,25 +66,16 @@ public class PostImageService {
     public InputStream getImage(Long resourceId) {
         Resource resource = resourceRepositoryAdapter.findResourceById(resourceId);
         log.debug("User downloading image with ID {}", resourceId);
-        return minioService.getFile(resource.getKey(), minioPropertiesToPostImages.getBucketName());
+        return minioService.getFile(resource.getKey(), postsImagesMinioProperties.getBucketName());
     }
 
     private Post findPostAndAuthorValidation(Long postId) {
-        Post post = postValidator.findPostWithId(postId);
+        Post post = postRepositoryAdapter.getById(postId);
         postValidator.postAuthorValidation(post);
         return post;
     }
 
-    private void imageSizeValidation(MultipartFile image) {
-        if (image.getSize() > minioPropertiesToPostImages.getMaxImageSize()) {
-            log.warn("The image size exceeds the maximum limit of 5 MB");
-            throw new DataValidationException("The image size exceeds the maximum limit of 5 MB");
-        }
-    }
-
     private Resource uploadImage(MultipartFile image, Post post) {
-        validateImage(image);
-
         try (InputStream inputStream = image.getInputStream()) {
             BufferedImage originalImage = ImageIO.read(inputStream);
 
@@ -92,9 +84,9 @@ public class PostImageService {
 
             InputStream processedImageStream = (originalSize[0] <= maxSize[0] && originalSize[1] <= maxSize[1])
                     ? image.getInputStream() : minioService.compressImage(image.getInputStream(), maxSize[0], maxSize[1],
-                    minioPropertiesToPostImages.getOutputQuality());
+                    postsImagesMinioProperties.getOutputQuality());
 
-            String key = minioService.generateStorageKey(image, minioPropertiesToPostImages.getFolderName());
+            String key = minioService.generateStorageKey(image, postsImagesMinioProperties.getFolderName());
             Resource resource = Resource.builder()
                     .key(key)
                     .name(image.getContentType())
@@ -103,8 +95,8 @@ public class PostImageService {
 
             Map<String, String> metadata = generateMetadata(originalSize, maxSize);
 
-            minioService.uploadToMinio(processedImageStream, key, metadata, image.getContentType(),
-                    minioPropertiesToPostImages.getBucketName());
+            minioService.uploadFile(processedImageStream, key, metadata, image.getContentType(),
+                    postsImagesMinioProperties.getBucketName());
 
             return resource;
         } catch (IOException e) {
@@ -122,6 +114,10 @@ public class PostImageService {
     }
 
     private void validateImage(MultipartFile image) {
+        if (image.getSize() > postsImagesMinioProperties.getMaxImageSize()) {
+            throw new DataValidationException("The image size exceeds the maximum limit of 5 MB");
+        }
+
         String contentType = image.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
             throw new InvalidFileTypeException("Uploading allowed only for images");
@@ -131,13 +127,13 @@ public class PostImageService {
     private int[] getMaxDimensionsForOrientation(BufferedImage image) {
         if (image.getWidth() > image.getHeight()) {
             return new int[]{
-                    minioPropertiesToPostImages.getMaxHorizontalWidth(),
-                    minioPropertiesToPostImages.getMaxHorizontalHeight()
+                    postsImagesMinioProperties.getMaxHorizontalWidth(),
+                    postsImagesMinioProperties.getMaxHorizontalHeight()
             };
         }
         return new int[]{
-                minioPropertiesToPostImages.getMaxSquareDimensions(),
-                minioPropertiesToPostImages.getMaxSquareDimensions()
+                postsImagesMinioProperties.getMaxSquareDimensions(),
+                postsImagesMinioProperties.getMaxSquareDimensions()
         };
     }
 

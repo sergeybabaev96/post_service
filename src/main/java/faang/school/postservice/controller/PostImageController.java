@@ -2,6 +2,7 @@ package faang.school.postservice.controller;
 
 import faang.school.postservice.service.PostImageService;
 import lombok.RequiredArgsConstructor;
+import org.simpleframework.xml.Path;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,7 +20,7 @@ import java.io.InputStream;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/image")
+@RequestMapping("/api/v1/posts/images")
 @RequiredArgsConstructor
 public class PostImageController {
 
@@ -29,15 +30,14 @@ public class PostImageController {
     public ResponseEntity<String> addingImagesToAPost(@PathVariable Long postId,
                                                       @RequestPart("files") List<MultipartFile> images) {
         postImageService.addingImagesToAPost(postId, images);
-        return ResponseEntity.status(HttpStatus.OK)
+        return ResponseEntity.ok()
                 .body("Uploading images: " + images.size());
     }
 
     @DeleteMapping("/{resourceId}/post/{postId}")
-    public ResponseEntity<String> deleteImageFromAPost(@PathVariable(name = "postId") Long postId,
-                                                       @PathVariable(name = "resourceId") Long resourceId) {
+    public ResponseEntity<String> deleteImageFromAPost(@PathVariable Long postId, @PathVariable Long resourceId) {
         postImageService.deleteImageFromAPost(postId, resourceId);
-        return ResponseEntity.status(HttpStatus.OK)
+        return ResponseEntity.ok()
                 .body("Deleting image " + resourceId + " successfully ended");
     }
 

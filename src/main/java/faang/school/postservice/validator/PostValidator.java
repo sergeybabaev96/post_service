@@ -74,10 +74,6 @@ public class PostValidator {
         }
     }
 
-    public Post findPostWithId(Long postId) {
-        return postRepositoryAdapter.getById(postId);
-    }
-
     public void validateAuthorForUpdate(Post post, PostDto updatePost) {
         if (post.getAuthorId() != null && !Objects.equals(post.getAuthorId(), updatePost.authorId())) {
             throw new DataUpdateException("Can not deleted or changed the author of the post");

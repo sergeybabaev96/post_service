@@ -26,8 +26,8 @@ public class MinioService {
 
     private final MinioClient minioClient;
 
-    public void uploadToMinio(InputStream inputStream, String key, Map<String, String> metadata,
-                              String contentType, String bucket) {
+    public void uploadFile(InputStream inputStream, String key, Map<String, String> metadata,
+                           String contentType, String bucket) {
         try {
             long processedSize = inputStream.available();
             minioClient.putObject(

@@ -41,7 +41,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-
 class PostImageControllerIT extends AbstractIntegrationTest {
 
     @Autowired
@@ -76,13 +75,13 @@ class PostImageControllerIT extends AbstractIntegrationTest {
 
     @Test
     void testAddingImagesToNonExistPost() throws Exception {
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/v1/image/post/{postId}", NON_EXISTENT_POST_ID)
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/v1/posts/images/post/{postId}", NON_EXISTENT_POST_ID)
                         .file(IMAGES_FOR_POST.get(0))
                         .file(IMAGES_FOR_POST.get(1))
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message")
-                        .value("Post with ID "  + NON_EXISTENT_POST_ID + " not found"))
+                        .value("Post with ID " + NON_EXISTENT_POST_ID + " not found"))
                 .andExpect(jsonPath("$.status").value(404));
     }
 
@@ -90,7 +89,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
     void testAddedImagesNonAuthorPost() throws Exception {
         long postId = setRequesterIdAndSavePost(PROJECT_ID, EXISTENT_POST);
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/v1/image/post/{postId}", postId)
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/v1/posts/images/post/{postId}", postId)
                         .file(IMAGES_FOR_POST.get(0))
                         .file(IMAGES_FOR_POST.get(1))
                         .contentType(MediaType.MULTIPART_FORM_DATA))
@@ -106,7 +105,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
 
         var requestBuilder =
                 (MockMultipartHttpServletRequestBuilder) MockMvcRequestBuilders
-                        .multipart("/api/v1/image/post/{postId}", postId)
+                        .multipart("/api/v1/posts/images/post/{postId}", postId)
                         .contentType(MediaType.MULTIPART_FORM_DATA);
 
         ELEVEN_IMAGES.forEach(requestBuilder::file);
@@ -122,7 +121,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
     void testUploadImageExceedsMaxSize() throws Exception {
         long postId = setRequesterIdAndSavePost(AUTHOR_ID, EXISTENT_POST);
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/v1/image/post/{postId}", postId)
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/v1/posts/images/post/{postId}", postId)
                         .file(IMAGE_EXCEED_SIZE.get(0))
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isBadRequest())
@@ -135,7 +134,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
     void testUploadNotValidContent() throws Exception {
         long postId = setRequesterIdAndSavePost(AUTHOR_ID, EXISTENT_POST);
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/v1/image/post/{postId}", postId)
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/v1/posts/images/post/{postId}", postId)
                         .file(INVALID_CONTENT.get(0))
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isBadRequest())
@@ -150,7 +149,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
 
         var requestBuilder =
                 (MockMultipartHttpServletRequestBuilder) MockMvcRequestBuilders
-                        .multipart("/api/v1/image/post/{postId}", postId)
+                        .multipart("/api/v1/posts/images/post/{postId}", postId)
                         .contentType(MediaType.MULTIPART_FORM_DATA);
 
         IMAGES_FOR_POST.forEach(requestBuilder::file);
@@ -164,11 +163,11 @@ class PostImageControllerIT extends AbstractIntegrationTest {
     void deleteImagesFromNonExistentPost() throws Exception {
         userContext.setRequesterId(AUTHOR_ID);
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/image/{resourceId}/post/{postId}",
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/posts/images/{resourceId}/post/{postId}",
                         NON_EXISTENT_RESOURCE_ID, NON_EXISTENT_POST_ID))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message")
-                        .value("Post with ID "  + NON_EXISTENT_POST_ID + " not found"))
+                        .value("Post with ID " + NON_EXISTENT_POST_ID + " not found"))
                 .andExpect(jsonPath("$.status").value(404));
     }
 
@@ -176,7 +175,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
     void testDeleteImagesNonAuthorPost() throws Exception {
         long postId = setRequesterIdAndSavePost(PROJECT_ID, EXISTENT_POST);
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/image/{resourceId}/post/{postId}",
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/posts/images/{resourceId}/post/{postId}",
                         RESOURCE_ID, postId))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message")
@@ -188,7 +187,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
     void testDeleteNonExistentResource() throws Exception {
         long postId = setRequesterIdAndSavePost(AUTHOR_ID, EXISTENT_POST);
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/image/{resourceId}/post/{postId}",
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/posts/images/{resourceId}/post/{postId}",
                         RESOURCE_ID, postId))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message")
@@ -206,11 +205,11 @@ class PostImageControllerIT extends AbstractIntegrationTest {
 
         doNothing().when(minioService).deleteFile(resource.getKey(), "post-bucket");
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/image/{resourceId}/post/{postId}",
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/posts/images/{resourceId}/post/{postId}",
                         resource.getId(), alienPostId))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message")
-                .value("This resource belongs to another post"))
+                        .value("This resource belongs to another post"))
                 .andExpect(jsonPath("$.status").value(400));
     }
 
@@ -222,7 +221,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
 
         doNothing().when(minioService).deleteFile(resource.getKey(), "post-bucket");
 
-        mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/image/{resourceId}/post/{postId}",
+        mockMvc.perform(MockMvcRequestBuilders.delete("/api/v1/posts/images/{resourceId}/post/{postId}",
                         resource.getId(), postId))
                 .andExpect(status().isOk())
                 .andExpect(content().string("Deleting image " + resource.getId() + " successfully ended"));
@@ -232,7 +231,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
     void testGetNonExistentResource() throws Exception {
         userContext.setRequesterId(AUTHOR_ID);
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/image/{resourceId}",
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/posts/images/{resourceId}",
                         RESOURCE_ID))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.message")
@@ -249,7 +248,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
         when(minioService.getFile(resource.getKey(), "post-bucket"))
                 .thenReturn(new ByteArrayInputStream(TEST_IMAGE_BYTES));
 
-        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/image/{resourceId}",
+        mockMvc.perform(MockMvcRequestBuilders.get("/api/v1/posts/images/{resourceId}",
                         resource.getId()))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.IMAGE_JPEG))
