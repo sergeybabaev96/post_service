@@ -6,7 +6,7 @@ import faang.school.postservice.exception.GlobalExceptionHandler;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.repository.adapter.ResourceRepositoryAdapter;
+import faang.school.postservice.repository.ResourceRepository;
 import faang.school.postservice.service.MinioService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +50,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
     private PostRepository postRepository;
 
     @Autowired
-    private ResourceRepositoryAdapter resourceRepositoryAdapter;
+    private ResourceRepository resourceRepository;
 
     @Autowired
     private UserContext userContext;
@@ -201,7 +201,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
         long alienPostId = setRequesterIdAndSavePost(AUTHOR_ID, EXISTENT_POST);
 
         Resource resource = Resource.builder().key("TEST_KEY").name("TEST_NAME").post(ANOTHER_POST).build();
-        resourceRepositoryAdapter.save(resource);
+        resourceRepository.save(resource);
 
         doNothing().when(minioService).deleteFile(resource.getKey(), "post-bucket");
 
@@ -217,7 +217,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
     void testSuccessDeleteImageFromAPost() throws Exception {
         long postId = setRequesterIdAndSavePost(AUTHOR_ID, EXISTENT_POST);
         Resource resource = Resource.builder().key("TEST_KEY").name("TEST_NAME").post(EXISTENT_POST).build();
-        resourceRepositoryAdapter.save(resource);
+        resourceRepository.save(resource);
 
         doNothing().when(minioService).deleteFile(resource.getKey(), "post-bucket");
 
@@ -243,7 +243,7 @@ class PostImageControllerIT extends AbstractIntegrationTest {
     void testSuccessGetImageById() throws Exception {
         setRequesterIdAndSavePost(ANOTHER_AUTHOR_ID_2, ANOTHER_POST_2);
         Resource resource = Resource.builder().key("TEST_RESOURCE").name("NAME RESOURCE").post(ANOTHER_POST_2).build();
-        resourceRepositoryAdapter.save(resource);
+        resourceRepository.save(resource);
 
         when(minioService.getFile(resource.getKey(), "post-bucket"))
                 .thenReturn(new ByteArrayInputStream(TEST_IMAGE_BYTES));

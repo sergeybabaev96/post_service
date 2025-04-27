@@ -6,6 +6,7 @@ import faang.school.postservice.exception.ReadingImageException;
 import faang.school.postservice.exception.UploadFileException;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.model.Resource;
+import faang.school.postservice.repository.ResourceRepository;
 import faang.school.postservice.repository.adapter.PostRepositoryAdapter;
 import faang.school.postservice.repository.adapter.ResourceRepositoryAdapter;
 import faang.school.postservice.validator.PostValidator;
@@ -33,6 +34,7 @@ public class PostImageService {
     private final PostsImagesMinioProperties postsImagesMinioProperties;
     private final MinioService minioService;
     private final ResourceRepositoryAdapter resourceRepositoryAdapter;
+    private final ResourceRepository resourceRepository;
     private final PostRepositoryAdapter postRepositoryAdapter;
 
     @Transactional
@@ -48,7 +50,7 @@ public class PostImageService {
 
         images.stream()
                 .map(image -> uploadImage(image, post))
-                .forEach(resourceRepositoryAdapter::save);
+                .forEach(resourceRepository::save);
     }
 
     @Transactional
@@ -59,7 +61,7 @@ public class PostImageService {
         checkingIfAResourceExistForAPost(resource, postId);
 
         minioService.deleteFile(resource.getKey(), postsImagesMinioProperties.getBucketName());
-        resourceRepositoryAdapter.delete(resource);
+        resourceRepository.delete(resource);
     }
 
     @Transactional

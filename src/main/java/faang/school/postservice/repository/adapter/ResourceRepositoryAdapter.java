@@ -12,16 +12,8 @@ public class ResourceRepositoryAdapter {
 
     private final ResourceRepository resourceRepository;
 
-    public void save(Resource resource) {
-        resourceRepository.save(resource);
-    }
-
-    public void delete(Resource resource) {
-        resourceRepository.delete(resource);
-    }
-
     public Resource findResourceById(long resourceId) {
-       return resourceRepository.findResourceById(resourceId)
+        return resourceRepository.findResourceById(resourceId)
                 .orElseThrow(() -> new EntityNotFoundException("Resource not found"));
     }
 }
