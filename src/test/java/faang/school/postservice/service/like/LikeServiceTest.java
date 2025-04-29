@@ -5,6 +5,7 @@ import faang.school.postservice.dto.user.UserDto;
 import faang.school.postservice.model.Comment;
 import faang.school.postservice.model.Like;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.publisher.LikePublisher;
 import faang.school.postservice.repository.CommentRepository;
 import faang.school.postservice.repository.LikeRepository;
 import faang.school.postservice.repository.PostRepository;
@@ -41,11 +42,16 @@ public class LikeServiceTest {
     @Mock
     UserServiceClient userServiceClient;
 
+    @Mock
+    LikePublisher likePublisher;
+
+
     private final long userId = 1L;
     private final long postId = 2L;
     private final long commentId = 3L;
+    private final long authorId = 1L;
     private final UserDto userDto = UserDto.builder().id(userId).build();
-    private final Post post = Post.builder().id(postId).build();
+    private final Post post = Post.builder().id(postId).authorId(authorId).build();
     private final Like likePost = Like.builder()
             .userId(userId)
             .post(post)
