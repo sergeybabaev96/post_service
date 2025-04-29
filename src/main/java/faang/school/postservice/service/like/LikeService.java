@@ -39,6 +39,7 @@ public class LikeService {
         likeRepository.save(like);
         likePublisher.publish(LikeEvent.builder().postId(post.getId())
                 .authorId(post.getAuthorId())
+                .userId(userId)
                 .likedAt(LocalDateTime.now())
                 .type(EventType.LIKED_POST).build());
     }

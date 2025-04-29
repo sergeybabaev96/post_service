@@ -1,5 +1,6 @@
 package faang.school.postservice.dto.event;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import faang.school.postservice.model.event.EventType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
