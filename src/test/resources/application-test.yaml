@@ -1,0 +1,12 @@
+spring:
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master-test.yml
+
+image-for-post:
+  max-horizontal-width: 1080
+  max-horizontal-height: 566
+  max-square-dimensions: 1080
+  max-image-size: 5242880
+  output-quality: 0.7
+  bucket-name: post-bucket
+  folder-name: image-for-post

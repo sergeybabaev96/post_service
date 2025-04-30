@@ -1,6 +1,8 @@
 package faang.school.postservice.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.params.shadow.com.univocity.parsers.common.DataValidationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -56,13 +58,20 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Object> handleEntityNotFoundException(EntityNotFoundException ex) {
         String message = ex.getMessage();
         log.error("Entity not found: {}", message, ex);
-        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
+        return buildErrorResponseEntity(HttpStatus.NOT_FOUND, message, null);
     }
 
     @ExceptionHandler(RequiredOwnerException.class)
     public ResponseEntity<Object> handleRequiredOwnerException(RequiredOwnerException ex) {
         String message = ex.getMessage();
         log.error("Required owner: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
+    }
+
+    @ExceptionHandler(DataValidationException.class)
+    public ResponseEntity<Object> handleDataValidation(DataValidationException ex) {
+        String message = ex.getMessage();
+        log.error("Validation failed: {}", message, ex);
         return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
     }
 
@@ -73,6 +82,13 @@ public class GlobalExceptionHandler {
         return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
     }
 
+    @ExceptionHandler(UploadFileException.class)
+    public ResponseEntity<Object> handleUploadFileException(UploadFileException ex) {
+        String message = ex.getMessage();
+        log.error("File upload error: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
+    }
+
     @ExceptionHandler(UnpublishedPostException.class)
     public ResponseEntity<Object> handleUnpublishedPostException(UnpublishedPostException ex) {
         String message = ex.getMessage();
@@ -80,10 +96,31 @@ public class GlobalExceptionHandler {
         return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
     }
 
+    @ExceptionHandler(InvalidFileTypeException.class)
+    public ResponseEntity<Object> handleInvalidFileTypeException(InvalidFileTypeException ex) {
+        String message = ex.getMessage();
+        log.error("Invalid type file: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.BAD_REQUEST, message, null);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleException(Exception ex) {
         log.error("Internal server error: {}", ex.getMessage(), ex);
         return buildErrorResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", null);
+    }
+
+    @ExceptionHandler(ResizeImageException.class)
+    public ResponseEntity<Object> handleResizeImageException(ResizeImageException ex) {
+        String message = ex.getMessage();
+        log.error("Resize image error: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, message, null);
+    }
+
+    @ExceptionHandler(ReadingImageException.class)
+    public ResponseEntity<Object> handleReadingImageException(ReadingImageException ex) {
+        String message = ex.getMessage();
+        log.error("Read image error: {}", message, ex);
+        return buildErrorResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, message, null);
     }
 
     private ResponseEntity<Object> buildErrorResponseEntity(

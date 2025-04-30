@@ -25,6 +25,26 @@ spring:
         calculations_channel:
           name: calculations_channel
 
+  servlet:
+    multipart:
+      max-file-size: 52428800
+      max-request-size: 52428800
+
+image-for-post:
+  max-horizontal-width: 1080
+  max-horizontal-height: 566
+  max-square-dimensions: 1080
+  max-image-size: 5242880
+  output-quality: 0.7
+  bucket-name: post-bucket
+  folder-name: image-for-post
+
+services:
+ s3:
+   endpoint: http://localhost:9000
+   accessKey: user
+   secretKey: password
+
 server:
   port: 8081
 

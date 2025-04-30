@@ -41,7 +41,7 @@ public class Resource {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name = "name", length = 150)
+    @Column(name = "name", length = 150, nullable = false)
     private String name;
 
     @Column(name = "type", length = 50)
