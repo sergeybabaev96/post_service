@@ -24,7 +24,6 @@ public class PostServiceApp {
     }
 
     @Bean
-
     public Clock clock() {
         return Clock.systemDefaultZone();
     }

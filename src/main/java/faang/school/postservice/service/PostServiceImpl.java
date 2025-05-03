@@ -31,7 +31,6 @@ public class PostServiceImpl implements PostService {
     @Transactional
     @Override
     public PostDto createDraft(PostDto postDto) {
-       // log.info("Creating draft post: {}", postDto);
         postValidator.validatePostDto(postDto);
         Post post = postMapper.toEntity(postDto);
         post.setCreatedAt(LocalDateTime.now(clock));
@@ -40,11 +39,11 @@ public class PostServiceImpl implements PostService {
         return postMapper.toDto(savedPost);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public PostDto getPost(long postId) {
         Post post = getPostById(postId);
-        if(post.isDeleted()) {
+        if (post.isDeleted()) {
             throw new PostNotFoundException("Post with ID = %d was deleted".formatted(postId));
         }
         return postMapper.toDto(post);
@@ -83,28 +82,28 @@ public class PostServiceImpl implements PostService {
         postRepository.save(post);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public List<PostDto> getAllDraftsByAuthorId(long authorId) {
         List<Post> posts = postRepository.findByAuthorId(authorId);
         return filterPostsAndMapToDto(posts, post -> !post.isPublished());
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public List<PostDto> getAllDraftsByProjectId(long projectId) {
         List<Post> posts = postRepository.findByProjectId(projectId);
         return filterPostsAndMapToDto(posts, post -> !post.isPublished());
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public List<PostDto> getAllPostsByAuthorId(long authorId) {
         List<Post> posts = postRepository.findByAuthorId(authorId);
         return filterPostsAndMapToDto(posts, Post::isPublished);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public List<PostDto> getAllPostsByProjectId(long projectId) {
         List<Post> posts = postRepository.findByProjectId(projectId);
