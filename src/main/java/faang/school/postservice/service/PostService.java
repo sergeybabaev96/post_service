@@ -1,12 +1,15 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.dto.event.PostEvent;
 import faang.school.postservice.dto.post.PostDto;
 import faang.school.postservice.exception.DataAlreadyDeletedException;
 import faang.school.postservice.exception.DataAlreadyExistException;
 import faang.school.postservice.exception.UnpublishedPostException;
 import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
+import faang.school.postservice.publisher.KafkaPostPublisher;
 import faang.school.postservice.repository.PostRepository;
+import faang.school.postservice.repository.UserJdbcRepository;
 import faang.school.postservice.repository.adapter.PostRepositoryAdapter;
 import faang.school.postservice.validator.PostValidator;
 import jakarta.transaction.Transactional;
@@ -21,6 +24,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class PostService {
+    private final UserJdbcRepository userJdbcRepository;
+    private final KafkaPostPublisher kafkaPostPublisher;
     private final PostValidator postValidator;
     private final PostMapper postMapper;
     private final PostRepositoryAdapter postRepositoryAdapter;
@@ -49,8 +54,9 @@ public class PostService {
 
         post.setPublished(true);
         post.setPublishedAt(LocalDateTime.now());
-
         log.info("Post was successfully published, post id = {}", id);
+
+        sendEventAboutPublishingPost(post);
         return postMapper.toDto(post);
     }
 
@@ -116,5 +122,22 @@ public class PostService {
         postValidator.getProjectById(projectId);
         log.info("Posts received successfully, project id = {}", projectId);
         return postMapper.toDtoList(postRepository.findByProjectIdWithLikesOrderByPublishDateDesc(projectId));
+    }
+
+    private void sendEventAboutPublishingPost(Post post) {
+        Long authorId = returnAuthorPost(post);
+
+        PostEvent postEvent = PostEvent.builder()
+                .postId(post.getId())
+                .authorId(authorId)
+                .followeeIds(userJdbcRepository.getFollowersIds(authorId))
+                .build();
+        kafkaPostPublisher.sendEvent(postEvent);
+    }
+
+    private Long returnAuthorPost(Post post) {
+        if (post.getAuthorId() != null) {
+            return post.getAuthorId();
+        } return post.getProjectId();
     }
 }
