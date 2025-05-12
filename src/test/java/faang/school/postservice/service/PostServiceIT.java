@@ -1,18 +1,15 @@
 package faang.school.postservice.service;
 
 import faang.school.postservice.AbstractIntegrationTest;
-import faang.school.postservice.config.context.UserContext;
+import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.event.PostEvent;
 import faang.school.postservice.dto.post.PostDto;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.publisher.KafkaPostPublisher;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.repository.UserJdbcRepository;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mockito;
+import org.mockito.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
@@ -26,11 +23,8 @@ public class PostServiceIT extends AbstractIntegrationTest {
     @Autowired
     private PostRepository postRepository;
 
-    @Autowired
-    private UserContext userContext;
-
     @MockBean
-    private UserJdbcRepository userJdbcRepository;
+    private UserServiceClient userServiceClient;
 
     @MockBean
     private KafkaPostPublisher kafkaPostPublisher;
@@ -52,7 +46,8 @@ public class PostServiceIT extends AbstractIntegrationTest {
                 .followeeIds(List.of(2L, 3L))
                 .build();
 
-        Mockito.when(userJdbcRepository.getFollowersIds(1L)).thenReturn(List.of(2L, 3L));
+        Mockito.when(userServiceClient.getFollowerIdsBatch(Mockito.eq(1L),
+                Mockito.eq(0L), ArgumentMatchers.anyInt())).thenReturn(List.of(2L, 3L));
 
         PostDto result = postService.publishPost(post.getId());
 

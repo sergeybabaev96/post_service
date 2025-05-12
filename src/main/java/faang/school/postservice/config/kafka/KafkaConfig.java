@@ -23,15 +23,21 @@ import java.util.Map;
 @EnableKafka
 public class KafkaConfig {
 
-    @Value("${spring.data.kafka.topic.name}")
-    private String postsTopic;
+    @Value("${spring.data.kafka.topics.posts.name}")
+    private String postsTopicName;
+
+    @Value("${spring.data.kafka.topics.posts.partitions}")
+    private int postsTopicPartitions;
+
+    @Value("${spring.data.kafka.topics.posts.replicas}")
+    private short postsTopicReplicas;
 
     @Value("${spring.data.kafka.bootstrap-servers}")
     private String bootstrapAddress;
 
     @Bean
-    public NewTopic posts() {
-        return TopicBuilder.name(postsTopic).build();
+    public NewTopic postsTopic() {
+        return new NewTopic(postsTopicName, postsTopicPartitions, postsTopicReplicas);
     }
 
     @Bean

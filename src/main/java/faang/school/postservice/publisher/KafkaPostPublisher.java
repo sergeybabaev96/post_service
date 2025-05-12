@@ -8,14 +8,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class KafkaPostPublisher extends AbstractEventPublisher<PostEvent> {
 
-    private final NewTopic posts;
-
-    public KafkaPostPublisher(KafkaTemplate<String, Object> kafkaTemplate, NewTopic posts) {
-        super(kafkaTemplate);
-        this.posts = posts;
-    }
-
-    public void sendEvent(PostEvent event) {
-        super.sendEvent(event, posts);
+    public KafkaPostPublisher(KafkaTemplate<String, Object> kafkaTemplate,
+                              NewTopic postsTopic) {
+        super(kafkaTemplate, postsTopic);
     }
 }

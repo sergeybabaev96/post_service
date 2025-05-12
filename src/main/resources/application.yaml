@@ -27,8 +27,12 @@ spring:
 
     kafka:
       bootstrap-servers: localhost:9092
-      topic:
-          name: posts
+      follower-ids-batch-size: 10
+      topics:
+        posts:
+          name: posts-topic
+          partitions: 3
+          replicas: 1
 
   servlet:
     multipart:

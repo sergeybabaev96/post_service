@@ -10,9 +10,10 @@ import org.springframework.kafka.core.KafkaTemplate;
 public abstract class AbstractEventPublisher<T> {
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final NewTopic topic;
 
-    public void sendEvent(T event, NewTopic topic) {
-        log.info("JSON event: {} successfully send to Kafka topic: {}", event, topic.name());
+    public void sendEvent(T event) {
         kafkaTemplate.send(topic.name(), event);
+        log.info("JSON event: {} successfully send to Kafka topic: {}", event, topic.name());
     }
 }

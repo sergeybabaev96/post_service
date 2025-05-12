@@ -1,5 +1,6 @@
 package faang.school.postservice.service;
 
+import faang.school.postservice.client.UserServiceClient;
 import faang.school.postservice.dto.event.PostEvent;
 import faang.school.postservice.dto.post.PostDto;
 import faang.school.postservice.exception.DataAlreadyDeletedException;
@@ -12,24 +13,30 @@ import faang.school.postservice.repository.PostRepository;
 import faang.school.postservice.repository.UserJdbcRepository;
 import faang.school.postservice.repository.adapter.PostRepositoryAdapter;
 import faang.school.postservice.validator.PostValidator;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class PostService {
-    private final UserJdbcRepository userJdbcRepository;
+    private final UserServiceClient userServiceClient;
     private final KafkaPostPublisher kafkaPostPublisher;
     private final PostValidator postValidator;
     private final PostMapper postMapper;
     private final PostRepositoryAdapter postRepositoryAdapter;
     private final PostRepository postRepository;
+
+    @Value("${spring.data.kafka.follower-ids-batch-size}")
+    private int followerIdsBatchSize;
 
     public PostDto createDraft(PostDto draftDTO) {
         postValidator.validatedOwnerPost(draftDTO);
@@ -125,19 +132,31 @@ public class PostService {
     }
 
     private void sendEventAboutPublishingPost(Post post) {
-        Long authorId = returnAuthorPost(post);
+        Long authorId = getPostAuthorId(post);
+        List<Long> batchFollowerIds;
+        long lastId = 0;
 
-        PostEvent postEvent = PostEvent.builder()
-                .postId(post.getId())
-                .authorId(authorId)
-                .followeeIds(userJdbcRepository.getFollowersIds(authorId))
-                .build();
-        kafkaPostPublisher.sendEvent(postEvent);
+        do {
+            System.out.println(userServiceClient.getClass());
+            batchFollowerIds = userServiceClient.getFollowerIdsBatch(authorId, lastId, followerIdsBatchSize);
+            if (!batchFollowerIds.isEmpty()) {
+                PostEvent postEvent = PostEvent.builder()
+                        .postId(post.getId())
+                        .authorId(authorId)
+                        .followeeIds(batchFollowerIds)
+                        .build();
+
+                kafkaPostPublisher.sendEvent(postEvent);
+
+                lastId = batchFollowerIds.get(batchFollowerIds.size() - 1);
+            }
+        } while (!batchFollowerIds.isEmpty());
     }
 
-    private Long returnAuthorPost(Post post) {
+    private Long getPostAuthorId(Post post) {
         if (post.getAuthorId() != null) {
             return post.getAuthorId();
-        } return post.getProjectId();
+        }
+        return post.getProjectId();
     }
 }
