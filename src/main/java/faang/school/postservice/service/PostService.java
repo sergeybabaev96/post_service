@@ -10,10 +10,8 @@ import faang.school.postservice.mapper.PostMapper;
 import faang.school.postservice.model.Post;
 import faang.school.postservice.publisher.KafkaPostPublisher;
 import faang.school.postservice.repository.PostRepository;
-import faang.school.postservice.repository.UserJdbcRepository;
 import faang.school.postservice.repository.adapter.PostRepositoryAdapter;
 import faang.school.postservice.validator.PostValidator;
-import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +19,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -137,7 +134,6 @@ public class PostService {
         long lastId = 0;
 
         do {
-            System.out.println(userServiceClient.getClass());
             batchFollowerIds = userServiceClient.getFollowerIdsBatch(authorId, lastId, followerIdsBatchSize);
             if (!batchFollowerIds.isEmpty()) {
                 PostEvent postEvent = PostEvent.builder()
